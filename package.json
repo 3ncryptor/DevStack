@@ -1,0 +1,73 @@
+{
+  "name": "create-devstack",
+  "version": "0.1.0",
+  "description": "Modular project scaffolding CLI for backend dev stacks",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/create-devstack.git"
+  },
+  "type": "commonjs",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "create-devstack": "dist/bin/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.json && cpy \"src/modules/**/files/**\" dist/src/modules --parents --dot && chmod +x dist/bin/cli.js",
+    "dev": "tsx bin/cli.ts",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier . --check",
+    "format:write": "prettier . --write",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^12.1.0",
+    "deepmerge": "^4.3.1",
+    "execa": "^5.1.1",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
+    "@typescript-eslint/parser": "^8.16.0",
+    "cpy-cli": "^5.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "src/**/*.ts": [
+      "eslint --fix"
+    ],
+    "tests/**/*.ts": [
+      "eslint --fix"
+    ]
+  }
+}
