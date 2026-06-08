@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/create-devstack.git"
+    "url": "https://github.com/3ncryptor/DevStack.git"
   },
   "type": "commonjs",
   "main": "dist/src/index.js",
