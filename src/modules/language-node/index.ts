@@ -1,5 +1,4 @@
-import path from 'node:path'
-
+import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
@@ -10,7 +9,7 @@ const moduleDefinition: DevstackModule = {
     tsx: '^4.19.2',
     typescript: '^5.7.2'
   },
-  filesPath: path.join(__dirname, 'files'),
+  filesPath: moduleFilesPath('language-node'),
   packageJson: {
     scripts: {
       build: 'tsc -p tsconfig.json',

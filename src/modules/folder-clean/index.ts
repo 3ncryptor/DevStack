@@ -1,5 +1,4 @@
-import path from 'node:path'
-
+import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
@@ -7,7 +6,7 @@ const moduleDefinition: DevstackModule = {
   description: 'Clean architecture source folder structure',
   requires: ['language-node'],
   conflictsWith: ['folder-mvc'],
-  filesPath: path.join(__dirname, 'files')
+  filesPath: moduleFilesPath('folder-clean')
 }
 
 export default moduleDefinition

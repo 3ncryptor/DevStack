@@ -1,5 +1,4 @@
-import path from 'node:path'
-
+import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
@@ -8,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   devDependencies: {
     prettier: '^3.4.2'
   },
-  filesPath: path.join(__dirname, 'files'),
+  filesPath: moduleFilesPath('formatter-prettier'),
   packageJson: {
     scripts: {
       format: 'prettier . --check',

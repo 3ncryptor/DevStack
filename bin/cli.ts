@@ -1,13 +1,31 @@
 #!/usr/bin/env node
-import { Command } from 'commander'
+import { Command, CommanderError } from 'commander'
 
-import { runCreateDevstack } from '../src'
+import { Aborted, EXIT_CODE, exitCodeFor } from '../src/errors'
+import { runCreateDevstack } from '../src/index'
+
+interface InitFlags {
+  preset?: string
+  yes: boolean
+  advanced: boolean
+  inPlace: boolean
+  skipInstall: boolean
+  skipGit: boolean
+  verbose: boolean
+}
 
 const program = new Command()
-
-program
   .name('create-devstack')
-  .description('Modular backend project scaffolding CLI')
+  .description('Scaffold a running, wired project from the stack you choose')
+  .showHelpAfterError()
+  // Throw instead of exiting so usage errors get the documented exit code (2), not commander's 1.
+  .exitOverride()
+
+// `init` is the default command, so `npx <package> my-app` and `npx <package> init my-app`
+// behave the same (buildPlan B11).
+program
+  .command('init', { isDefault: true })
+  .description('Create a new project')
   .argument('[project-name]', 'Name of the project to create')
   .option('--preset <name>', 'Use a predefined preset (example: backend)')
   .option('--yes', 'Skip interactive prompts and use defaults', false)
@@ -15,22 +33,33 @@ program
   .option('--in-place', 'Generate in current directory instead of creating a new folder', false)
   .option('--skip-install', 'Skip dependency installation', false)
   .option('--skip-git', 'Skip git initialization', false)
-  .action(async (projectName: string | undefined, options: Record<string, unknown>) => {
-    await runCreateDevstack({
-      projectName,
-      options: {
-        preset: typeof options.preset === 'string' ? options.preset : undefined,
-        yes: options.yes === true,
-        advanced: options.advanced === true,
-        inPlace: options.inPlace === true,
-        skipInstall: options.skipInstall === true,
-        skipGit: options.skipGit === true
-      }
-    })
+  .option('--verbose', 'Print debug output and full error details', false)
+  .action(async (projectName: string | undefined, flags: InitFlags) => {
+    await runCreateDevstack({ projectName, options: flags })
   })
 
-program.parseAsync(process.argv).catch((error: unknown) => {
-  const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-  console.error(`create-devstack failed: ${errorMessage}`)
-  process.exitCode = 1
-})
+const COMMANDER_SUCCESS_CODES = new Set(['commander.helpDisplayed', 'commander.version'])
+
+function handleFailure(error: unknown): void {
+  if (error instanceof CommanderError) {
+    // commander has already printed the usage error or the help text
+    process.exitCode = COMMANDER_SUCCESS_CODES.has(error.code)
+      ? EXIT_CODE.ok
+      : EXIT_CODE.invalidInput
+    return
+  }
+  if (error instanceof Aborted) {
+    console.error(error.message)
+    process.exitCode = error.exitCode
+    return
+  }
+
+  const message = error instanceof Error ? error.message : String(error)
+  console.error(`create-devstack failed: ${message}`)
+  if (process.argv.includes('--verbose') && error instanceof Error && error.stack !== undefined) {
+    console.error(error.stack)
+  }
+  process.exitCode = exitCodeFor(error)
+}
+
+program.parseAsync(process.argv).catch(handleFailure)

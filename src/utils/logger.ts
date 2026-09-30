@@ -1,4 +1,4 @@
-import chalk from 'chalk'
+import colors from 'picocolors'
 
 export interface Logger {
   info: (message: string) => void
@@ -12,19 +12,19 @@ export class ConsoleLogger implements Logger {
   constructor(private readonly verbose = false) {}
 
   info(message: string): void {
-    console.log(chalk.cyan(message))
+    console.log(colors.cyan(message))
   }
 
   warn(message: string): void {
-    console.log(chalk.yellow(message))
+    console.log(colors.yellow(message))
   }
 
   error(message: string): void {
-    console.error(chalk.red(message))
+    console.error(colors.red(message))
   }
 
   success(message: string): void {
-    console.log(chalk.green(message))
+    console.log(colors.green(message))
   }
 
   debug(message: string): void {
@@ -32,6 +32,6 @@ export class ConsoleLogger implements Logger {
       return
     }
 
-    console.log(chalk.gray(message))
+    console.log(colors.gray(message))
   }
 }

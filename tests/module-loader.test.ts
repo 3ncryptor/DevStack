@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { loadModules } from '../src/core/module-loader'
 
 describe('module-loader', () => {
-  it('loads builtin modules', async () => {
-    const modules = await loadModules()
+  it('loads builtin modules', () => {
+    const modules = loadModules()
 
     expect(modules.size).toBeGreaterThanOrEqual(16)
     expect(modules.has('language-node')).toBe(true)

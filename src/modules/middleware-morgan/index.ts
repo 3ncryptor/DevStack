@@ -1,5 +1,4 @@
-import path from 'node:path'
-
+import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
@@ -12,7 +11,7 @@ const moduleDefinition: DevstackModule = {
   devDependencies: {
     '@types/morgan': '^1.9.9'
   },
-  filesPath: path.join(__dirname, 'files')
+  filesPath: moduleFilesPath('middleware-morgan')
 }
 
 export default moduleDefinition

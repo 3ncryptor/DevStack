@@ -1,5 +1,7 @@
 import deepmerge from 'deepmerge'
 
+import { ResolutionError } from '../errors'
+
 import type { DevstackModule } from '../types/module'
 import type { DependencyMap, PackageJson } from '../types/package-json'
 import { validateModuleSelection } from './validator'
@@ -23,12 +25,12 @@ function resolveModulesInDependencyOrder(
     }
 
     if (visiting.has(moduleName)) {
-      throw new Error(`Circular module requirement detected at "${moduleName}"`)
+      throw new ResolutionError(`Circular module requirement detected at "${moduleName}"`)
     }
 
     const moduleDefinition = registry.get(moduleName)
     if (!moduleDefinition) {
-      throw new Error(`Unknown module requested: "${moduleName}"`)
+      throw new ResolutionError(`Unknown module requested: "${moduleName}"`)
     }
 
     visiting.add(moduleName)
@@ -58,7 +60,7 @@ function mergeDependencyMaps(
   for (const [packageName, version] of Object.entries(incoming)) {
     const existing = owners.get(packageName)
     if (existing && existing.version !== version) {
-      throw new Error(
+      throw new ResolutionError(
         `Dependency version conflict for "${packageName}": "${existing.version}" (${existing.owner}) vs "${version}" (${owner})`
       )
     }
@@ -131,7 +133,7 @@ export function composeProjectPackageJson(
     }
 
     if (devDependencyVersion !== dependencyVersion) {
-      throw new Error(
+      throw new ResolutionError(
         `Dependency "${dependencyName}" appears in both dependencies and devDependencies with different versions`
       )
     }

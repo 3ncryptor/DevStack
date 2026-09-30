@@ -7,22 +7,14 @@
     "type": "git",
     "url": "https://github.com/3ncryptor/DevStack.git"
   },
-  "type": "commonjs",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "type": "module",
   "bin": {
-    "create-devstack": "dist/bin/cli.js"
+    "create-devstack": "dist/cli.js"
   },
-  "files": [
-    "dist/bin",
-    "dist/src",
-    "README.md",
-    "LICENSE"
-  ],
   "scripts": {
-    "build": "rimraf dist && tsc -p tsconfig.json && cpy \"src/modules/**/files/**\" dist/src/modules --parents --dot && chmod +x dist/bin/cli.js",
+    "build": "tsup",
     "dev": "tsx bin/cli.ts",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint .",
     "format": "prettier . --check",
     "format:write": "prettier . --write",
     "test": "vitest run",
@@ -32,35 +24,35 @@
     "e2e": "tsx tests/e2e/harness.ts"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=22.12.0"
   },
   "dependencies": {
-    "chalk": "^4.1.2",
-    "commander": "^12.1.0",
+    "@clack/prompts": "^1.8.1",
+    "commander": "^15.0.0",
     "deepmerge": "^4.3.1",
-    "execa": "^5.1.1",
+    "execa": "^10.0.1",
     "fs-extra": "^11.2.0",
-    "inquirer": "^8.2.6",
-    "zod": "^3.23.8"
+    "picocolors": "^1.1.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^10.0.1",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^22.10.2",
-    "@typescript-eslint/eslint-plugin": "^8.16.0",
-    "@typescript-eslint/parser": "^8.16.0",
-    "cpy-cli": "^5.0.0",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
+    "@types/node": "^22.20.4",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
     "husky": "^9.1.7",
     "kestrel-tui": "^0.1.1",
     "lint-staged": "^15.2.10",
     "prettier": "^3.4.2",
-    "rimraf": "^6.0.1",
+    "tsup": "^8.5.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.2"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
@@ -72,5 +64,11 @@
     "tests/**/*.ts": [
       "eslint --fix"
     ]
-  }
+  },
+  "files": [
+    "dist",
+    "src/modules/*/files/**",
+    "README.md",
+    "LICENSE"
+  ]
 }

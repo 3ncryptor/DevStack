@@ -1,7 +1,6 @@
 import path from 'node:path'
 
 import fs from 'fs-extra'
-import inquirer from 'inquirer'
 
 import type { GeneratorContext } from '../types/context'
 import type { DevstackModule } from '../types/module'
@@ -27,22 +26,31 @@ async function collectFiles(rootPath: string): Promise<string[]> {
   return files
 }
 
-async function askConflictAction(filePath: string): Promise<ConflictAction> {
-  const answers = await inquirer.prompt<{ action: ConflictAction }>([
-    {
-      type: 'list',
-      name: 'action',
-      message: `File already exists: ${filePath}`,
-      choices: [
-        { name: 'Overwrite', value: 'overwrite' },
-        { name: 'Skip', value: 'skip' },
-        { name: 'Overwrite all', value: 'overwrite-all' },
-        { name: 'Skip all', value: 'skip-all' }
-      ]
-    }
-  ])
+function askConflictAction(context: GeneratorContext, filePath: string): Promise<ConflictAction> {
+  return context.prompter.select<ConflictAction>({
+    message: `File already exists: ${filePath}`,
+    choices: [
+      { value: 'overwrite', label: 'Overwrite' },
+      { value: 'skip', label: 'Skip' },
+      { value: 'overwrite-all', label: 'Overwrite all' },
+      { value: 'skip-all', label: 'Skip all' }
+    ]
+  })
+}
 
-  return answers.action
+/**
+ * npm drops `.gitignore` from published packages, so templates store dotfiles that npm
+ * would strip without the leading dot and they are restored here.
+ */
+const DOTFILE_TEMPLATES = new Set(['gitignore'])
+
+export function toProjectRelativePath(templateRelativePath: string): string {
+  const directory = path.dirname(templateRelativePath)
+  const baseName = path.basename(templateRelativePath)
+  if (!DOTFILE_TEMPLATES.has(baseName)) {
+    return templateRelativePath
+  }
+  return directory === '.' ? `.${baseName}` : path.join(directory, `.${baseName}`)
 }
 
 export async function mergeModuleFiles(
@@ -71,7 +79,9 @@ export async function mergeModuleFiles(
     )
 
     for (const sourceFile of moduleFiles) {
-      const relativePath = path.relative(moduleDefinition.filesPath, sourceFile)
+      const relativePath = toProjectRelativePath(
+        path.relative(moduleDefinition.filesPath, sourceFile)
+      )
       const targetFile = path.join(context.projectDir, relativePath)
       const targetExists = await fs.pathExists(targetFile)
 
@@ -81,7 +91,7 @@ export async function mergeModuleFiles(
         }
 
         if (!overwriteAll) {
-          const action = await askConflictAction(relativePath)
+          const action = await askConflictAction(context, relativePath)
           if (action === 'skip') {
             continue
           }

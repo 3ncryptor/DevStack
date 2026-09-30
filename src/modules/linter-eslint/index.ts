@@ -1,5 +1,4 @@
-import path from 'node:path'
-
+import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
@@ -12,7 +11,7 @@ const moduleDefinition: DevstackModule = {
     eslint: '^8.57.1',
     'eslint-config-prettier': '^9.1.0'
   },
-  filesPath: path.join(__dirname, 'files'),
+  filesPath: moduleFilesPath('linter-eslint'),
   packageJson: {
     scripts: {
       lint: 'eslint . --ext .ts',

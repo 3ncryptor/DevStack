@@ -1,200 +1,113 @@
-import inquirer from 'inquirer'
-
+import type { Choice, Prompter } from '../intake/prompter'
 import type { DevstackModule } from '../types/module'
 
-function deduplicate(modules: string[]): string[] {
-  return Array.from(new Set(modules))
+type Registry = Map<string, DevstackModule>
+
+interface ModuleChoice extends Choice<string> {
+  checked?: boolean
 }
 
-function filterExistingModules(modules: string[], registry: Map<string, DevstackModule>): string[] {
-  return deduplicate(modules).filter((moduleName) => registry.has(moduleName))
+const FRAMEWORKS: ModuleChoice[] = [
+  { value: 'framework-express', label: 'Express' },
+  { value: 'framework-nest', label: 'NestJS' }
+]
+
+const ARCHITECTURES: ModuleChoice[] = [
+  { value: 'folder-clean', label: 'Clean architecture' },
+  { value: 'folder-mvc', label: 'MVC' }
+]
+
+const QUALITY: ModuleChoice[] = [
+  { value: 'linter-eslint', label: 'ESLint', checked: true },
+  { value: 'formatter-prettier', label: 'Prettier', checked: true },
+  { value: 'quality-husky', label: 'Husky + lint-staged + commitlint', checked: true }
+]
+
+const SECURITY: ModuleChoice[] = [
+  { value: 'middleware-cors', label: 'CORS middleware', checked: true },
+  { value: 'security-origin-checks', label: 'Origin allowlist checks (ALLOWED_ORIGINS)' },
+  { value: 'security-helmet', label: 'Helmet security headers', checked: true },
+  { value: 'rate-limit', label: 'Rate limiting', checked: true },
+  { value: 'middleware-morgan', label: 'HTTP request logger (morgan)', checked: true },
+  { value: 'middleware-compression', label: 'Response compression' }
+]
+
+const EXTRAS: ModuleChoice[] = [{ value: 'docker-basic', label: 'Docker setup' }]
+
+function available(registry: Registry, choices: ModuleChoice[]): ModuleChoice[] {
+  return choices.filter((choice) => registry.has(choice.value))
+}
+
+async function pickMany(
+  prompter: Prompter,
+  registry: Registry,
+  message: string,
+  choices: ModuleChoice[]
+): Promise<string[]> {
+  const options = available(registry, choices)
+  if (options.length === 0) {
+    return []
+  }
+  const initialValues = options.filter((choice) => choice.checked).map((choice) => choice.value)
+  return prompter.multiselect({ message, choices: options, initialValues })
 }
 
 export async function runBasicPrompt(
-  registry: Map<string, DevstackModule>
+  registry: Registry,
+  prompter: Prompter
 ): Promise<{ selectedModules: string[] }> {
-  const selectedModules: string[] = []
+  const selected: string[] = []
 
-  const languageAnswer = await inquirer.prompt<{ language: string }>([
-    {
-      type: 'list',
-      name: 'language',
+  selected.push(
+    await prompter.select({
       message: 'Select language/runtime',
-      choices: [{ name: 'Node.js + TypeScript', value: 'language-node' }],
-      default: 'language-node'
-    }
-  ])
-  selectedModules.push(languageAnswer.language)
+      choices: [{ value: 'language-node', label: 'Node.js + TypeScript' }],
+      initialValue: 'language-node'
+    })
+  )
 
-  const frameworkChoices: Array<{ name: string; value: string }> = []
-  if (registry.has('framework-express')) {
-    frameworkChoices.push({ name: 'Express', value: 'framework-express' })
-  }
-  if (registry.has('framework-nest')) {
-    frameworkChoices.push({ name: 'NestJS', value: 'framework-nest' })
-  }
-
-  if (frameworkChoices.length === 0) {
+  const frameworks = available(registry, FRAMEWORKS)
+  if (frameworks.length === 0) {
     throw new Error('No framework modules available. Install framework modules first.')
   }
+  const framework = await prompter.select({
+    message: 'Select backend framework',
+    choices: frameworks,
+    initialValue: frameworks[0]?.value
+  })
+  selected.push(framework)
 
-  const frameworkAnswer = await inquirer.prompt<{ framework: string }>([
-    {
-      type: 'list',
-      name: 'framework',
-      message: 'Select backend framework',
-      choices: frameworkChoices,
-      default: frameworkChoices[0]?.value
-    }
-  ])
-  selectedModules.push(frameworkAnswer.framework)
-
-  const databaseChoices: Array<{ name: string; value: string }> = [{ name: 'None', value: 'none' }]
-  if (registry.has('orm-prisma')) {
-    databaseChoices.unshift({ name: 'Prisma + PostgreSQL', value: 'orm-prisma' })
+  const databases = [
+    ...available(registry, [{ value: 'orm-prisma', label: 'Prisma + PostgreSQL' }]),
+    { value: 'none', label: 'None' }
+  ]
+  const database = await prompter.select({
+    message: 'Select database layer',
+    choices: databases,
+    initialValue: databases[0]?.value
+  })
+  if (database !== 'none') {
+    selected.push(database)
   }
 
-  const databaseAnswer = await inquirer.prompt<{ database: string }>([
-    {
-      type: 'list',
-      name: 'database',
-      message: 'Select database layer',
-      choices: databaseChoices,
-      default: databaseChoices[0]?.value
-    }
-  ])
-
-  if (databaseAnswer.database !== 'none') {
-    selectedModules.push(databaseAnswer.database)
-  }
-
-  const isHttpFramework =
-    frameworkAnswer.framework === 'framework-express' ||
-    frameworkAnswer.framework === 'framework-nest'
-
-  if (frameworkAnswer.framework === 'framework-express') {
-    const architectureChoices: Array<{ name: string; value: string }> = []
-    if (registry.has('folder-clean')) {
-      architectureChoices.push({ name: 'Clean architecture', value: 'folder-clean' })
-    }
-    if (registry.has('folder-mvc')) {
-      architectureChoices.push({ name: 'MVC', value: 'folder-mvc' })
-    }
-
-    if (architectureChoices.length > 0) {
-      const architectureAnswer = await inquirer.prompt<{ architecture: string }>([
-        {
-          type: 'list',
-          name: 'architecture',
-          message: 'Select folder architecture',
-          choices: architectureChoices,
-          default: architectureChoices[0]?.value
-        }
-      ])
-
-      selectedModules.push(architectureAnswer.architecture)
-    }
-  }
-
-  const qualityChoices: Array<{ name: string; value: string; checked: boolean }> = []
-  if (registry.has('linter-eslint')) {
-    qualityChoices.push({ name: 'ESLint', value: 'linter-eslint', checked: true })
-  }
-  if (registry.has('formatter-prettier')) {
-    qualityChoices.push({ name: 'Prettier', value: 'formatter-prettier', checked: true })
-  }
-  if (registry.has('quality-husky')) {
-    qualityChoices.push({
-      name: 'Husky + lint-staged + commitlint',
-      value: 'quality-husky',
-      checked: true
-    })
-  }
-
-  if (qualityChoices.length > 0) {
-    const qualityAnswer = await inquirer.prompt<{ qualityModules: string[] }>([
-      {
-        type: 'checkbox',
-        name: 'qualityModules',
-        message: 'Select quality tooling',
-        choices: qualityChoices
-      }
-    ])
-
-    selectedModules.push(...qualityAnswer.qualityModules)
-  }
-
-  if (isHttpFramework) {
-    const securityChoices: Array<{ name: string; value: string; checked: boolean }> = []
-
-    if (registry.has('middleware-cors')) {
-      securityChoices.push({ name: 'CORS middleware', value: 'middleware-cors', checked: true })
-    }
-    if (registry.has('security-origin-checks')) {
-      securityChoices.push({
-        name: 'Origin allowlist checks (ALLOWED_ORIGINS)',
-        value: 'security-origin-checks',
-        checked: false
+  const architectures = available(registry, ARCHITECTURES)
+  if (framework === 'framework-express' && architectures.length > 0) {
+    selected.push(
+      await prompter.select({
+        message: 'Select folder architecture',
+        choices: architectures,
+        initialValue: architectures[0]?.value
       })
-    }
-    if (registry.has('security-helmet')) {
-      securityChoices.push({
-        name: 'Helmet security headers',
-        value: 'security-helmet',
-        checked: true
-      })
-    }
-    if (registry.has('rate-limit')) {
-      securityChoices.push({ name: 'Rate limiting', value: 'rate-limit', checked: true })
-    }
-    if (registry.has('middleware-morgan')) {
-      securityChoices.push({
-        name: 'HTTP request logger (morgan)',
-        value: 'middleware-morgan',
-        checked: true
-      })
-    }
-    if (registry.has('middleware-compression')) {
-      securityChoices.push({
-        name: 'Response compression',
-        value: 'middleware-compression',
-        checked: false
-      })
-    }
-
-    if (securityChoices.length > 0) {
-      const securityAnswer = await inquirer.prompt<{ securityModules: string[] }>([
-        {
-          type: 'checkbox',
-          name: 'securityModules',
-          message: 'Select API security and middleware features',
-          choices: securityChoices
-        }
-      ])
-
-      selectedModules.push(...securityAnswer.securityModules)
-    }
+    )
   }
 
-  const extraChoices: Array<{ name: string; value: string; checked: boolean }> = []
-  if (registry.has('docker-basic')) {
-    extraChoices.push({ name: 'Docker setup', value: 'docker-basic', checked: false })
-  }
-
-  if (extraChoices.length > 0) {
-    const extrasAnswer = await inquirer.prompt<{ extras: string[] }>([
-      {
-        type: 'checkbox',
-        name: 'extras',
-        message: 'Select optional platform extras',
-        choices: extraChoices
-      }
-    ])
-
-    selectedModules.push(...extrasAnswer.extras)
-  }
+  selected.push(...(await pickMany(prompter, registry, 'Select quality tooling', QUALITY)))
+  selected.push(
+    ...(await pickMany(prompter, registry, 'Select API security and middleware features', SECURITY))
+  )
+  selected.push(...(await pickMany(prompter, registry, 'Select optional platform extras', EXTRAS)))
 
   return {
-    selectedModules: filterExistingModules(selectedModules, registry)
+    selectedModules: [...new Set(selected)].filter((moduleName) => registry.has(moduleName))
   }
 }

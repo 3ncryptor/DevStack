@@ -1,5 +1,4 @@
-import path from 'node:path'
-
+import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
@@ -12,7 +11,7 @@ const moduleDefinition: DevstackModule = {
   devDependencies: {
     '@types/cors': '^2.8.17'
   },
-  filesPath: path.join(__dirname, 'files')
+  filesPath: moduleFilesPath('middleware-cors')
 }
 
 export default moduleDefinition

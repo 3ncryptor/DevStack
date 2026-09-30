@@ -1,3 +1,4 @@
+import { ResolutionError } from '../errors'
 import type { DevstackModule } from '../types/module'
 import { moduleDefinitionSchema } from '../types/module'
 
@@ -18,7 +19,7 @@ export function validateModuleSelection(modules: DevstackModule[]): void {
   for (const moduleDefinition of modules) {
     for (const required of moduleDefinition.requires ?? []) {
       if (!selected.has(required)) {
-        throw new Error(
+        throw new ResolutionError(
           `Module "${moduleDefinition.name}" requires "${required}", but it is not selected`
         )
       }
@@ -28,7 +29,7 @@ export function validateModuleSelection(modules: DevstackModule[]): void {
     if (requiresAny.length > 0) {
       const hasAny = requiresAny.some((requiredModuleName) => selected.has(requiredModuleName))
       if (!hasAny) {
-        throw new Error(
+        throw new ResolutionError(
           `Module "${moduleDefinition.name}" requires one of [${requiresAny.join(', ')}], but none are selected`
         )
       }
@@ -36,7 +37,7 @@ export function validateModuleSelection(modules: DevstackModule[]): void {
 
     for (const conflicting of moduleDefinition.conflictsWith ?? []) {
       if (selected.has(conflicting)) {
-        throw new Error(
+        throw new ResolutionError(
           `Module "${moduleDefinition.name}" conflicts with "${conflicting}". Remove one of them.`
         )
       }

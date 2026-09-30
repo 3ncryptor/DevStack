@@ -35,7 +35,7 @@ interface CombinationReport {
   steps: StepResult[]
 }
 
-const REPO_ROOT = path.resolve(__dirname, '..', '..')
+const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..')
 const GATE_SCRIPTS = ['lint', 'format', 'typecheck', 'build'] as const
 const REQUIRED_FILES = ['package.json', '.gitignore', 'tsconfig.json'] as const
 const MINUTE_MS = 60_000
@@ -221,7 +221,7 @@ function printReport(reports: CombinationReport[]): void {
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
-  const matrix = parseMatrix(await readJson(path.join(__dirname, 'matrix.json'))).filter(
+  const matrix = parseMatrix(await readJson(path.join(import.meta.dirname, 'matrix.json'))).filter(
     (combination) => args.only === undefined || combination.id === args.only
   )
   if (matrix.length === 0) {

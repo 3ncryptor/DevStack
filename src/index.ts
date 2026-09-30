@@ -1,19 +1,25 @@
 import path from 'node:path'
 
-import inquirer from 'inquirer'
+import { z } from 'zod'
 
 import { generateProject } from './core/generator'
 import { loadModules } from './core/module-loader'
 import { getPreset } from './core/presets'
+import { InputError } from './errors'
+import { ClackPrompter } from './intake/clack-prompter'
+import type { Prompter } from './intake/prompter'
 import { runAdvancedPrompt } from './prompts/advanced'
 import { runBasicPrompt } from './prompts/basic'
 import { cliOptionSchema, type CliOptions } from './types/cli'
+import type { DevstackModule } from './types/module'
 import { ConsoleLogger } from './utils/logger'
 import { detectPackageManager } from './utils/package-manager'
 
 export interface CreateDevstackInput {
   projectName?: string
-  options: CliOptions
+  options: Partial<CliOptions>
+  /** Injected in tests; defaults to the interactive clack prompter. */
+  prompter?: Prompter
 }
 
 interface ProjectTarget {
@@ -21,147 +27,101 @@ interface ProjectTarget {
   projectDir: string
 }
 
-function validateProjectName(projectName: string): string {
-  const validName = /^(?:@[a-zA-Z0-9._-]+\/)?[a-zA-Z0-9._-]+$/.test(projectName)
-  if (!validName) {
-    throw new Error(
-      'Invalid project name. Use letters, numbers, dots, underscores, dashes, and optional @ scope only.'
-    )
-  }
+const DEFAULT_PROJECT_NAME = 'devstack-app'
+const PROJECT_NAME_PATTERN = /^(?:@[a-zA-Z0-9._-]+\/)?[a-zA-Z0-9._-]+$/
 
+function projectNameProblem(projectName: string): string | undefined {
+  return PROJECT_NAME_PATTERN.test(projectName)
+    ? undefined
+    : 'Invalid project name. Use letters, numbers, dots, underscores, dashes, and optional @ scope only.'
+}
+
+function validateProjectName(projectName: string): string {
+  const problem = projectNameProblem(projectName)
+  if (problem !== undefined) {
+    throw new InputError(problem)
+  }
   return projectName
 }
 
-async function resolveProjectName(projectName: string | undefined, yes: boolean): Promise<string> {
-  if (projectName) {
-    return validateProjectName(projectName)
-  }
-
-  if (yes) {
-    return 'devstack-app'
-  }
-
-  const answer = await inquirer.prompt<{ projectName: string }>([
-    {
-      type: 'input',
-      name: 'projectName',
-      message: 'Project name',
-      default: 'devstack-app',
-      validate: (input: unknown) => {
-        try {
-          if (typeof input !== 'string') {
-            return 'Project name must be a string'
-          }
-
-          validateProjectName(input)
-          return true
-        } catch (error) {
-          if (error instanceof Error) {
-            return error.message
-          }
-
-          return 'Invalid project name'
-        }
-      }
-    }
-  ])
-
-  return validateProjectName(answer.projectName)
-}
-
-async function resolveInPlaceProjectName(
-  projectName: string | undefined,
-  yes: boolean
+async function askProjectName(
+  prompter: Prompter,
+  message: string,
+  initialValue: string
 ): Promise<string> {
-  if (projectName && projectName !== '.') {
-    return validateProjectName(projectName)
-  }
-
-  const directoryName = path.basename(process.cwd())
-  const defaultName = /^(?:@[a-zA-Z0-9._-]+\/)?[a-zA-Z0-9._-]+$/.test(directoryName)
-    ? directoryName
-    : 'devstack-app'
-
-  if (yes) {
-    return validateProjectName(defaultName)
-  }
-
-  const answer = await inquirer.prompt<{ projectName: string }>([
-    {
-      type: 'input',
-      name: 'projectName',
-      message: 'Package name for current directory',
-      default: defaultName,
-      validate: (input: unknown) => {
-        try {
-          if (typeof input !== 'string') {
-            return 'Project name must be a string'
-          }
-
-          validateProjectName(input)
-          return true
-        } catch (error) {
-          if (error instanceof Error) {
-            return error.message
-          }
-
-          return 'Invalid project name'
-        }
-      }
-    }
-  ])
-
-  return validateProjectName(answer.projectName)
+  const answer = await prompter.text({ message, initialValue, validate: projectNameProblem })
+  return validateProjectName(answer)
 }
 
 async function resolveProjectTarget(
   projectName: string | undefined,
-  options: CliOptions
+  options: CliOptions,
+  prompter: Prompter
 ): Promise<ProjectTarget> {
   if (options.inPlace || projectName === '.') {
-    return {
-      projectName: await resolveInPlaceProjectName(projectName, options.yes),
-      projectDir: process.cwd()
-    }
+    const directoryName = path.basename(process.cwd())
+    const defaultName =
+      projectNameProblem(directoryName) === undefined ? directoryName : DEFAULT_PROJECT_NAME
+    const name =
+      projectName && projectName !== '.'
+        ? validateProjectName(projectName)
+        : options.yes
+          ? defaultName
+          : await askProjectName(prompter, 'Package name for current directory', defaultName)
+    return { projectName: name, projectDir: process.cwd() }
   }
 
-  const resolvedProjectName = await resolveProjectName(projectName, options.yes)
-  return {
-    projectName: resolvedProjectName,
-    projectDir: path.resolve(process.cwd(), resolvedProjectName)
+  const name = projectName
+    ? validateProjectName(projectName)
+    : options.yes
+      ? DEFAULT_PROJECT_NAME
+      : await askProjectName(prompter, 'Project name', DEFAULT_PROJECT_NAME)
+  return { projectName: name, projectDir: path.resolve(process.cwd(), name) }
+}
+
+async function selectModules(
+  registry: Map<string, DevstackModule>,
+  options: CliOptions,
+  prompter: Prompter
+): Promise<string[]> {
+  if (options.advanced) {
+    const presetModules = options.preset ? (getPreset(options.preset)?.modules ?? []) : []
+    return runAdvancedPrompt(registry, prompter, presetModules)
   }
+  if (options.preset) {
+    const preset = getPreset(options.preset)
+    if (!preset) {
+      throw new InputError(`Unknown preset: ${options.preset}`)
+    }
+    return [...preset.modules]
+  }
+  if (options.yes) {
+    return [...(getPreset('backend')?.modules ?? [])]
+  }
+  return (await runBasicPrompt(registry, prompter)).selectedModules
+}
+
+function parseOptions(raw: Partial<CliOptions>): CliOptions {
+  const parsed = cliOptionSchema.safeParse(raw)
+  if (!parsed.success) {
+    throw new InputError(`Invalid options:\n${z.prettifyError(parsed.error)}`)
+  }
+  return parsed.data
 }
 
 export async function runCreateDevstack(input: CreateDevstackInput): Promise<void> {
-  const options = cliOptionSchema.parse(input.options)
-  const logger = new ConsoleLogger(false)
+  const options = parseOptions(input.options)
+  const logger = new ConsoleLogger(options.verbose)
+  const prompter = input.prompter ?? new ClackPrompter()
 
-  const target = await resolveProjectTarget(input.projectName, options)
+  const target = await resolveProjectTarget(input.projectName, options, prompter)
 
   logger.info('Loading modules...')
-  const registry = await loadModules()
+  const registry = loadModules()
 
-  let selectedModules: string[] = []
-
-  if (options.advanced) {
-    const presetModules = options.preset ? (getPreset(options.preset)?.modules ?? []) : []
-    selectedModules = await runAdvancedPrompt(registry, presetModules)
-  } else if (options.preset) {
-    const preset = getPreset(options.preset)
-    if (!preset) {
-      throw new Error(`Unknown preset: ${options.preset}`)
-    }
-
-    selectedModules = [...preset.modules]
-  } else if (options.yes) {
-    selectedModules = [...(getPreset('backend')?.modules ?? [])]
-  } else {
-    const basicPrompt = await runBasicPrompt(registry)
-    selectedModules = basicPrompt.selectedModules
-  }
-
+  const selectedModules = await selectModules(registry, options, prompter)
   if (selectedModules.length === 0) {
-    throw new Error('No modules selected. Aborting.')
+    throw new InputError('No modules selected. Aborting.')
   }
 
   const packageManager = await detectPackageManager(process.cwd())
@@ -174,6 +134,7 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     registry,
     packageManager,
     options,
-    logger
+    logger,
+    prompter
   })
 }

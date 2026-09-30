@@ -1,5 +1,4 @@
-import path from 'node:path'
-
+import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
@@ -14,7 +13,7 @@ const moduleDefinition: DevstackModule = {
     'reflect-metadata': '^0.2.2',
     rxjs: '^7.8.1'
   },
-  filesPath: path.join(__dirname, 'files'),
+  filesPath: moduleFilesPath('framework-nest'),
   packageJson: {
     scripts: {
       dev: 'tsx watch src/main.ts',
