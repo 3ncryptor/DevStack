@@ -1,0 +1,56 @@
+name: e2e
+
+# Generates every combination in tests/e2e/matrix.json from the packed CLI and checks that the
+# generated project passes its own gates (buildPlan B13, task 0.2).
+# Non-blocking until task 0.7 lands (buildPlan Part C execution order); then continue-on-error goes.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  generated-project:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package-manager: [npm, pnpm]
+        node-version: [24, 26]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        if: matrix.package-manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install CLI dependencies
+        run: npm ci
+
+      - name: Run e2e harness
+        run: npm run e2e -- --pm ${{ matrix.package-manager }} --report e2e-report.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report-${{ matrix.package-manager }}-node${{ matrix.node-version }}
+          path: e2e-report.json
+          if-no-files-found: ignore
