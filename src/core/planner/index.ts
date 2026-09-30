@@ -7,7 +7,7 @@ import {
   type PackageManager
 } from '../../utils/package-manager'
 import { composeModules } from '../composer'
-import { MANIFEST_PATH, manifestFor } from '../manifest'
+import { CLI_PACKAGE, MANIFEST_PATH, manifestFor } from '../manifest'
 import { planCommands, type CommandOptions } from './commands'
 import { collectEnv, envExample } from './env'
 import { EXECUTABLE_MODE, generatedFile, moduleTemplateFiles } from './files'
@@ -49,7 +49,7 @@ function huskyFiles(
   const lintStaged = getHookCommand(packageManager, 'lint-staged')
   const commitlint = `${getHookCommand(packageManager, 'commitlint')} --edit "$1"`
   return [
-    generatedFile('README.md', `# ${projectName}\n\nGenerated with create-devstack.\n`, {
+    generatedFile('README.md', `# ${projectName}\n\nGenerated with ${CLI_PACKAGE.name}.\n`, {
       strategy: 'skip-if-exists'
     }),
     generatedFile(

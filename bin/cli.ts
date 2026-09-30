@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command, CommanderError } from 'commander'
 
+import { CLI_PACKAGE } from '../src/core/manifest'
 import { Aborted, EXIT_CODE, exitCodeFor } from '../src/errors'
 import { runCreateDevstack } from '../src/index'
 import type { CliOptions } from '../src/types/cli'
@@ -20,7 +21,8 @@ interface InitFlags {
 }
 
 const program = new Command()
-  .name('create-devstack')
+  .name(CLI_PACKAGE.name)
+  .version(CLI_PACKAGE.version)
   .description('Scaffold a running, wired project from the stack you choose')
   .showHelpAfterError()
   // Throw instead of exiting so usage errors get the documented exit code (2), not commander's 1.
@@ -68,7 +70,7 @@ function handleFailure(error: unknown): void {
   }
 
   const message = error instanceof Error ? error.message : String(error)
-  console.error(`create-devstack failed: ${message}`)
+  console.error(`${CLI_PACKAGE.name} failed: ${message}`)
   if (process.argv.includes('--verbose') && error instanceof Error && error.stack !== undefined) {
     console.error(error.stack)
   }

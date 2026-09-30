@@ -1,135 +1,132 @@
-# create-devstack
+# create-devstack-app
 
-`create-devstack` is a production-grade, modular TypeScript CLI for scaffolding backend projects.
+Scaffold a running, wired TypeScript backend from the stack you choose. Every generated project
+passes its own lint, format, typecheck and build on the first run, boots with a `/health` route,
+and shuts down cleanly on `SIGTERM`.
 
-## Features
+> Status: 0.x, Phase 0 of the [build plan](./buildPlan.md). The stack menu is small today (Express
+> or NestJS, optional Prisma + Postgres, security middleware, tooling, Docker). The plan lists
+> what comes next.
 
-- Guided wizard flow: language -> framework -> database -> architecture -> tooling -> optional features.
-- Quality tooling selection includes ESLint, Prettier, and Husky/commit hooks.
-- Express security/middleware selection includes CORS, origin checks, Helmet, rate limiting, logging, and compression.
-- NestJS projects can also opt into the same middleware/security modules.
-- Preset mode for fast project generation.
-- Advanced mode for module-by-module composition.
-- Module metadata with dependency/requirement/conflict handling.
-- Safe file merge flow with overwrite confirmation.
-- Automatic package manager detection (`npm`, `pnpm`, `yarn`, `bun`).
-- Git + Husky + lint-staged + commitlint bootstrap.
-- Contributor-ready structure with tests and CI.
-
-## Installation
-
-### Run directly
+## Quick start
 
 ```bash
-npx create-devstack my-app
+npx create-devstack-app my-app
 ```
 
-### Local development
+The wizard asks for your framework, database, folder layout, tooling and middleware. When it
+finishes, the CLI prints the next commands for your package manager, the environment variables to
+fill in, and any warnings (for example, CORS left open to every origin).
 
-```bash
-pnpm install
-pnpm build
-pnpm link
-create-devstack my-app
-```
+Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
+
+## What you get
+
+- **Express 5 or NestJS 12** on ESM TypeScript (NodeNext), with a `/health` route and graceful
+  shutdown: `SIGTERM`/`SIGINT` stop accepting connections, finish in-flight requests, and exit 0.
+- **Security middleware you pick, imported explicitly:** Helmet, CORS, origin checks, rate
+  limiting, request logging and compression. There is no runtime discovery, so a missing
+  middleware is a compile error, never a silent no-op. Open CORS logs a warning at startup.
+- **Prisma 7 + PostgreSQL** (optional): driver adapter, `prisma.config.mjs`, and a client generated
+  into `src/generated` after install.
+- **Tooling that passes on day one:** ESLint 10 (flat config), Prettier, Husky + lint-staged +
+  commitlint. Every generated file is formatted with the project's own Prettier config.
+- **Docker** (optional): a multi-stage, non-root Dockerfile for your package manager with a
+  `/health` healthcheck, and a compose file that only adds Postgres when you chose a database.
+- **`.env.example`** built from what each module needs, and `.devstack/stack.json`, a record of the
+  stack you can regenerate from.
+- **npm, pnpm, yarn or bun**, including pnpm's build-script approval (`allowBuilds`).
 
 ## Usage
 
 ```bash
-create-devstack my-app
-create-devstack . --in-place
-create-devstack my-app --preset backend
-create-devstack my-app --advanced
-create-devstack my-app --yes
+create-devstack-app my-app                        # interactive wizard
+create-devstack-app my-app --preset backend --yes # a preset, no questions
+create-devstack-app my-app --config stack.json    # from a stack config
+create-devstack-app . --in-place                  # into the current directory
+create-devstack-app my-app --dry-run              # show the plan, write nothing
+create-devstack-app my-app --preset backend --print-plan json
 ```
 
-## Architecture
+| Flag                        | Effect                                                                      |
+| --------------------------- | --------------------------------------------------------------------------- |
+| `--preset <name>`           | Use a built-in preset (`backend`)                                           |
+| `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json` |
+| `--yes`                     | Accept defaults, never ask. Never overwrites existing files                 |
+| `--force`                   | Overwrite existing files. Originals are backed up first                     |
+| `--advanced`                | Pick modules one by one                                                     |
+| `--in-place`                | Generate into the current directory                                         |
+| `--dry-run`                 | Print the plan (files and commands) and stop                                |
+| `--print-plan [text\|json]` | Print the plan in a format; `json` never prompts                            |
+| `--skip-install`            | Do not install dependencies                                                 |
+| `--skip-git`                | Do not initialise git or install hooks                                      |
+| `--verbose`                 | Debug output and full error details                                         |
 
-The CLI uses a composition engine in `src/core`:
+Exit codes: `0` success, `1` generation failed after writing (the message lists what was written),
+`2` invalid input or stack (nothing written), `3` cancelled.
 
-- `module-loader.ts`: discovers and validates module definitions.
-- `composer.ts`: resolves required modules and merges package metadata/dependencies.
-- `validator.ts`: enforces module requirements and conflict rules.
-- `file-merger.ts`: merges template files safely.
-- `installer.ts`: installs dependencies, initializes git, and sets up Husky hooks.
+### Stack config
 
-Each module lives under `src/modules/<module-name>` and exports `DevstackModule` metadata.
-
-```ts
-export interface DevstackModule {
-  name: string
-  description: string
-  dependencies?: Record<string, string>
-  devDependencies?: Record<string, string>
-  requires?: string[]
-  conflictsWith?: string[]
-  filesPath?: string
-  packageJson?: PackageJsonFragment
-  postInstall?: (context: GeneratorContext) => Promise<void>
+```json
+{
+  "version": 1,
+  "name": "acme-api",
+  "packageManager": "pnpm",
+  "modules": ["framework-express", "orm-prisma", "security-helmet", "middleware-cors"]
 }
 ```
 
-## Included MVP Modules
+Every generated project records its own config in `.devstack/stack.json`; passing it to
+`--config` regenerates the same files.
 
-- `language-node`
-- `framework-express`
-- `framework-nest`
-- `middleware-cors`
-- `security-origin-checks`
-- `security-helmet`
-- `middleware-morgan`
-- `middleware-compression`
-- `orm-prisma`
-- `linter-eslint`
-- `formatter-prettier`
-- `quality-husky`
-- `rate-limit`
-- `docker-basic`
-- `folder-mvc`
-- `folder-clean`
+## Safety
 
-## Create a New Module
+- Nothing is written until the whole plan has rendered. Files are staged in a temp directory,
+  then copied in.
+- `--yes` never overwrites. With `--force` or an interactive "overwrite", originals are copied to
+  a backup directory first and the summary says where. Nothing is ever deleted.
+- Symlinks, non-regular files and paths outside the project are refused before anything is written.
+- Project names follow npm's rules, including reserved and Windows device names.
+- Commands run without a shell.
 
-1. Create `src/modules/<module-name>/index.ts`.
-2. Export a typed `DevstackModule` object.
-3. Add template files to `src/modules/<module-name>/files`.
-4. Declare `requires` and `conflictsWith` when relevant.
-5. Add tests for behavior in `tests/`.
-
-Example:
-
-```ts
-import path from 'node:path'
-import type { DevstackModule } from '../../types/module'
-
-const moduleDefinition: DevstackModule = {
-  name: 'my-module',
-  description: 'My custom module',
-  filesPath: path.join(__dirname, 'files')
-}
-
-export default moduleDefinition
-```
-
-## Contribution Guide
-
-1. Create a branch (`codex/<feature-name>`).
-2. Keep modules small and single-purpose.
-3. Run checks before opening a PR:
+## Develop
 
 ```bash
-pnpm lint
-pnpm test
-pnpm build
+npm install
+npm run dev -- my-app --dry-run   # run the CLI from source
+npm test                          # unit tests
+npm run test:coverage             # with coverage
+npm run e2e -- --pm pnpm --keep   # generate projects and run their own gates
+npm run lint && npm run typecheck && npm run build
 ```
 
-4. Use conventional commits (`feat:`, `fix:`, `chore:`, etc.).
-5. Update docs/tests for behavior changes.
+The end-to-end harness (`tests/e2e`) packs the CLI as npm publishes it, generates every
+combination in `tests/e2e/matrix.json`, and checks each project: install, required files, lint,
+format, typecheck, build, and boot with `/health`, security headers and a clean `SIGTERM` exit.
 
-Project governance files for open source collaboration:
+### How generation works
 
-- `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
-- `SECURITY.md`
-- `.github/ISSUE_TEMPLATE/*`
-- `.github/pull_request_template.md`
+`src/core/planner` resolves the modules and builds a plan: every file and command, as data. Eta
+templates (`*.eta`) render framework entry points and fill their slots with fragments from the
+selected modules. `src/core/apply` then checks paths, applies the conflict policy, stages and
+writes the files, and runs the commands. Versions come only from `src/catalog/node.ts`.
+
+### Add a module
+
+1. Create `src/modules/<id>/index.ts` exporting a `DevstackModule`, and register it in
+   `src/modules/index.ts`.
+2. List packages by name. Add their versions to `src/catalog/node.ts`; a test rejects literal
+   versions in modules.
+3. Put templates in `src/modules/<id>/files` (`filesPath: moduleFilesPath('<id>')`). Name a file
+   `*.eta` to render it; store `.gitignore` as `gitignore`.
+4. Contribute framework code through `slots` (`app.imports`, `app.middleware`), environment
+   variables through `env`, and post-install steps through `commands`.
+5. Add tests, and add a combination to `tests/e2e/matrix.json`.
+
+Decisions and their reasons are in [`buildPlan.md` §7](./buildPlan.md#7-decision-log) and
+indexed in [`docs/adr`](./docs/adr/README.md). See [CONTRIBUTING.md](./CONTRIBUTING.md),
+[CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) and [SECURITY.md](./SECURITY.md).
+
+## License
+
+MIT

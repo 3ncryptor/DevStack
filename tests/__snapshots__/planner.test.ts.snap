@@ -33,7 +33,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "9e8fd105192e3ab1",
+      "sha256": "e224729dfab5d219",
       "strategy": "create",
     },
     {
@@ -93,7 +93,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "44677c55b818b717",
+      "sha256": "1f842823345085b6",
       "strategy": "create",
     },
     {
@@ -111,7 +111,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "9059a2a0b4db5b00",
+      "sha256": "25a6ec74b7b8ad8f",
       "strategy": "skip-if-exists",
     },
     {
@@ -135,7 +135,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/index.ts",
-      "sha256": "f56d65784024f524",
+      "sha256": "43211c37c3a1cec8",
       "strategy": "create",
     },
     {
