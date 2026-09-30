@@ -11,4 +11,7 @@ export interface PackageJson {
   engines?: Record<string, string>
 }
 
-export type PackageJsonFragment = Partial<Omit<PackageJson, 'name' | 'version' | 'private'>>
+/** Module fragments cannot declare dependencies: versions come only from the catalog (D-08). */
+export type PackageJsonFragment = Partial<
+  Omit<PackageJson, 'name' | 'version' | 'private' | 'dependencies' | 'devDependencies'>
+>

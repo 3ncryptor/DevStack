@@ -5,12 +5,7 @@ const moduleDefinition: DevstackModule = {
   name: 'middleware-compression',
   description: 'Response compression middleware',
   requiresAny: ['framework-express', 'framework-nest'],
-  dependencies: {
-    compression: '^1.7.5'
-  },
-  devDependencies: {
-    '@types/compression': '^1.7.5'
-  },
+  dependencies: ['compression'],
   filesPath: moduleFilesPath('middleware-compression')
 }
 

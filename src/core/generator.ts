@@ -156,6 +156,35 @@ async function writeLintStagedFile(projectDir: string, options: MetaFileOptions)
   await fs.writeJson(lintStagedPath, lintStagedConfig, { spaces: 2 })
 }
 
+/**
+ * pnpm >= 11 fails the install when a dependency's install scripts are not approved
+ * (ERR_PNPM_IGNORED_BUILDS). pnpm 12 reads the `allowBuilds` map; pnpm 10 reads
+ * `onlyBuiltDependencies`. Only the catalog-listed packages are approved.
+ */
+export function pnpmWorkspaceYaml(approvals: readonly string[]): string {
+  const quoted = approvals.map((name) => `'${name}'`)
+  return [
+    '# Packages whose install scripts pnpm may run. Keep this list minimal.',
+    'allowBuilds:',
+    ...quoted.map((name) => `  ${name}: true`),
+    'onlyBuiltDependencies:',
+    ...quoted.map((name) => `  - ${name}`),
+    ''
+  ].join('\n')
+}
+
+async function writePnpmBuildApprovals(
+  projectDir: string,
+  packageManager: PackageManager,
+  approvals: readonly string[]
+): Promise<void> {
+  const workspacePath = path.join(projectDir, 'pnpm-workspace.yaml')
+  if (packageManager !== 'pnpm' || approvals.length === 0 || (await fs.pathExists(workspacePath))) {
+    return
+  }
+  await fs.writeFile(workspacePath, pnpmWorkspaceYaml(approvals), 'utf8')
+}
+
 function createContext(input: GenerateProjectInput): GeneratorContext {
   const runCommand = async (command: string, args: string[]): Promise<void> => {
     try {
@@ -219,6 +248,7 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
     })
   }
   await mergeModuleFiles(composition.orderedModules, context)
+  await writePnpmBuildApprovals(input.projectDir, input.packageManager, composition.buildApprovals)
 
   await initializeGitRepository(context)
   await installProjectDependencies(context)

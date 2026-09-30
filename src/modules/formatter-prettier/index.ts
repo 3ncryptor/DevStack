@@ -4,9 +4,7 @@ import type { DevstackModule } from '../../types/module'
 const moduleDefinition: DevstackModule = {
   name: 'formatter-prettier',
   description: 'Prettier formatting defaults',
-  devDependencies: {
-    prettier: '^3.4.2'
-  },
+  devDependencies: ['prettier'],
   filesPath: moduleFilesPath('formatter-prettier'),
   packageJson: {
     scripts: {

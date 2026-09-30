@@ -1,13 +1,15 @@
 import { z } from 'zod'
 
+import type { CatalogName } from '../catalog/node'
 import type { GeneratorContext } from './context'
-import type { DependencyMap, PackageJsonFragment } from './package-json'
+import type { PackageJsonFragment } from './package-json'
 
 export interface DevstackModule {
   name: string
   description: string
-  dependencies?: DependencyMap
-  devDependencies?: DependencyMap
+  /** Catalog package names; versions come from src/catalog (D-08). */
+  dependencies?: readonly CatalogName[]
+  devDependencies?: readonly CatalogName[]
   requires?: string[]
   requiresAny?: string[]
   conflictsWith?: string[]
@@ -19,8 +21,8 @@ export interface DevstackModule {
 export const moduleDefinitionSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
-  dependencies: z.record(z.string(), z.string()).optional(),
-  devDependencies: z.record(z.string(), z.string()).optional(),
+  dependencies: z.array(z.string()).optional(),
+  devDependencies: z.array(z.string()).optional(),
   requires: z.array(z.string()).optional(),
   requiresAny: z.array(z.string()).optional(),
   conflictsWith: z.array(z.string()).optional(),
@@ -29,8 +31,6 @@ export const moduleDefinitionSchema = z.object({
     .object({
       description: z.string().optional(),
       scripts: z.record(z.string(), z.string()).optional(),
-      dependencies: z.record(z.string(), z.string()).optional(),
-      devDependencies: z.record(z.string(), z.string()).optional(),
       engines: z.record(z.string(), z.string()).optional()
     })
     .optional()

@@ -1,2 +1,8 @@
 node_modules
 dist
+coverage
+# lockfiles are written by the package manager, not by people
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock

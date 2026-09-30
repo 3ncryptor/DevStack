@@ -5,12 +5,7 @@ const moduleDefinition: DevstackModule = {
   name: 'middleware-morgan',
   description: 'HTTP request logging using Morgan',
   requiresAny: ['framework-express', 'framework-nest'],
-  dependencies: {
-    morgan: '^1.10.0'
-  },
-  devDependencies: {
-    '@types/morgan': '^1.9.9'
-  },
+  dependencies: ['morgan'],
   filesPath: moduleFilesPath('middleware-morgan')
 }
 

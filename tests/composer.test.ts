@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { NODE_CATALOG, type CatalogName } from '../src/catalog/node'
 import { composeModules } from '../src/core/composer'
 import { loadModules } from '../src/core/module-loader'
 import type { DevstackModule } from '../src/types/module'
@@ -73,22 +74,47 @@ describe('composer', () => {
     expect(result.packageJson.scripts?.format).toBe('prettier . --check')
   })
 
-  it('throws when dependency versions conflict', () => {
+  it('takes every version from the catalog', () => {
+    const result = composeModules(['framework-express'], loadModules(), 'catalog-app')
+
+    expect(result.packageJson.dependencies?.express).toBe(NODE_CATALOG.express.version)
+    expect(result.packageJson.devDependencies?.typescript).toBe(NODE_CATALOG.typescript.version)
+  })
+
+  it('adds the paired @types package when a module only lists the runtime package', () => {
+    const registry = createModuleRegistry([
+      { name: 'uses-express', description: 'needs express', dependencies: ['express'] }
+    ])
+
+    const result = composeModules(['uses-express'], registry, 'pair-app')
+
+    expect(result.packageJson.devDependencies?.['@types/express']).toBe(
+      NODE_CATALOG['@types/express'].version
+    )
+  })
+
+  it('rejects a package that is not in the catalog', () => {
     const registry = createModuleRegistry([
       {
-        name: 'a',
-        description: 'module a',
-        dependencies: { express: '^4.0.0' }
-      },
-      {
-        name: 'b',
-        description: 'module b',
-        dependencies: { express: '^5.0.0' }
+        name: 'rogue',
+        description: 'lists an unknown package',
+        dependencies: ['left-pad-9000' as CatalogName]
       }
     ])
 
-    expect(() => composeModules(['a', 'b'], registry, 'conflict-app')).toThrow(
-      'Dependency version conflict'
+    expect(() => composeModules(['rogue'], registry, 'rogue-app')).toThrow(
+      '"left-pad-9000" (required by rogue) is not in the version catalog'
     )
+  })
+
+  it('lists the install scripts pnpm has to approve for the selected stack', () => {
+    const result = composeModules(['framework-express', 'orm-prisma'], loadModules(), 'build-app')
+
+    expect(result.buildApprovals).toEqual([
+      '@prisma/client',
+      '@prisma/engines',
+      'esbuild',
+      'prisma'
+    ])
   })
 })

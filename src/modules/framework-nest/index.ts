@@ -6,17 +6,19 @@ const moduleDefinition: DevstackModule = {
   description: 'NestJS application starter',
   requires: ['language-node'],
   conflictsWith: ['framework-express'],
-  dependencies: {
-    '@nestjs/common': '^11.0.0',
-    '@nestjs/core': '^11.0.0',
-    '@nestjs/platform-express': '^11.0.0',
-    'reflect-metadata': '^0.2.2',
-    rxjs: '^7.8.1'
-  },
+  dependencies: [
+    '@nestjs/common',
+    '@nestjs/core',
+    '@nestjs/platform-express',
+    'reflect-metadata',
+    'rxjs'
+  ],
+  // SWC keeps decorator metadata in dev, which Nest's dependency injection needs (D-51)
+  devDependencies: ['@swc-node/register', '@swc/core'],
   filesPath: moduleFilesPath('framework-nest'),
   packageJson: {
     scripts: {
-      dev: 'tsx watch src/main.ts',
+      dev: 'node --watch --require @swc-node/register src/main.ts',
       start: 'node dist/main.js'
     }
   }

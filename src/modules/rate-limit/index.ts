@@ -5,9 +5,7 @@ const moduleDefinition: DevstackModule = {
   name: 'rate-limit',
   description: 'API rate limiting middleware for Express or NestJS',
   requiresAny: ['framework-express', 'framework-nest'],
-  dependencies: {
-    'express-rate-limit': '^7.5.0'
-  },
+  dependencies: ['express-rate-limit'],
   filesPath: moduleFilesPath('rate-limit')
 }
 

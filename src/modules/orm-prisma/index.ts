@@ -5,12 +5,8 @@ const moduleDefinition: DevstackModule = {
   name: 'orm-prisma',
   description: 'Prisma ORM with starter schema and client setup',
   requires: ['language-node'],
-  dependencies: {
-    '@prisma/client': '^6.1.0'
-  },
-  devDependencies: {
-    prisma: '^6.1.0'
-  },
+  dependencies: ['@prisma/client'],
+  devDependencies: ['prisma'],
   filesPath: moduleFilesPath('orm-prisma'),
   packageJson: {
     scripts: {

@@ -5,12 +5,7 @@ const moduleDefinition: DevstackModule = {
   name: 'middleware-cors',
   description: 'CORS middleware for Express or NestJS APIs',
   requiresAny: ['framework-express', 'framework-nest'],
-  dependencies: {
-    cors: '^2.8.5'
-  },
-  devDependencies: {
-    '@types/cors': '^2.8.17'
-  },
+  dependencies: ['cors'],
   filesPath: moduleFilesPath('middleware-cors')
 }
 
