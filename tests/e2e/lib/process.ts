@@ -18,9 +18,7 @@ export interface RunResult {
 }
 
 export type ExitStatus =
-  | { kind: 'exit'; code: number }
-  | { kind: 'signal'; signal: NodeJS.Signals }
-  | { kind: 'timeout' }
+  { kind: 'exit'; code: number } | { kind: 'signal'; signal: NodeJS.Signals } | { kind: 'timeout' }
 
 const OUTPUT_TAIL_CHARS = 4000
 /** Grandchildren can hold the pipes open after the direct child exits; stop waiting after this. */

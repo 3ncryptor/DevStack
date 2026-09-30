@@ -3,6 +3,7 @@ import { Command, CommanderError } from 'commander'
 
 import { Aborted, EXIT_CODE, exitCodeFor } from '../src/errors'
 import { runCreateDevstack } from '../src/index'
+import type { CliOptions } from '../src/types/cli'
 
 interface InitFlags {
   preset?: string
@@ -12,6 +13,9 @@ interface InitFlags {
   skipInstall: boolean
   skipGit: boolean
   verbose: boolean
+  force: boolean
+  dryRun: boolean
+  printPlan?: true | string
 }
 
 const program = new Command()
@@ -34,8 +38,15 @@ program
   .option('--skip-install', 'Skip dependency installation', false)
   .option('--skip-git', 'Skip git initialization', false)
   .option('--verbose', 'Print debug output and full error details', false)
+  .option('--force', 'Overwrite files that already exist (--yes alone never does)', false)
+  .option('--dry-run', 'Show what would be written and run, then stop', false)
+  .option('--print-plan [format]', 'Print the plan as text or json and write nothing')
   .action(async (projectName: string | undefined, flags: InitFlags) => {
-    await runCreateDevstack({ projectName, options: flags })
+    const { printPlan, ...rest } = flags
+    await runCreateDevstack({
+      projectName,
+      options: { ...rest, printPlan: printPlan as CliOptions['printPlan'] }
+    })
   })
 
 const COMMANDER_SUCCESS_CODES = new Set(['commander.helpDisplayed', 'commander.version'])

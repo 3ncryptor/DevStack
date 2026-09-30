@@ -4,13 +4,6 @@ import { moduleDefinitionSchema } from '../types/module'
 
 export function validateModuleDefinition(moduleDefinition: DevstackModule): void {
   moduleDefinitionSchema.parse(moduleDefinition)
-
-  if (
-    moduleDefinition.postInstall !== undefined &&
-    typeof moduleDefinition.postInstall !== 'function'
-  ) {
-    throw new Error(`Module ${moduleDefinition.name} has an invalid postInstall hook`)
-  }
 }
 
 export function validateModuleSelection(modules: DevstackModule[]): void {

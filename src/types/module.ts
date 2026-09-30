@@ -1,8 +1,12 @@
 import { z } from 'zod'
 
 import type { CatalogName } from '../catalog/node'
-import type { GeneratorContext } from './context'
 import type { PackageJsonFragment } from './package-json'
+
+export interface ModuleCommand {
+  phase: 'postInstall'
+  run: readonly [binary: string, ...args: string[]]
+}
 
 export interface DevstackModule {
   name: string
@@ -15,7 +19,8 @@ export interface DevstackModule {
   conflictsWith?: string[]
   filesPath?: string
   packageJson?: PackageJsonFragment
-  postInstall?: (context: GeneratorContext) => Promise<void>
+  /** Commands run after install, as data (buildPlan B4). `run` is a binary and its arguments. */
+  commands?: readonly ModuleCommand[]
 }
 
 export const moduleDefinitionSchema = z.object({
@@ -27,6 +32,9 @@ export const moduleDefinitionSchema = z.object({
   requiresAny: z.array(z.string()).optional(),
   conflictsWith: z.array(z.string()).optional(),
   filesPath: z.string().optional(),
+  commands: z
+    .array(z.object({ phase: z.literal('postInstall'), run: z.array(z.string()).min(1) }))
+    .optional(),
   packageJson: z
     .object({
       description: z.string().optional(),

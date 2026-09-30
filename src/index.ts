@@ -5,6 +5,11 @@ import { z } from 'zod'
 import { generateProject } from './core/generator'
 import { loadModules } from './core/module-loader'
 import { getPreset } from './core/presets'
+import {
+  assertValidProjectName,
+  projectDirectoryName,
+  projectNameProblem
+} from './core/project-name'
 import { InputError } from './errors'
 import { ClackPrompter } from './intake/clack-prompter'
 import type { Prompter } from './intake/prompter'
@@ -28,21 +33,6 @@ interface ProjectTarget {
 }
 
 const DEFAULT_PROJECT_NAME = 'devstack-app'
-const PROJECT_NAME_PATTERN = /^(?:@[a-zA-Z0-9._-]+\/)?[a-zA-Z0-9._-]+$/
-
-function projectNameProblem(projectName: string): string | undefined {
-  return PROJECT_NAME_PATTERN.test(projectName)
-    ? undefined
-    : 'Invalid project name. Use letters, numbers, dots, underscores, dashes, and optional @ scope only.'
-}
-
-function validateProjectName(projectName: string): string {
-  const problem = projectNameProblem(projectName)
-  if (problem !== undefined) {
-    throw new InputError(problem)
-  }
-  return projectName
-}
 
 async function askProjectName(
   prompter: Prompter,
@@ -50,7 +40,7 @@ async function askProjectName(
   initialValue: string
 ): Promise<string> {
   const answer = await prompter.text({ message, initialValue, validate: projectNameProblem })
-  return validateProjectName(answer)
+  return assertValidProjectName(answer)
 }
 
 async function resolveProjectTarget(
@@ -64,7 +54,7 @@ async function resolveProjectTarget(
       projectNameProblem(directoryName) === undefined ? directoryName : DEFAULT_PROJECT_NAME
     const name =
       projectName && projectName !== '.'
-        ? validateProjectName(projectName)
+        ? assertValidProjectName(projectName)
         : options.yes
           ? defaultName
           : await askProjectName(prompter, 'Package name for current directory', defaultName)
@@ -72,11 +62,11 @@ async function resolveProjectTarget(
   }
 
   const name = projectName
-    ? validateProjectName(projectName)
+    ? assertValidProjectName(projectName)
     : options.yes
       ? DEFAULT_PROJECT_NAME
       : await askProjectName(prompter, 'Project name', DEFAULT_PROJECT_NAME)
-  return { projectName: name, projectDir: path.resolve(process.cwd(), name) }
+  return { projectName: name, projectDir: path.resolve(process.cwd(), projectDirectoryName(name)) }
 }
 
 async function selectModules(
@@ -101,6 +91,17 @@ async function selectModules(
   return (await runBasicPrompt(registry, prompter)).selectedModules
 }
 
+/** Prompts write to stdout, which would corrupt the JSON document; require every answer upfront. */
+function assertNonInteractive(projectName: string | undefined, options: CliOptions): void {
+  const needsName = projectName === undefined && !options.yes
+  const needsModules = options.advanced || (options.preset === undefined && !options.yes)
+  if (needsName || needsModules) {
+    throw new InputError(
+      '--print-plan json cannot ask questions. Pass a project name and --preset <name>, or --yes.'
+    )
+  }
+}
+
 function parseOptions(raw: Partial<CliOptions>): CliOptions {
   const parsed = cliOptionSchema.safeParse(raw)
   if (!parsed.success) {
@@ -111,9 +112,16 @@ function parseOptions(raw: Partial<CliOptions>): CliOptions {
 
 export async function runCreateDevstack(input: CreateDevstackInput): Promise<void> {
   const options = parseOptions(input.options)
-  const logger = new ConsoleLogger(options.verbose)
+  // With --print-plan json, stdout must carry only the JSON document.
+  const logger = new ConsoleLogger({
+    verbose: options.verbose,
+    silent: options.printPlan === 'json'
+  })
   const prompter = input.prompter ?? new ClackPrompter()
 
+  if (options.printPlan === 'json') {
+    assertNonInteractive(input.projectName, options)
+  }
   const target = await resolveProjectTarget(input.projectName, options, prompter)
 
   logger.info('Loading modules...')

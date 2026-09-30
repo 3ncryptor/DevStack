@@ -15,14 +15,7 @@ const moduleDefinition: DevstackModule = {
       'prisma:studio': 'prisma studio'
     }
   },
-  postInstall: async (context) => {
-    if (context.options.skipInstall) {
-      context.logger.warn('Skipping prisma generate because --skip-install is enabled.')
-      return
-    }
-
-    await context.runPackageManagerExec('prisma', ['generate'])
-  }
+  commands: [{ phase: 'postInstall', run: ['prisma', 'generate'] }]
 }
 
 export default moduleDefinition
