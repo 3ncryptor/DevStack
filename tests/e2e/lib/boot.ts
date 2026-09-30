@@ -58,8 +58,7 @@ async function pollHealth(
 /**
  * Starts the generated app, checks GET /health and its security headers,
  * then sends SIGTERM to its process group and requires exit code 0 (graceful shutdown).
- * The status observed is the start script's (e.g. `npm run start`), which npm and pnpm
- * derive from the app's own exit.
+ * Callers pass the app's own command (not a package-manager wrapper) so the status is the app's.
  */
 export async function bootAndProbe(
   cwd: string,

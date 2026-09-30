@@ -1,0 +1,41 @@
+import 'reflect-metadata'
+
+import { NestFactory } from '@nestjs/core'
+
+<%~ it.slots['app.imports'] %>
+
+import { AppModule } from './app.module'
+
+const SHUTDOWN_TIMEOUT_MS = 10_000
+
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create(AppModule)
+
+  <%~ it.slots['app.middleware'] %>
+
+  const port = Number(process.env.PORT ?? 3000)
+  await app.listen(port)
+  console.log(`Server running on http://localhost:${port}`)
+
+  // app.close() runs Nest's shutdown lifecycle hooks; exiting 0 marks a clean shutdown
+  // (enableShutdownHooks would re-raise the signal instead). buildPlan B17.2.
+  const shutdown = (signal: NodeJS.Signals): void => {
+    console.log(`${signal} received, shutting down`)
+    const timeout = setTimeout(() => {
+      console.error(`Shutdown did not finish within ${SHUTDOWN_TIMEOUT_MS} ms, exiting`)
+      process.exit(1)
+    }, SHUTDOWN_TIMEOUT_MS)
+    timeout.unref()
+    app.close().then(
+      () => process.exit(0),
+      (error: unknown) => {
+        console.error('Error while shutting down', error)
+        process.exit(1)
+      }
+    )
+  }
+  process.once('SIGTERM', shutdown)
+  process.once('SIGINT', shutdown)
+}
+
+void bootstrap()

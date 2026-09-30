@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import type { DevstackModule } from '../../types/module'
 import type { PlannedFile } from '../../types/plan'
+import { renderTemplate, TEMPLATE_SUFFIX, type TemplateContext } from './templates'
 
 const FILE_MODE = 0o644
 export const EXECUTABLE_MODE = 0o755
@@ -40,9 +41,24 @@ async function readTextTemplate(filePath: string): Promise<string> {
   return bytes.toString('utf8')
 }
 
+/** Copies a template verbatim, or renders it with Eta when it ends in `.eta` (D-10). */
+async function readTemplate(
+  root: string,
+  relativePath: string,
+  context: TemplateContext
+): Promise<Pick<PlannedFile, 'path' | 'content'>> {
+  const source = await readTextTemplate(path.join(root, relativePath))
+  if (!relativePath.endsWith(TEMPLATE_SUFFIX)) {
+    return { path: toProjectRelativePath(relativePath), content: source }
+  }
+  const outputPath = toProjectRelativePath(relativePath.slice(0, -TEMPLATE_SUFFIX.length))
+  return { path: outputPath, content: renderTemplate(source, context, relativePath) }
+}
+
 /** Reads a module's template directory into planned files. */
 export async function moduleTemplateFiles(
-  moduleDefinition: DevstackModule
+  moduleDefinition: DevstackModule,
+  context: TemplateContext
 ): Promise<PlannedFile[]> {
   if (moduleDefinition.filesPath === undefined) {
     return []
@@ -51,8 +67,7 @@ export async function moduleTemplateFiles(
   const relativePaths = await listFiles(root)
   return Promise.all(
     relativePaths.map(async (relativePath) => ({
-      path: toProjectRelativePath(relativePath),
-      content: await readTextTemplate(path.join(root, relativePath)),
+      ...(await readTemplate(root, relativePath, context)),
       mode: FILE_MODE,
       strategy: 'create' as const,
       source: moduleDefinition.name

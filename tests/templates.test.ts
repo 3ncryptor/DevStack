@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest'
+
+import { renderSlots } from '../src/core/planner/slots'
+import { renderTemplate, type TemplateContext } from '../src/core/planner/templates'
+import { ResolutionError } from '../src/errors'
+import type { DevstackModule } from '../src/types/module'
+
+const context: TemplateContext = {
+  projectName: 'demo-app',
+  packageManager: 'pnpm',
+  slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' }
+}
+
+describe('renderTemplate', () => {
+  it('renders context values and raw slot output', () => {
+    const output = renderTemplate(
+      "// <%= it.projectName %>\n<%~ it.slots['app.imports'] %>\n",
+      context,
+      'src/app.ts.eta'
+    )
+
+    expect(output).toBe("// demo-app\nimport cors from 'cors'\n")
+  })
+
+  it('fails on an unknown variable instead of rendering a blank', () => {
+    expect(() => renderTemplate('<%= it.projectNmae %>', context, 'src/app.ts.eta')).toThrow(
+      /src\/app\.ts\.eta.*projectNmae/
+    )
+  })
+
+  it('fails on an unknown slot name', () => {
+    expect(() => renderTemplate("<%~ it.slots['app.nope'] %>", context, 'src/app.ts.eta')).toThrow(
+      /app\.nope/
+    )
+  })
+})
+
+function moduleWith(definition: Partial<DevstackModule> & { name: string }): DevstackModule {
+  return { description: definition.name, ...definition }
+}
+
+describe('renderSlots', () => {
+  const framework = moduleWith({
+    name: 'framework-demo',
+    exposesSlots: ['app.imports', 'app.middleware']
+  })
+
+  it('orders fragments by `order`, then module order, and removes duplicates', () => {
+    const slots = renderSlots([
+      framework,
+      moduleWith({
+        name: 'b',
+        slots: [
+          { slot: 'app.imports', code: "import { b } from './b'" },
+          { slot: 'app.middleware', code: 'app.use(b)', order: 20 }
+        ]
+      }),
+      moduleWith({
+        name: 'a',
+        slots: [
+          { slot: 'app.imports', code: "import { b } from './b'" },
+          { slot: 'app.middleware', code: 'app.use(a)', order: 10 }
+        ]
+      })
+    ])
+
+    expect(slots['app.middleware']).toBe('app.use(a)\napp.use(b)')
+    expect(slots['app.imports']).toBe("import { b } from './b'")
+  })
+
+  it('skips fragments meant for a framework that is not selected', () => {
+    const slots = renderSlots([
+      framework,
+      moduleWith({
+        name: 'x',
+        slots: [{ slot: 'app.middleware', code: 'nestOnly()', for: 'framework-nest' }]
+      })
+    ])
+
+    expect(slots['app.middleware']).toBe('')
+  })
+
+  it('rejects a fragment for a slot no selected module exposes', () => {
+    expect(() =>
+      renderSlots([
+        framework,
+        moduleWith({ name: 'x', slots: [{ slot: 'app.routes', code: 'routes()' }] })
+      ])
+    ).toThrow(ResolutionError)
+  })
+})

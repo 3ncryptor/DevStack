@@ -126,7 +126,8 @@ async function checkCombination(
   const built = steps.find((step) => step.step === 'build')?.ok === true
   if (built) {
     const startedAt = Date.now()
-    const boot = await bootAndProbe(projectDir, pm, ['run', 'start'], BOOT_TIMEOUT_MS)
+    const [command, ...args] = await startCommand(projectDir)
+    const boot = await bootAndProbe(projectDir, command, args, BOOT_TIMEOUT_MS)
     const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
     steps.push(
       toStep('boot + /health', { ok: boot.ok, durationMs: Date.now() - startedAt }, detail)
@@ -140,6 +141,22 @@ async function checkCombination(
     })
   }
   return { id: combination.id, pm, steps }
+}
+
+/**
+ * The project's own `start` command, run directly. Package-manager wrappers (`npm run start`)
+ * re-raise SIGTERM after their child exits, which would hide whether the app itself shut down
+ * cleanly; the harness must observe the app's exit status.
+ */
+async function startCommand(projectDir: string): Promise<string[]> {
+  const manifest = (await readJson(path.join(projectDir, 'package.json'))) as {
+    scripts?: Record<string, string>
+  }
+  const start = manifest.scripts?.start
+  if (start === undefined || !/^[\w./@=:-]+(\s+[\w./@=:-]+)*$/.test(start)) {
+    throw new Error(`start script must be a plain command the harness can run directly: "${start}"`)
+  }
+  return start.split(/\s+/)
 }
 
 /** Files every generated project must contain; dotfiles are the ones npm packing drops. */

@@ -15,6 +15,7 @@ const moduleDefinition: DevstackModule = {
   ],
   // SWC keeps decorator metadata in dev, which Nest's dependency injection needs (D-51)
   devDependencies: ['@swc-node/register', '@swc/core'],
+  exposesSlots: ['app.imports', 'app.middleware'],
   filesPath: moduleFilesPath('framework-nest'),
   packageJson: {
     scripts: {

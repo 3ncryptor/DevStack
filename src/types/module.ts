@@ -8,6 +8,16 @@ export interface ModuleCommand {
   run: readonly [binary: string, ...args: string[]]
 }
 
+/** A code fragment rendered into a framework template's slot (D-07, buildPlan B6). */
+export interface SlotContribution {
+  slot: string
+  code: string
+  /** Lower renders first; default 100. */
+  order?: number
+  /** Only when this module (usually a framework) is selected. */
+  for?: string
+}
+
 export interface DevstackModule {
   name: string
   description: string
@@ -21,6 +31,9 @@ export interface DevstackModule {
   packageJson?: PackageJsonFragment
   /** Commands run after install, as data (buildPlan B4). `run` is a binary and its arguments. */
   commands?: readonly ModuleCommand[]
+  /** Slots this module's templates render, e.g. `app.middleware`. */
+  exposesSlots?: readonly string[]
+  slots?: readonly SlotContribution[]
 }
 
 export const moduleDefinitionSchema = z.object({
@@ -32,6 +45,17 @@ export const moduleDefinitionSchema = z.object({
   requiresAny: z.array(z.string()).optional(),
   conflictsWith: z.array(z.string()).optional(),
   filesPath: z.string().optional(),
+  exposesSlots: z.array(z.string()).optional(),
+  slots: z
+    .array(
+      z.object({
+        slot: z.string().min(1),
+        code: z.string(),
+        order: z.number().optional(),
+        for: z.string().optional()
+      })
+    )
+    .optional(),
   commands: z
     .array(z.object({ phase: z.literal('postInstall'), run: z.array(z.string()).min(1) }))
     .optional(),

@@ -1,0 +1,15 @@
+import express from 'express'
+
+<%~ it.slots['app.imports'] %>
+
+import { healthRouter } from './routes/health'
+
+export const app = express()
+
+// Do not advertise the framework, even when no security middleware is selected.
+app.disable('x-powered-by')
+
+<%~ it.slots['app.middleware'] %>
+
+app.use(express.json())
+app.use('/health', healthRouter)

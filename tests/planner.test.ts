@@ -119,6 +119,55 @@ describe('buildGenerationPlan', () => {
   })
 })
 
+describe('framework slots (D-07)', () => {
+  it('imports and mounts every selected middleware explicitly, in the documented order', async () => {
+    const plan = await buildGenerationPlan(planInput())
+    const app = fileAt(plan, 'src/app.ts')?.content ?? ''
+
+    expect(app).not.toContain('require(')
+    expect(app).not.toContain('.eta')
+    const mounted = [...app.matchAll(/app\.use\((?:'[^']*',\s*)?(\w+)/g)].map((match) => match[1])
+    expect(mounted).toEqual([
+      'requestLoggerMiddleware',
+      'helmetMiddleware',
+      'corsMiddleware',
+      'originCheckMiddleware',
+      'apiRateLimiter',
+      'compressionMiddleware',
+      'express',
+      'healthRouter'
+    ])
+    expect(app).toContain("import { helmetMiddleware } from './middlewares/helmet'")
+  })
+
+  it('only imports middleware that was selected', async () => {
+    const modules = BACKEND_MODULES.filter((id) => id !== 'security-helmet')
+    const plan = await buildGenerationPlan(planInput({ selectedModuleNames: modules }))
+
+    expect(fileAt(plan, 'src/app.ts')?.content).not.toContain('helmet')
+  })
+
+  it('shuts the server down gracefully on SIGTERM and SIGINT', async () => {
+    const plan = await buildGenerationPlan(planInput())
+    const server = fileAt(plan, 'src/server.ts')?.content ?? ''
+
+    expect(server).toContain("process.once('SIGTERM'")
+    expect(server).toContain("process.once('SIGINT'")
+  })
+
+  it('mounts the same middleware in a Nest app', async () => {
+    const plan = await buildGenerationPlan(
+      planInput({ selectedModuleNames: ['framework-nest', 'security-helmet', 'middleware-cors'] })
+    )
+    const main = fileAt(plan, 'src/main.ts')?.content ?? ''
+
+    expect(main).not.toContain('require(')
+    expect(main).toContain('app.use(helmetMiddleware)')
+    expect(main).toContain("process.once('SIGTERM'")
+    expect(main).toContain('app.close()')
+  })
+})
+
 describe('toProjectRelativePath', () => {
   it('restores the dot on templates npm would strip', () => {
     expect(toProjectRelativePath('gitignore')).toBe('.gitignore')

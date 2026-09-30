@@ -105,7 +105,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/app.ts",
-      "sha256": "ce3bcc39b7cf509e",
+      "sha256": "a49500e4e903e8bb",
       "strategy": "create",
     },
     {
@@ -189,7 +189,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/server.ts",
-      "sha256": "4e81cd93acb698c7",
+      "sha256": "4ad5e2e62cf7ffde",
       "strategy": "create",
     },
     {

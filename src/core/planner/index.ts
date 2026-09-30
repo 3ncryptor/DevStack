@@ -7,6 +7,8 @@ import { planCommands, type CommandOptions } from './commands'
 import { EXECUTABLE_MODE, generatedFile, moduleTemplateFiles } from './files'
 import { formatPlannedFiles } from './format'
 import { pnpmWorkspaceYaml } from './pnpm'
+import { renderSlots } from './slots'
+import type { TemplateContext } from './templates'
 
 export interface PlanInput {
   projectName: string
@@ -76,8 +78,13 @@ async function collectFiles(
   if (has(modules, 'quality-husky')) {
     for (const file of huskyFiles(input.projectName, modules, input.packageManager)) add(file)
   }
+  const context: TemplateContext = {
+    projectName: input.projectName,
+    packageManager: input.packageManager,
+    slots: renderSlots(modules)
+  }
   for (const moduleDefinition of modules) {
-    for (const file of await moduleTemplateFiles(moduleDefinition)) add(file)
+    for (const file of await moduleTemplateFiles(moduleDefinition, context)) add(file)
   }
   if (input.packageManager === 'pnpm' && buildApprovals.length > 0) {
     add(

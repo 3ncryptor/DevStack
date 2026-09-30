@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   description: 'Express HTTP server setup',
   requires: ['language-node'],
   dependencies: ['express'],
+  exposesSlots: ['app.imports', 'app.middleware'],
   filesPath: moduleFilesPath('framework-express'),
   packageJson: {
     scripts: {
