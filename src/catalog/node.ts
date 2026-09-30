@@ -3,8 +3,7 @@
  * name only; every version a generated project installs comes from here. Verified against the
  * npm registry on 2026-09-30.
  *
- * Nest stays on 11 and Prisma on 6 while generated projects are CommonJS: Nest 12 is ESM-only and
- * Prisma 7 is ESM-first. Both move with the ESM switch in task 0.3 (D-53).
+ * Generated projects are ESM, which Nest 12 (ESM-only) and Prisma 7 (ESM-first) require (D-53).
  */
 export interface CatalogEntry {
   version: string
@@ -24,17 +23,21 @@ export const NODE_CATALOG = {
   // HTTP frameworks
   express: { version: '^5.2.1' },
   '@types/express': { version: '^5.0.6' },
-  '@nestjs/common': { version: '^11.2.6' },
-  '@nestjs/core': { version: '^11.2.6' },
-  '@nestjs/platform-express': { version: '^11.2.6' },
+  '@nestjs/common': { version: '^12.1.2' },
+  '@nestjs/core': { version: '^12.1.2' },
+  '@nestjs/platform-express': { version: '^12.1.2' },
   'reflect-metadata': { version: '^0.2.2' },
   rxjs: { version: '^7.8.2' },
   '@swc-node/register': { version: '^1.12.1' },
   '@swc/core': { version: '^1.16.12', allowBuilds: ['@swc/core'] },
 
   // data
-  prisma: { version: '^6.19.3', allowBuilds: ['prisma', '@prisma/engines'] },
-  '@prisma/client': { version: '^6.19.3', allowBuilds: ['@prisma/client'] },
+  prisma: { version: '^7.10.0', allowBuilds: ['prisma', '@prisma/engines'] },
+  '@prisma/client': { version: '^7.10.0', allowBuilds: ['@prisma/client'] },
+  '@prisma/adapter-pg': { version: '^7.10.0' },
+  pg: { version: '^8.23.0' },
+  '@types/pg': { version: '^8.23.1' },
+  dotenv: { version: '^18.0.4' },
 
   // middleware and security
   cors: { version: '^2.8.6' },

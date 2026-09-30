@@ -7,6 +7,8 @@ const moduleDefinition: DevstackModule = {
   devDependencies: ['@types/node', 'tsx', 'typescript'],
   filesPath: moduleFilesPath('language-node'),
   packageJson: {
+    // generated projects are ESM (D-53); NodeNext resolution needs .js import extensions
+    type: 'module',
     scripts: {
       build: 'tsc -p tsconfig.json',
       dev: 'tsx watch src/index.ts',

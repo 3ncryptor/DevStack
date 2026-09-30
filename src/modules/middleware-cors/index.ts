@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   requiresAny: ['framework-express', 'framework-nest'],
   dependencies: ['cors'],
   slots: [
-    { slot: 'app.imports', code: "import { corsMiddleware } from './middlewares/cors'" },
+    { slot: 'app.imports', code: "import { corsMiddleware } from './middlewares/cors.js'" },
     { slot: 'app.middleware', code: 'app.use(corsMiddleware)', order: 40 }
   ],
   filesPath: moduleFilesPath('middleware-cors')

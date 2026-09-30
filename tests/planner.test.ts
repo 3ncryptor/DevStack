@@ -137,7 +137,7 @@ describe('framework slots (D-07)', () => {
       'express',
       'healthRouter'
     ])
-    expect(app).toContain("import { helmetMiddleware } from './middlewares/helmet'")
+    expect(app).toContain("import { helmetMiddleware } from './middlewares/helmet.js'")
   })
 
   it('only imports middleware that was selected', async () => {
@@ -166,6 +166,33 @@ describe('framework slots (D-07)', () => {
     expect(main).toContain("process.once('SIGTERM'")
     expect(main).toContain('app.close()')
   })
+})
+
+describe('ESM output (D-53)', () => {
+  it.each([
+    ['backend preset', BACKEND_MODULES],
+    ['nest', ['framework-nest', 'security-helmet', 'rate-limit', 'orm-prisma']]
+  ])(
+    'declares ESM and imports relative files with .js extensions (%s)',
+    async (_label, modules) => {
+      const plan = await buildGenerationPlan(planInput({ selectedModuleNames: modules }))
+      const manifest = JSON.parse(fileAt(plan, 'package.json')?.content ?? '{}') as {
+        type?: string
+      }
+
+      const extensionless = plan.files
+        .filter((file) => file.path.endsWith('.ts'))
+        .flatMap((file) =>
+          [...file.content.matchAll(/from '(\.{1,2}\/[^']*)'/g)]
+            .map((match) => match[1] ?? '')
+            .filter((specifier) => !specifier.endsWith('.js'))
+            .map((specifier) => `${file.path}: ${specifier}`)
+        )
+
+      expect(manifest.type).toBe('module')
+      expect(extensionless).toEqual([])
+    }
+  )
 })
 
 describe('toProjectRelativePath', () => {

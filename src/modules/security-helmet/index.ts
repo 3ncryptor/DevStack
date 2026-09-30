@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   requiresAny: ['framework-express', 'framework-nest'],
   dependencies: ['helmet'],
   slots: [
-    { slot: 'app.imports', code: "import { helmetMiddleware } from './middlewares/helmet'" },
+    { slot: 'app.imports', code: "import { helmetMiddleware } from './middlewares/helmet.js'" },
     { slot: 'app.middleware', code: 'app.use(helmetMiddleware)', order: 30 }
   ],
   filesPath: moduleFilesPath('security-helmet')

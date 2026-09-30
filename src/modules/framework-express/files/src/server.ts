@@ -1,4 +1,4 @@
-import { app } from './app'
+import { app } from './app.js'
 
 const port = Number(process.env.PORT ?? 3000)
 const SHUTDOWN_TIMEOUT_MS = 10_000

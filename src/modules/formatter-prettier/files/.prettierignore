@@ -1,6 +1,7 @@
 node_modules
 dist
 coverage
+src/generated
 # lockfiles are written by the package manager, not by people
 package-lock.json
 pnpm-lock.yaml

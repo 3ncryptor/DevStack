@@ -10,7 +10,7 @@ const moduleDefinition: DevstackModule = {
   slots: [
     {
       slot: 'app.imports',
-      code: "import { originCheckMiddleware } from './middlewares/origin-check'"
+      code: "import { originCheckMiddleware } from './middlewares/origin-check.js'"
     },
     { slot: 'app.middleware', code: 'app.use(originCheckMiddleware)', order: 50 }
   ],

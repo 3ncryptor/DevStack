@@ -39,7 +39,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".gitignore",
-      "sha256": "a63a0ec41781295c",
+      "sha256": "ef4553fdf74885ae",
       "strategy": "create",
     },
     {
@@ -63,7 +63,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".prettierignore",
-      "sha256": "ee5326f85486544d",
+      "sha256": "4b9b1146850f85c1",
       "strategy": "create",
     },
     {
@@ -87,13 +87,19 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "3d45579540c5423b",
+      "sha256": "44677c55b818b717",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "prisma.config.mjs",
+      "sha256": "dd97f334883a822b",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "prisma/schema.prisma",
-      "sha256": "ccb81b7c87766023",
+      "sha256": "172880a592de53dd",
       "strategy": "create",
     },
     {
@@ -105,7 +111,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/app.ts",
-      "sha256": "a49500e4e903e8bb",
+      "sha256": "61b186c4f1f90410",
       "strategy": "create",
     },
     {
@@ -141,7 +147,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/lib/prisma.ts",
-      "sha256": "e5006cc3b774be51",
+      "sha256": "bee0323891a42428",
       "strategy": "create",
     },
     {
@@ -189,13 +195,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/server.ts",
-      "sha256": "4ad5e2e62cf7ffde",
+      "sha256": "013c98164a93f787",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "tsconfig.json",
-      "sha256": "e0db02dbf1e60abf",
+      "sha256": "a8e6f723d9617de5",
       "strategy": "create",
     },
   ],

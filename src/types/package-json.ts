@@ -4,6 +4,7 @@ export interface PackageJson {
   name: string
   version: string
   private: boolean
+  type?: 'module' | 'commonjs'
   description?: string
   scripts?: Record<string, string>
   dependencies?: DependencyMap

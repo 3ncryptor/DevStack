@@ -9,7 +9,7 @@ const moduleDefinition: DevstackModule = {
   slots: [
     {
       slot: 'app.imports',
-      code: "import { compressionMiddleware } from './middlewares/compression'"
+      code: "import { compressionMiddleware } from './middlewares/compression.js'"
     },
     { slot: 'app.middleware', code: 'app.use(compressionMiddleware)', order: 70 }
   ],

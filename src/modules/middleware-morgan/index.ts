@@ -9,7 +9,7 @@ const moduleDefinition: DevstackModule = {
   slots: [
     {
       slot: 'app.imports',
-      code: "import { requestLoggerMiddleware } from './middlewares/request-logger'"
+      code: "import { requestLoggerMiddleware } from './middlewares/request-logger.js'"
     },
     { slot: 'app.middleware', code: 'app.use(requestLoggerMiddleware)', order: 20 }
   ],

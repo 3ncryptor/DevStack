@@ -2,7 +2,7 @@ import express from 'express'
 
 <%~ it.slots['app.imports'] %>
 
-import { healthRouter } from './routes/health'
+import { healthRouter } from './routes/health.js'
 
 export const app = express()
 

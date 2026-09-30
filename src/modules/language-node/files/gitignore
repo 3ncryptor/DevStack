@@ -1,4 +1,6 @@
 node_modules
 dist
+# rebuilt by code generators such as `prisma generate`
+src/generated
 .env
 .DS_Store

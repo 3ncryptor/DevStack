@@ -19,7 +19,7 @@ const moduleDefinition: DevstackModule = {
   filesPath: moduleFilesPath('framework-nest'),
   packageJson: {
     scripts: {
-      dev: 'node --watch --require @swc-node/register src/main.ts',
+      dev: 'node --watch --import @swc-node/register/esm-register src/main.ts',
       start: 'node dist/main.js'
     }
   }

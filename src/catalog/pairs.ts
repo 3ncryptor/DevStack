@@ -9,5 +9,6 @@ export const TYPE_PAIRS: ReadonlyArray<readonly [runtime: CatalogName, types: Ca
   ['express', '@types/express'],
   ['cors', '@types/cors'],
   ['morgan', '@types/morgan'],
-  ['compression', '@types/compression']
+  ['compression', '@types/compression'],
+  ['pg', '@types/pg']
 ]
