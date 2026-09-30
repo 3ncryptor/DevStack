@@ -10,6 +10,10 @@ function parseAllowedOrigins(): string[] {
 
 const allowedOrigins = parseAllowedOrigins()
 
+if (allowedOrigins.length === 0) {
+  console.warn('[origin-check] ALLOWED_ORIGINS is not set: origin checks are disabled.')
+}
+
 export const originCheckMiddleware: RequestHandler = (request, response, next) => {
   if (allowedOrigins.length === 0) {
     next()

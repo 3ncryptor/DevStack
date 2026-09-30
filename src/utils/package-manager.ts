@@ -91,3 +91,58 @@ export function getHookCommand(manager: PackageManager, binary: string): string 
       return `npx --no -- ${binary}`
   }
 }
+
+/** Command lines a Dockerfile or README needs for a package manager (buildPlan B7, task 0.10). */
+export interface PackageManagerCommands {
+  /** Dockerfile line that installs the package manager itself, or '' when the image has it. */
+  setup: string
+  /** Files the install needs, copied before the source for layer caching. */
+  manifests: string
+  installFrozen: string
+  /** Production dependencies only; scripts are skipped (no dev tools such as husky exist). */
+  installProd: string
+  exec: string
+  run: string
+}
+
+export function packageManagerCommands(manager: PackageManager): PackageManagerCommands {
+  switch (manager) {
+    case 'pnpm':
+      return {
+        setup: 'RUN npm install --global pnpm@12',
+        manifests: 'package.json pnpm-lock.yaml pnpm-workspace.yaml',
+        installFrozen: 'pnpm install --frozen-lockfile',
+        installProd: 'pnpm install --frozen-lockfile --prod --ignore-scripts',
+        exec: 'pnpm exec',
+        run: 'pnpm run'
+      }
+    case 'yarn':
+      return {
+        setup: '',
+        manifests: 'package.json yarn.lock',
+        installFrozen: 'yarn install --frozen-lockfile',
+        installProd: 'yarn install --frozen-lockfile --production --ignore-scripts',
+        exec: 'yarn',
+        run: 'yarn run'
+      }
+    case 'bun':
+      return {
+        setup: 'RUN npm install --global bun',
+        manifests: 'package.json bun.lock',
+        installFrozen: 'bun install --frozen-lockfile',
+        installProd: 'bun install --frozen-lockfile --production --ignore-scripts',
+        exec: 'bunx',
+        run: 'bun run'
+      }
+    case 'npm':
+    default:
+      return {
+        setup: '',
+        manifests: 'package.json package-lock.json',
+        installFrozen: 'npm ci',
+        installProd: 'npm ci --omit=dev --ignore-scripts',
+        exec: 'npx --no --',
+        run: 'npm run'
+      }
+  }
+}

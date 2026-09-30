@@ -29,6 +29,18 @@ export interface PlannedCommand {
   skipIfExists?: string
 }
 
+/** An environment variable of the generated project, merged across the modules declaring it. */
+export interface PlannedEnvVar {
+  name: string
+  description: string
+  example?: string
+  required: boolean
+  secret: boolean
+  /** Modules that declare it, in module order. */
+  owners: string[]
+  warnings: string[]
+}
+
 /** Everything generation will write and run, as data (buildPlan B2). Contains no side effects. */
 export interface GenerationPlan {
   projectName: string
@@ -39,4 +51,5 @@ export interface GenerationPlan {
   /** Sorted by path. */
   files: PlannedFile[]
   commands: PlannedCommand[]
+  env: PlannedEnvVar[]
 }

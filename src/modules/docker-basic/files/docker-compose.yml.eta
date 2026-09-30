@@ -1,0 +1,35 @@
+# Local development stack. The database credentials below are for local use only.
+<% const hasDatabase = it.modules.includes('orm-prisma') %>
+services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    env_file:
+      - path: .env
+        required: false
+<% if (hasDatabase) { %>    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: devstack
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d devstack']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
+<% } %>

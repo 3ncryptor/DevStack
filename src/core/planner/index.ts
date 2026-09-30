@@ -1,10 +1,15 @@
 import type { DevstackModule } from '../../types/module'
 import type { PackageJson } from '../../types/package-json'
 import type { GenerationPlan, PlannedFile } from '../../types/plan'
-import { getHookCommand, type PackageManager } from '../../utils/package-manager'
+import {
+  getHookCommand,
+  packageManagerCommands,
+  type PackageManager
+} from '../../utils/package-manager'
 import { composeModules } from '../composer'
 import { MANIFEST_PATH, manifestFor } from '../manifest'
 import { planCommands, type CommandOptions } from './commands'
+import { collectEnv, envExample } from './env'
 import { EXECUTABLE_MODE, generatedFile, moduleTemplateFiles } from './files'
 import { formatPlannedFiles } from './format'
 import { pnpmWorkspaceYaml } from './pnpm'
@@ -88,7 +93,13 @@ async function collectFiles(
   const context: TemplateContext = {
     projectName: input.projectName,
     packageManager: input.packageManager,
+    pm: packageManagerCommands(input.packageManager),
+    modules: modules.map((moduleDefinition) => moduleDefinition.name),
     slots: renderSlots(modules)
+  }
+  const env = collectEnv(modules)
+  if (env.length > 0) {
+    add(generatedFile('.env.example', envExample(env)))
   }
   for (const moduleDefinition of modules) {
     for (const file of await moduleTemplateFiles(moduleDefinition, context)) add(file)
@@ -120,6 +131,7 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
     packageManager: input.packageManager,
     modules: modules.map((moduleDefinition) => moduleDefinition.name),
     files: await formatPlannedFiles(files),
-    commands: planCommands(modules, input.packageManager, input.options)
+    commands: planCommands(modules, input.packageManager, input.options),
+    env: collectEnv(modules)
   }
 }

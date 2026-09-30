@@ -28,7 +28,8 @@ function planFor(projectDir: string, files: PlannedFile[]): GenerationPlan {
     packageManager: 'npm',
     modules: [],
     files,
-    commands: []
+    commands: [],
+    env: []
   }
 }
 

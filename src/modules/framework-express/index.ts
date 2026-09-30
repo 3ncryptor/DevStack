@@ -7,6 +7,14 @@ const moduleDefinition: DevstackModule = {
   requires: ['language-node'],
   dependencies: ['express'],
   exposesSlots: ['app.imports', 'app.middleware'],
+  env: [
+    {
+      name: 'PORT',
+      description: 'Port the HTTP server listens on',
+      example: '3000',
+      required: false
+    }
+  ],
   filesPath: moduleFilesPath('framework-express'),
   packageJson: {
     scripts: {

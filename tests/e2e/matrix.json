@@ -10,7 +10,8 @@
       "orm-prisma",
       "linter-eslint",
       "formatter-prettier",
-      "quality-husky"
+      "quality-husky",
+      "docker-basic"
     ]
   }
 ]

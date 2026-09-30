@@ -11,6 +11,12 @@ function parseAllowedOrigins(): string[] {
 
 const allowedOrigins = parseAllowedOrigins()
 
+if (allowedOrigins.length === 0) {
+  console.warn(
+    '[cors] ALLOWED_ORIGINS is not set: requests from any origin are allowed. Set it before deploying.'
+  )
+}
+
 const corsOptions: CorsOptions =
   allowedOrigins.length === 0
     ? {}

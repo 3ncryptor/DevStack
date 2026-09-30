@@ -1,11 +1,17 @@
 import { Eta } from 'eta'
 
+import type { PackageManagerCommands } from '../../utils/package-manager'
+
 /** Only files ending in this suffix are rendered; the suffix is removed (D-10). */
 export const TEMPLATE_SUFFIX = '.eta'
 
 export interface TemplateContext {
   projectName: string
   packageManager: string
+  /** Command lines for the project package manager (Dockerfile, docs). */
+  pm: PackageManagerCommands
+  /** Selected module ids, e.g. for `it.modules.includes('orm-prisma')`. */
+  modules: readonly string[]
   /** Rendered slot output, keyed by slot name (e.g. `app.middleware`). */
   slots: Record<string, string>
 }

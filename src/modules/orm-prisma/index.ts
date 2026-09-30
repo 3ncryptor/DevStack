@@ -15,6 +15,15 @@ const moduleDefinition: DevstackModule = {
       'prisma:studio': 'prisma studio'
     }
   },
+  env: [
+    {
+      name: 'DATABASE_URL',
+      description: 'PostgreSQL connection string',
+      example: '"postgresql://postgres:postgres@localhost:5432/devstack"',
+      required: true,
+      secret: true
+    }
+  ],
   commands: [{ phase: 'postInstall', run: ['prisma', 'generate'] }]
 }
 

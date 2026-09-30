@@ -3,6 +3,18 @@ import { z } from 'zod'
 import type { CatalogName } from '../catalog/node'
 import type { PackageJsonFragment } from './package-json'
 
+/** An environment variable a module needs (buildPlan B10). */
+export interface EnvDeclaration {
+  name: string
+  description: string
+  example?: string
+  required: boolean
+  /** Never printed with a value; marked in .env.example. */
+  secret?: boolean
+  /** Shown in the summary when the variable is left empty (permissive defaults, D-B10). */
+  warnIfUnset?: string
+}
+
 export interface ModuleCommand {
   phase: 'postInstall'
   run: readonly [binary: string, ...args: string[]]
@@ -33,6 +45,7 @@ export interface DevstackModule {
   commands?: readonly ModuleCommand[]
   /** Slots this module's templates render, e.g. `app.middleware`. */
   exposesSlots?: readonly string[]
+  env?: readonly EnvDeclaration[]
   slots?: readonly SlotContribution[]
 }
 
@@ -46,6 +59,18 @@ export const moduleDefinitionSchema = z.object({
   conflictsWith: z.array(z.string()).optional(),
   filesPath: z.string().optional(),
   exposesSlots: z.array(z.string()).optional(),
+  env: z
+    .array(
+      z.object({
+        name: z.string().regex(/^[A-Z][A-Z0-9_]*$/),
+        description: z.string().min(1),
+        example: z.string().optional(),
+        required: z.boolean(),
+        secret: z.boolean().optional(),
+        warnIfUnset: z.string().optional()
+      })
+    )
+    .optional(),
   slots: z
     .array(
       z.object({

@@ -7,6 +7,7 @@ import type { PackageManager } from '../utils/package-manager'
 import { runPlanCommands } from './apply/commands'
 import { applyPlan, classifyFiles } from './apply/index'
 import { formatPlanText, planToJson } from './plan-output'
+import { buildSummary } from './summary'
 import { buildGenerationPlan } from './planner/index'
 
 export interface GenerateProjectInput {
@@ -63,15 +64,12 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
     logger: input.logger
   })
   input.logger.info(`Wrote ${result.written.length} files.`)
-  if (result.kept.length > 0) {
-    input.logger.warn(`Kept ${result.kept.length} existing file(s): ${result.kept.join(', ')}`)
-  }
-  if (result.backupDir !== undefined) {
-    input.logger.warn(
-      `Overwrote ${result.overwritten.length} file(s); the originals are saved in ${result.backupDir}`
-    )
-  }
 
   await runPlanCommands(plan, input.logger)
-  input.logger.success(`Project created at ${input.projectDir}`)
+  input.logger.success(
+    buildSummary(plan, result, {
+      inPlace: input.options.inPlace,
+      skipInstall: input.options.skipInstall
+    })
+  )
 }

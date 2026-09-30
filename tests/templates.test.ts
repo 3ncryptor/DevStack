@@ -4,10 +4,13 @@ import { renderSlots } from '../src/core/planner/slots'
 import { renderTemplate, type TemplateContext } from '../src/core/planner/templates'
 import { ResolutionError } from '../src/errors'
 import type { DevstackModule } from '../src/types/module'
+import { packageManagerCommands } from '../src/utils/package-manager'
 
 const context: TemplateContext = {
   projectName: 'demo-app',
   packageManager: 'pnpm',
+  pm: packageManagerCommands('pnpm'),
+  modules: [],
   slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' }
 }
 

@@ -39,7 +39,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".env.example",
-      "sha256": "21b92994dab2c25f",
+      "sha256": "3d58170fca877579",
       "strategy": "create",
     },
     {
@@ -165,7 +165,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/middlewares/cors.ts",
-      "sha256": "bea9c7c8cad2bfd8",
+      "sha256": "2dabecc5f794321d",
       "strategy": "create",
     },
     {
@@ -177,7 +177,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/middlewares/origin-check.ts",
-      "sha256": "af8acf81d32bafba",
+      "sha256": "aff5f991bcfab39c",
       "strategy": "create",
     },
     {
