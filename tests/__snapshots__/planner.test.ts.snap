@@ -32,6 +32,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
   "files": [
     {
       "mode": "644",
+      "path": ".devstack/stack.json",
+      "sha256": "9e8fd105192e3ab1",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
       "path": ".env.example",
       "sha256": "21b92994dab2c25f",
       "strategy": "create",

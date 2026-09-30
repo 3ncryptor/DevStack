@@ -2,6 +2,8 @@ import { z } from 'zod'
 
 export const cliOptionSchema = z.strictObject({
   preset: z.string().optional(),
+  /** Path to a stack config (stack.json or a project's .devstack/stack.json). */
+  config: z.string().optional(),
   yes: z.boolean().default(false),
   advanced: z.boolean().default(false),
   inPlace: z.boolean().default(false),

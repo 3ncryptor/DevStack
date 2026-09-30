@@ -3,6 +3,7 @@ import type { PackageJson } from '../../types/package-json'
 import type { GenerationPlan, PlannedFile } from '../../types/plan'
 import { getHookCommand, type PackageManager } from '../../utils/package-manager'
 import { composeModules } from '../composer'
+import { MANIFEST_PATH, manifestFor } from '../manifest'
 import { planCommands, type CommandOptions } from './commands'
 import { EXECUTABLE_MODE, generatedFile, moduleTemplateFiles } from './files'
 import { formatPlannedFiles } from './format'
@@ -75,6 +76,12 @@ async function collectFiles(
   }
 
   add(generatedFile('package.json', `${JSON.stringify(packageJson, null, 2)}\n`))
+  const manifest = manifestFor({
+    projectName: input.projectName,
+    packageManager: input.packageManager,
+    modules: modules.map((moduleDefinition) => moduleDefinition.name)
+  })
+  add(generatedFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`))
   if (has(modules, 'quality-husky')) {
     for (const file of huskyFiles(input.projectName, modules, input.packageManager)) add(file)
   }

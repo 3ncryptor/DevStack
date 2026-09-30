@@ -102,6 +102,17 @@ function toStep(step: string, result: { ok: boolean; durationMs: number }, detai
   return { step, ok: result.ok, durationMs: result.durationMs, detail: result.ok ? '' : detail }
 }
 
+/** A preset, or an inline module list written out as a stack config and passed with --config. */
+async function stackArgs(combination: Combination, projectsDir: string): Promise<string[]> {
+  if (combination.preset !== undefined) {
+    return ['--preset', combination.preset]
+  }
+  const configFile = path.join(projectsDir, `${combination.id}.stack.json`)
+  const config = { version: 1, name: combination.id, modules: combination.modules }
+  await writeFile(configFile, `${JSON.stringify(config, null, 2)}\n`)
+  return ['--config', configFile]
+}
+
 async function checkCombination(
   cliBin: string,
   combination: Combination,
@@ -111,7 +122,7 @@ async function checkCombination(
   const steps: StepResult[] = []
   const generate = await run(
     cliBin,
-    [combination.id, '--preset', combination.preset, '--yes', '--skip-git'],
+    [combination.id, ...(await stackArgs(combination, projectsDir)), '--yes', '--skip-git'],
     { cwd: projectsDir, timeoutMs: INSTALL_TIMEOUT_MS, env: { npm_config_user_agent: `${pm}/e2e` } }
   )
   steps.push(toStep('generate + install', generate, generate.output))

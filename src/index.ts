@@ -11,7 +11,9 @@ import {
   projectNameProblem
 } from './core/project-name'
 import { InputError } from './errors'
+import type { StackConfig } from './core/manifest'
 import { ClackPrompter } from './intake/clack-prompter'
+import { loadStackConfig } from './intake/config'
 import type { Prompter } from './intake/prompter'
 import { runAdvancedPrompt } from './prompts/advanced'
 import { runBasicPrompt } from './prompts/basic'
@@ -72,8 +74,12 @@ async function resolveProjectTarget(
 async function selectModules(
   registry: Map<string, DevstackModule>,
   options: CliOptions,
-  prompter: Prompter
+  prompter: Prompter,
+  config: StackConfig | undefined
 ): Promise<string[]> {
+  if (config !== undefined) {
+    return [...config.modules]
+  }
   if (options.advanced) {
     const presetModules = options.preset ? (getPreset(options.preset)?.modules ?? []) : []
     return runAdvancedPrompt(registry, prompter, presetModules)
@@ -94,12 +100,26 @@ async function selectModules(
 /** Prompts write to stdout, which would corrupt the JSON document; require every answer upfront. */
 function assertNonInteractive(projectName: string | undefined, options: CliOptions): void {
   const needsName = projectName === undefined && !options.yes
-  const needsModules = options.advanced || (options.preset === undefined && !options.yes)
+  const needsModules =
+    options.advanced ||
+    (options.preset === undefined && options.config === undefined && !options.yes)
   if (needsName || needsModules) {
     throw new InputError(
       '--print-plan json cannot ask questions. Pass a project name and --preset <name>, or --yes.'
     )
   }
+}
+
+async function readConfig(options: CliOptions): Promise<StackConfig | undefined> {
+  if (options.config === undefined) {
+    return undefined
+  }
+  if (options.preset !== undefined || options.advanced) {
+    throw new InputError(
+      '--config cannot be combined with --preset or --advanced: the config already lists the modules.'
+    )
+  }
+  return loadStackConfig(path.resolve(process.cwd(), options.config))
 }
 
 function parseOptions(raw: Partial<CliOptions>): CliOptions {
@@ -119,21 +139,24 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
   })
   const prompter = input.prompter ?? new ClackPrompter()
 
+  const config = await readConfig(options)
+  // a name on the command line wins over the config's (flags > config file)
+  const projectName = input.projectName ?? config?.name
   if (options.printPlan === 'json') {
-    assertNonInteractive(input.projectName, options)
+    assertNonInteractive(projectName, options)
   }
-  const target = await resolveProjectTarget(input.projectName, options, prompter)
+  const target = await resolveProjectTarget(projectName, options, prompter)
 
   logger.info('Loading modules...')
   const registry = loadModules()
 
-  const selectedModules = await selectModules(registry, options, prompter)
+  const selectedModules = await selectModules(registry, options, prompter, config)
   if (selectedModules.length === 0) {
     throw new InputError('No modules selected. Aborting.')
   }
 
-  const packageManager = await detectPackageManager(process.cwd())
-  logger.info(`Detected package manager: ${packageManager}`)
+  const packageManager = config?.packageManager ?? (await detectPackageManager(process.cwd()))
+  logger.info(`Package manager: ${packageManager}${config?.packageManager ? ' (from config)' : ''}`)
 
   await generateProject({
     projectName: target.projectName,

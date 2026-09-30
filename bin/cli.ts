@@ -7,6 +7,7 @@ import type { CliOptions } from '../src/types/cli'
 
 interface InitFlags {
   preset?: string
+  config?: string
   yes: boolean
   advanced: boolean
   inPlace: boolean
@@ -32,6 +33,7 @@ program
   .description('Create a new project')
   .argument('[project-name]', 'Name of the project to create')
   .option('--preset <name>', 'Use a predefined preset (example: backend)')
+  .option('--config <file>', "Generate from a stack config, e.g. a project's .devstack/stack.json")
   .option('--yes', 'Skip interactive prompts and use defaults', false)
   .option('--advanced', 'Enable advanced module selection mode', false)
   .option('--in-place', 'Generate in current directory instead of creating a new folder', false)

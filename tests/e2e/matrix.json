@@ -1,1 +1,16 @@
-[{ "id": "backend-preset", "preset": "backend" }]
+[
+  { "id": "backend-preset", "preset": "backend" },
+  {
+    "id": "nest-prisma",
+    "modules": [
+      "framework-nest",
+      "security-helmet",
+      "middleware-cors",
+      "rate-limit",
+      "orm-prisma",
+      "linter-eslint",
+      "formatter-prettier",
+      "quality-husky"
+    ]
+  }
+]
