@@ -48,19 +48,20 @@ create-devstack-app my-app --dry-run              # show the plan, write nothing
 create-devstack-app my-app --preset backend --print-plan json
 ```
 
-| Flag                        | Effect                                                                      |
-| --------------------------- | --------------------------------------------------------------------------- |
-| `--preset <name>`           | Use a built-in preset (`backend`)                                           |
-| `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json` |
-| `--yes`                     | Accept defaults, never ask. Never overwrites existing files                 |
-| `--force`                   | Overwrite existing files. Originals are backed up first                     |
-| `--advanced`                | Pick modules one by one                                                     |
-| `--in-place`                | Generate into the current directory                                         |
-| `--dry-run`                 | Print the plan (files and commands) and stop                                |
-| `--print-plan [text\|json]` | Print the plan in a format; `json` never prompts                            |
-| `--skip-install`            | Do not install dependencies                                                 |
-| `--skip-git`                | Do not initialise git or install hooks                                      |
-| `--verbose`                 | Debug output and full error details                                         |
+| Flag                        | Effect                                                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `--preset <name>`           | Use a built-in preset (`backend`)                                                                              |
+| `--pm <name>`               | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm) |
+| `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                    |
+| `--yes`                     | Accept defaults, never ask. Never overwrites existing files                                                    |
+| `--force`                   | Overwrite existing files. Originals are backed up first                                                        |
+| `--advanced`                | Pick modules one by one                                                                                        |
+| `--in-place`                | Generate into the current directory                                                                            |
+| `--dry-run`                 | Print the plan (files and commands) and stop                                                                   |
+| `--print-plan [text\|json]` | Print the plan in a format; `json` never prompts                                                               |
+| `--skip-install`            | Do not install dependencies                                                                                    |
+| `--skip-git`                | Do not initialise git or install hooks                                                                         |
+| `--verbose`                 | Debug output and full error details                                                                            |
 
 Exit codes: `0` success, `1` generation failed after writing (the message lists what was written),
 `2` invalid input or stack (nothing written), `3` cancelled.
@@ -72,9 +73,17 @@ Exit codes: `0` success, `1` generation failed after writing (the message lists 
   "version": 1,
   "name": "acme-api",
   "packageManager": "pnpm",
-  "modules": ["framework-express", "orm-prisma", "security-helmet", "middleware-cors"]
+  "modules": [
+    "framework-express",
+    "orm-prisma",
+    "security-helmet",
+    { "id": "security-rate-limit", "options": { "limit": 500 } }
+  ]
 }
 ```
+
+A module entry can be an id or `{ "id", "options" }`; options are validated against the
+module's schema, and defaults fill in the rest (rate limiting: `windowMs`, `limit`).
 
 Every generated project records its own config in `.devstack/stack.json`; passing it to
 `--config` regenerates the same files.

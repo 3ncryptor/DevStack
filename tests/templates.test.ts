@@ -4,13 +4,16 @@ import { renderSlots } from '../src/core/planner/slots'
 import { renderTemplate, type TemplateContext } from '../src/core/planner/templates'
 import { ResolutionError } from '../src/errors'
 import { testModule } from './helpers/modules'
-import { packageManagerCommands } from '../src/utils/package-manager'
+import { NODE_LANGUAGE } from '../src/adapters/language/node'
+import { packageManagerAdapter } from '../src/adapters/package-manager/index'
 
 const context: TemplateContext = {
   projectName: 'demo-app',
   packageManager: 'pnpm',
-  pm: packageManagerCommands('pnpm'),
+  pm: packageManagerAdapter('pnpm').docker,
+  language: NODE_LANGUAGE,
   modules: [],
+  options: {},
   slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' }
 }
 

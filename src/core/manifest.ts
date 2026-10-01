@@ -3,6 +3,8 @@ import path from 'node:path'
 
 import { z } from 'zod'
 
+import { PACKAGE_MANAGERS } from '../adapters/package-manager/index'
+
 import { InputError } from '../errors'
 import { PACKAGE_ROOT } from '../paths'
 import { projectNameProblem } from './project-name'
@@ -26,8 +28,15 @@ export const stackConfigSchema = z.strictObject({
     const problem = projectNameProblem(name)
     if (problem !== undefined) context.addIssue({ code: 'custom', message: problem })
   }),
-  packageManager: z.enum(['npm', 'pnpm', 'yarn', 'bun']).optional(),
-  modules: z.array(z.string().min(1)).min(1, 'List at least one module.'),
+  packageManager: z.enum(PACKAGE_MANAGERS).optional(),
+  modules: z
+    .array(
+      z.union([
+        z.string().min(1),
+        z.strictObject({ id: z.string().min(1), options: z.record(z.string(), z.unknown()) })
+      ])
+    )
+    .min(1, 'List at least one module.'),
   generatedBy: z.strictObject({ name: z.string(), version: z.string() }).optional()
 })
 
@@ -46,6 +55,8 @@ export interface ManifestInput {
   packageManager: NonNullable<StackConfig['packageManager']>
   /** Resolved module ids in dependency order. */
   modules: readonly string[]
+  /** Resolved options per module id; recorded so a replay renders the same files. */
+  options?: Readonly<Record<string, Record<string, unknown>>>
 }
 
 /** The manifest contents; deterministic (no timestamps), so the same stack gives the same file. */
@@ -54,7 +65,28 @@ export function manifestFor(input: ManifestInput): StackConfig {
     version: STACK_CONFIG_VERSION,
     name: input.projectName,
     packageManager: input.packageManager,
-    modules: [...input.modules],
+    modules: input.modules.map((id) => {
+      const options = input.options?.[id]
+      return options === undefined ? id : { id, options }
+    }),
     generatedBy: { name: CLI_PACKAGE.name, version: CLI_PACKAGE.version }
   }
+}
+
+/** Separates a config's module list into ids and per-module options. */
+export function splitModuleEntries(entries: StackConfig['modules']): {
+  ids: string[]
+  options: Record<string, Record<string, unknown>>
+} {
+  const ids: string[] = []
+  const options: Record<string, Record<string, unknown>> = {}
+  for (const entry of entries) {
+    if (typeof entry === 'string') {
+      ids.push(entry)
+      continue
+    }
+    ids.push(entry.id)
+    options[entry.id] = entry.options
+  }
+  return { ids, options }
 }

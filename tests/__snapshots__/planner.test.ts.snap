@@ -33,7 +33,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "d2fc5be2af6a66dc",
+      "sha256": "8f8bdb819173ff81",
       "strategy": "create",
     },
     {
@@ -183,7 +183,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/middlewares/rate-limit.ts",
-      "sha256": "05affc5a01faecec",
+      "sha256": "9c842d56504824d4",
       "strategy": "create",
     },
     {

@@ -3,7 +3,12 @@ import path from 'node:path'
 
 import { afterAll, describe, expect, it } from 'vitest'
 
-import { CLI_PACKAGE, MANIFEST_PATH, parseStackConfig } from '../src/core/manifest'
+import {
+  CLI_PACKAGE,
+  MANIFEST_PATH,
+  parseStackConfig,
+  splitModuleEntries
+} from '../src/core/manifest'
 import { loadModules } from '../src/core/module-loader'
 import { buildGenerationPlan } from '../src/core/planner/index'
 import { getPreset } from '../src/core/presets'
@@ -81,7 +86,9 @@ describe('.devstack/stack.json manifest', () => {
       version: 1,
       name: 'replay-app',
       packageManager: 'pnpm',
-      modules: plan.modules,
+      modules: plan.modules.map((id) =>
+        id === 'security-rate-limit' ? { id, options: { windowMs: 900000, limit: 100 } } : id
+      ),
       generatedBy: { name: CLI_PACKAGE.name, version: CLI_PACKAGE.version }
     })
   })
@@ -90,9 +97,11 @@ describe('.devstack/stack.json manifest', () => {
     const original = await backendPlan()
     const config = parseStackConfig(manifestOf(original), MANIFEST_PATH)
 
+    const { ids, options } = splitModuleEntries(config.modules)
     const replayed = await backendPlan({
       projectName: config.name,
-      selectedModuleNames: config.modules,
+      selectedModuleNames: ids,
+      moduleOptions: options,
       packageManager: config.packageManager ?? 'npm'
     })
 

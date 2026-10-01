@@ -11,7 +11,6 @@ import {
   projectNameProblem
 } from './core/project-name'
 import { InputError } from './errors'
-import type { StackConfig } from './core/manifest'
 import { ClackPrompter } from './intake/clack-prompter'
 import { loadStackConfig } from './intake/config'
 import type { Prompter } from './intake/prompter'
@@ -20,7 +19,8 @@ import { runBasicPrompt } from './prompts/basic'
 import { cliOptionSchema, type CliOptions } from './types/cli'
 import type { DevstackModule } from './types/module'
 import { ConsoleLogger } from './utils/logger'
-import { detectPackageManager } from './utils/package-manager'
+import { choosePackageManager, lockfilesIn } from './adapters/package-manager/index'
+import { splitModuleEntries, type StackConfig } from './core/manifest'
 
 export interface CreateDevstackInput {
   projectName?: string
@@ -78,7 +78,7 @@ async function selectModules(
   config: StackConfig | undefined
 ): Promise<string[]> {
   if (config !== undefined) {
-    return [...config.modules]
+    return splitModuleEntries(config.modules).ids
   }
   if (options.advanced) {
     const presetModules = options.preset ? (getPreset(options.preset)?.modules ?? []) : []
@@ -155,13 +155,20 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     throw new InputError('No modules selected. Aborting.')
   }
 
-  const packageManager = config?.packageManager ?? (await detectPackageManager(process.cwd()))
-  logger.info(`Package manager: ${packageManager}${config?.packageManager ? ' (from config)' : ''}`)
+  const choice = choosePackageManager({
+    flag: options.pm,
+    config: config?.packageManager,
+    userAgent: process.env.npm_config_user_agent ?? '',
+    lockfiles: await lockfilesIn(process.cwd())
+  })
+  const packageManager = choice.id
+  logger.info(`Package manager: ${packageManager} (${choice.source})`)
 
   await generateProject({
     projectName: target.projectName,
     projectDir: target.projectDir,
     selectedModuleNames: selectedModules,
+    moduleOptions: config === undefined ? {} : splitModuleEntries(config.modules).options,
     registry,
     packageManager,
     options,

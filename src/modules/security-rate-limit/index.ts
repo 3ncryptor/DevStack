@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
@@ -15,6 +17,16 @@ const moduleDefinition: DevstackModule = {
     { slot: 'app.imports', code: "import { apiRateLimiter } from './middlewares/rate-limit.js'" },
     { slot: 'app.middleware', code: 'app.use(apiRateLimiter)', order: 60 }
   ],
+  options: z.strictObject({
+    /** Length of the rate-limit window in milliseconds. */
+    windowMs: z
+      .number()
+      .int()
+      .positive()
+      .default(15 * 60 * 1000),
+    /** Requests allowed per client in each window. */
+    limit: z.number().int().positive().default(100)
+  }),
   filesPath: moduleFilesPath('security-rate-limit')
 }
 

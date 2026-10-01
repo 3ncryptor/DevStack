@@ -1,6 +1,6 @@
 import type { DevstackModule } from '../../types/module'
 import type { PlannedCommand } from '../../types/plan'
-import { getExecArgs, getInstallArgs, type PackageManager } from '../../utils/package-manager'
+import { packageManagerAdapter, type PackageManagerId } from '../../adapters/package-manager/index'
 
 export interface CommandOptions {
   skipInstall: boolean
@@ -10,9 +10,10 @@ export interface CommandOptions {
 /** Git, install, hook and module commands, in the order they run. */
 export function planCommands(
   modules: readonly DevstackModule[],
-  packageManager: PackageManager,
+  packageManager: PackageManagerId,
   options: CommandOptions
 ): PlannedCommand[] {
+  const pm = packageManagerAdapter(packageManager)
   const commands: PlannedCommand[] = []
   const hasHusky = modules.some((moduleDefinition) => moduleDefinition.id === 'quality-husky')
 
@@ -32,14 +33,14 @@ export function planCommands(
   commands.push({
     phase: 'install',
     command: packageManager,
-    args: getInstallArgs(packageManager),
+    args: pm.install(),
     description: `Install dependencies with ${packageManager}`
   })
   if (hasHusky && !options.skipGit) {
     commands.push({
       phase: 'hooks',
       command: packageManager,
-      args: getExecArgs(packageManager, 'husky'),
+      args: pm.exec('husky'),
       description: 'Install git hooks'
     })
   }
@@ -49,7 +50,7 @@ export function planCommands(
       commands.push({
         phase: moduleCommand.phase,
         command: packageManager,
-        args: getExecArgs(packageManager, binary, args),
+        args: pm.exec(binary, args),
         description: `${moduleDefinition.id}: ${moduleCommand.run.join(' ')}`
       })
     }

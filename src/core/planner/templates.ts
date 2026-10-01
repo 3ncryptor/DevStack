@@ -1,6 +1,7 @@
 import { Eta } from 'eta'
 
-import type { PackageManagerCommands } from '../../utils/package-manager'
+import type { LanguageAdapter } from '../../adapters/language/node'
+import type { DockerCommands } from '../../adapters/package-manager/index'
 
 /** Only files ending in this suffix are rendered; the suffix is removed (D-10). */
 export const TEMPLATE_SUFFIX = '.eta'
@@ -9,11 +10,15 @@ export interface TemplateContext {
   projectName: string
   packageManager: string
   /** Command lines for the project package manager (Dockerfile, docs). */
-  pm: PackageManagerCommands
+  pm: DockerCommands
+  /** Language adapter values, e.g. `it.language.dockerBaseImage`. */
+  language: LanguageAdapter
   /** Selected module ids, e.g. for `it.modules.includes('orm-prisma')`. */
   modules: readonly string[]
   /** Rendered slot output, keyed by slot name (e.g. `app.middleware`). */
   slots: Record<string, string>
+  /** Resolved options of the module whose template is rendering (task 1.6). */
+  options: Record<string, unknown>
 }
 
 // Templates render developer-controlled data into source code, so no HTML escaping; exact
@@ -38,7 +43,11 @@ export function renderTemplate(
   templatePath: string
 ): string {
   const data = strict(
-    { ...context, slots: strict(context.slots, 'slot', templatePath) },
+    {
+      ...context,
+      slots: strict(context.slots, 'slot', templatePath),
+      options: strict(context.options, 'option', templatePath)
+    },
     'variable',
     templatePath
   )

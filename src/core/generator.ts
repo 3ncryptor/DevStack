@@ -3,7 +3,7 @@ import type { GeneratorOptions } from '../types/context'
 import type { DevstackModule } from '../types/module'
 import type { GenerationPlan } from '../types/plan'
 import type { Logger } from '../utils/logger'
-import type { PackageManager } from '../utils/package-manager'
+import type { PackageManagerId as PackageManager } from '../adapters/package-manager/index'
 import { runPlanCommands } from './apply/commands'
 import { applyPlan, classifyFiles } from './apply/index'
 import { formatPlanText, planToJson } from './plan-output'
@@ -14,6 +14,7 @@ export interface GenerateProjectInput {
   projectName: string
   projectDir: string
   selectedModuleNames: string[]
+  moduleOptions?: Readonly<Record<string, unknown>>
   registry: Map<string, DevstackModule>
   packageManager: PackageManager
   options: GeneratorOptions
@@ -45,6 +46,7 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
     projectName: input.projectName,
     projectDir: input.projectDir,
     selectedModuleNames: input.selectedModuleNames,
+    moduleOptions: input.moduleOptions,
     registry: input.registry,
     packageManager: input.packageManager,
     options: { skipInstall: input.options.skipInstall, skipGit: input.options.skipGit }

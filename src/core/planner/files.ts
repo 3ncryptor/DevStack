@@ -58,8 +58,10 @@ async function readTemplate(
 /** Reads a module's template directory into planned files. */
 export async function moduleTemplateFiles(
   moduleDefinition: DevstackModule,
-  context: TemplateContext
+  sharedContext: Omit<TemplateContext, 'options'>,
+  options: Record<string, unknown> = {}
 ): Promise<PlannedFile[]> {
+  const context: TemplateContext = { ...sharedContext, options }
   if (moduleDefinition.filesPath === undefined) {
     return []
   }

@@ -1,3 +1,4 @@
+import { packageManagerAdapter } from '../adapters/package-manager/index'
 import type { GenerationPlan } from '../types/plan'
 import type { ApplyResult } from './apply/index'
 import { projectDirectoryName } from './project-name'
@@ -8,7 +9,8 @@ export interface SummaryOptions {
 }
 
 function nextSteps(plan: GenerationPlan, options: SummaryOptions): string[] {
-  const run = (script: string): string => `${plan.packageManager} run ${script}`
+  const pm = packageManagerAdapter(plan.packageManager)
+  const run = (script: string): string => [plan.packageManager, ...pm.run(script)].join(' ')
   const steps: string[] = []
   if (!options.inPlace) steps.push(`cd ${projectDirectoryName(plan.projectName)}`)
   if (options.skipInstall) steps.push(`${plan.packageManager} install`)

@@ -1,9 +1,13 @@
 import { z } from 'zod'
 
+import { PACKAGE_MANAGERS } from '../adapters/package-manager/index'
+
 export const cliOptionSchema = z.strictObject({
   preset: z.string().optional(),
   /** Path to a stack config (stack.json or a project's .devstack/stack.json). */
   config: z.string().optional(),
+  /** Package manager for the generated project; beats config and detection. */
+  pm: z.enum(PACKAGE_MANAGERS).optional(),
   yes: z.boolean().default(false),
   advanced: z.boolean().default(false),
   inPlace: z.boolean().default(false),

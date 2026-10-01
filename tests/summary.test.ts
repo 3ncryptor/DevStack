@@ -4,7 +4,7 @@ import { loadModules } from '../src/core/module-loader'
 import { buildGenerationPlan } from '../src/core/planner/index'
 import { getPreset } from '../src/core/presets'
 import { buildSummary } from '../src/core/summary'
-import type { PackageManager } from '../src/utils/package-manager'
+import type { PackageManagerId as PackageManager } from '../src/adapters/package-manager/index'
 
 const BACKEND_MODULES = [...(getPreset('backend')?.modules ?? [])]
 

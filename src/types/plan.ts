@@ -1,4 +1,4 @@
-import type { PackageManager } from '../utils/package-manager'
+import type { PackageManagerId as PackageManager } from '../adapters/package-manager/index'
 
 /**
  * How a planned file treats an existing file at the same path:

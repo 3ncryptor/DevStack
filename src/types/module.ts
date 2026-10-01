@@ -85,6 +85,8 @@ export interface DevstackModule {
   exposesSlots?: readonly string[]
   env?: readonly EnvDeclaration[]
   slots?: readonly SlotContribution[]
+  /** Zod schema with defaults for this module's options; templates read them as `it.options`. */
+  options?: z.ZodType<Record<string, unknown>>
 }
 
 const MODULE_ID = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -103,6 +105,7 @@ export const moduleDefinitionSchema = z.object({
   conflictsWith: z.array(z.string()).optional(),
   filesPath: z.string().optional(),
   exposesSlots: z.array(z.string()).optional(),
+  options: z.custom<z.ZodType>((value) => value instanceof z.ZodType).optional(),
   env: z
     .array(
       z.object({
