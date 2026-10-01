@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   category: 'security',
   language: 'node',
   description: 'Strict origin allowlist checks for Express or NestJS requests',
-  requiresAny: ['framework-express', 'framework-nest'],
+  requiresAny: ['http-framework'],
   // the middleware imports express types, which Nest does not bring in on its own
   devDependencies: ['@types/express'],
   env: [

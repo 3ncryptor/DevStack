@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   category: 'security',
   language: 'node',
   description: 'API rate limiting middleware for Express or NestJS',
-  requiresAny: ['framework-express', 'framework-nest'],
+  requiresAny: ['http-framework'],
   dependencies: ['express-rate-limit'],
   // its types reference express types, which Nest does not bring in on its own
   devDependencies: ['@types/express'],

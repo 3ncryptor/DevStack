@@ -29,8 +29,11 @@ describe('module contract v2', () => {
     }
   )
 
-  it('only references modules that exist', () => {
-    const ids = new Set(BUILTIN_MODULES.map((moduleDefinition) => moduleDefinition.id))
+  it('only references modules or capability tags that exist', () => {
+    const ids = new Set([
+      ...BUILTIN_MODULES.map((moduleDefinition) => moduleDefinition.id),
+      ...BUILTIN_MODULES.flatMap((moduleDefinition) => moduleDefinition.provides ?? [])
+    ])
     const dangling = BUILTIN_MODULES.flatMap((moduleDefinition) =>
       [
         ...(moduleDefinition.requires ?? []),

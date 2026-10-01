@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   provides: ['git-hooks'],
   description: 'Husky + lint-staged + commitlint setup',
-  requiresAny: ['quality-eslint', 'quality-prettier'],
+  requiresAny: ['linter', 'formatter'],
   devDependencies: ['@commitlint/cli', '@commitlint/config-conventional', 'husky', 'lint-staged'],
   packageJson: {
     scripts: {

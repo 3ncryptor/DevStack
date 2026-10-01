@@ -103,7 +103,7 @@ describe('composer', () => {
     ])
 
     expect(() => composeModules(['rogue'], registry, 'rogue-app')).toThrow(
-      '"left-pad-9000" (required by rogue) is not in the version catalog'
+      'Module "rogue" depends on "left-pad-9000", which is not in the version catalog'
     )
   })
 

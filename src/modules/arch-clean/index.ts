@@ -8,7 +8,6 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   description: 'Clean architecture source folder structure',
   requires: ['language-node'],
-  conflictsWith: ['arch-mvc'],
   filesPath: moduleFilesPath('arch-clean')
 }
 

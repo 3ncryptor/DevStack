@@ -9,7 +9,6 @@ const moduleDefinition: DevstackModule = {
   provides: ['http-framework'],
   description: 'NestJS application starter',
   requires: ['language-node'],
-  conflictsWith: ['framework-express'],
   dependencies: [
     '@nestjs/common',
     '@nestjs/core',

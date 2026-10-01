@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   category: 'middleware',
   language: 'node',
   description: 'Response compression middleware',
-  requiresAny: ['framework-express', 'framework-nest'],
+  requiresAny: ['http-framework'],
   dependencies: ['compression'],
   slots: [
     {

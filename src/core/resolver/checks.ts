@@ -1,0 +1,151 @@
+import { isCatalogName } from '../../catalog/node'
+import type { Diagnostic } from '../../types/diagnostics'
+import type { DevstackModule, ModuleCategory } from '../../types/module'
+
+/** Categories that allow one module per project (buildPlan B4); more than one is an error. */
+export const SINGLE_SELECT_CATEGORIES: ReadonlySet<ModuleCategory> = new Set([
+  'language',
+  'package-manager',
+  'layout',
+  'framework',
+  'api-style',
+  'orm',
+  'auth',
+  'architecture',
+  'env',
+  'styling',
+  'template'
+])
+
+export interface CheckContext {
+  selected: ReadonlyMap<string, DevstackModule>
+  registry: ReadonlyMap<string, DevstackModule>
+  /** Ids and capability tags of the selected modules. */
+  present: ReadonlySet<string>
+}
+
+const providersOf = (
+  names: readonly string[],
+  registry: ReadonlyMap<string, DevstackModule>
+): string[] =>
+  [...registry.values()]
+    .filter((candidate) =>
+      names.some((name) => candidate.id === name || (candidate.provides ?? []).includes(name))
+    )
+    .map((candidate) => candidate.id)
+    .sort()
+
+export function checkRequirements(context: CheckContext): Diagnostic[] {
+  const diagnostics: Diagnostic[] = []
+  for (const moduleDefinition of context.selected.values()) {
+    for (const requirement of moduleDefinition.requires ?? []) {
+      if (context.present.has(requirement) || context.registry.has(requirement)) continue
+      diagnostics.push({
+        severity: 'error',
+        code: 'missing-requirement',
+        moduleId: moduleDefinition.id,
+        message: `Module "${moduleDefinition.id}" requires "${requirement}".`,
+        fix: `Add one of: ${providersOf([requirement], context.registry).join(', ')}.`
+      })
+    }
+    const anyOf = moduleDefinition.requiresAny ?? []
+    if (anyOf.length > 0 && !anyOf.some((name) => context.present.has(name))) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'unmet-requirement',
+        moduleId: moduleDefinition.id,
+        message: `Module "${moduleDefinition.id}" needs one of: ${anyOf.join(', ')}.`,
+        fix: `Add one of: ${providersOf(anyOf, context.registry).join(', ')}.`
+      })
+    }
+  }
+  return diagnostics
+}
+
+export function checkConflicts(context: CheckContext): Diagnostic[] {
+  const reported = new Set<string>()
+  const diagnostics: Diagnostic[] = []
+  for (const moduleDefinition of context.selected.values()) {
+    for (const conflict of moduleDefinition.conflictsWith ?? []) {
+      const others = [...context.selected.values()].filter(
+        (other) =>
+          other.id !== moduleDefinition.id &&
+          (other.id === conflict || (other.provides ?? []).includes(conflict))
+      )
+      for (const other of others) {
+        const pair = [moduleDefinition.id, other.id].sort().join('|')
+        if (reported.has(pair)) continue
+        reported.add(pair)
+        diagnostics.push({
+          severity: 'error',
+          code: 'conflict',
+          moduleId: moduleDefinition.id,
+          message: `Module "${moduleDefinition.id}" conflicts with "${other.id}".`,
+          fix: `Remove "${moduleDefinition.id}" or "${other.id}".`
+        })
+      }
+    }
+  }
+  return diagnostics
+}
+
+export function checkSingleSelect(context: CheckContext): Diagnostic[] {
+  const byCategory = new Map<ModuleCategory, string[]>()
+  for (const moduleDefinition of context.selected.values()) {
+    if (!SINGLE_SELECT_CATEGORIES.has(moduleDefinition.category)) continue
+    byCategory.set(moduleDefinition.category, [
+      ...(byCategory.get(moduleDefinition.category) ?? []),
+      moduleDefinition.id
+    ])
+  }
+  return [...byCategory.entries()]
+    .filter(([, chosen]) => chosen.length > 1)
+    .map(([category, chosen]) => ({
+      severity: 'error' as const,
+      code: 'single-select' as const,
+      message: `Only one ${category} module can be selected, but ${chosen.length} are: ${chosen.sort().join(', ')}.`,
+      fix: `Keep one of: ${chosen.join(', ')}.`
+    }))
+}
+
+export function checkSlots(context: CheckContext): Diagnostic[] {
+  const exposed = new Set(
+    [...context.selected.values()].flatMap(
+      (moduleDefinition) => moduleDefinition.exposesSlots ?? []
+    )
+  )
+  return [...context.selected.values()].flatMap((moduleDefinition) =>
+    (moduleDefinition.slots ?? [])
+      .filter(
+        (fragment) =>
+          (fragment.for === undefined || context.selected.has(fragment.for)) &&
+          !exposed.has(fragment.slot)
+      )
+      .map((fragment) => ({
+        severity: 'error' as const,
+        code: 'unknown-slot' as const,
+        moduleId: moduleDefinition.id,
+        message: `Module "${moduleDefinition.id}" adds code to slot "${fragment.slot}", but no selected module exposes it.`,
+        fix: 'Select a framework that exposes this slot, or remove the module.'
+      }))
+  )
+}
+
+export function checkCatalog(context: CheckContext): Diagnostic[] {
+  return [...context.selected.values()].flatMap((moduleDefinition) =>
+    (
+      [
+        ...(moduleDefinition.dependencies ?? []),
+        ...(moduleDefinition.devDependencies ?? [])
+      ] as string[]
+    )
+      .filter((name) => !isCatalogName(name))
+      .map((name) => ({
+        severity: 'error' as const,
+        code: 'unknown-package' as const,
+        moduleId: moduleDefinition.id,
+        message: `Module "${moduleDefinition.id}" depends on "${name}", which is not in the version catalog.`,
+        fix: 'Add the package to src/catalog/node.ts.'
+      }))
+  )
+}

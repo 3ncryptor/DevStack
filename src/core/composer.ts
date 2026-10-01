@@ -3,58 +3,16 @@ import deepmerge from 'deepmerge'
 import { buildApprovalsFor, isCatalogName, NODE_CATALOG } from '../catalog/node'
 import { TYPE_PAIRS } from '../catalog/pairs'
 import { ResolutionError } from '../errors'
-import { canonicalModuleId } from '../modules/aliases'
 import { CLI_PACKAGE } from './manifest'
 import type { DevstackModule } from '../types/module'
 import type { DependencyMap, PackageJson } from '../types/package-json'
-import { validateModuleSelection } from './validator'
+import { formatDiagnostics, resolveStack } from './resolver/index'
 
 export interface CompositionResult {
   orderedModules: DevstackModule[]
   packageJson: PackageJson
   /** Packages whose install scripts the package manager must be allowed to run (pnpm). */
   buildApprovals: string[]
-}
-
-function resolveModulesInDependencyOrder(
-  selectedModuleNames: string[],
-  registry: Map<string, DevstackModule>
-): DevstackModule[] {
-  const visited = new Set<string>()
-  const visiting = new Set<string>()
-  const ordered: DevstackModule[] = []
-
-  const visit = (requestedName: string): void => {
-    // old ids keep working after a rename (buildPlan B4)
-    const moduleName = canonicalModuleId(requestedName)
-    if (visited.has(moduleName)) {
-      return
-    }
-
-    if (visiting.has(moduleName)) {
-      throw new ResolutionError(`Circular module requirement detected at "${moduleName}"`)
-    }
-
-    const moduleDefinition = registry.get(moduleName)
-    if (!moduleDefinition) {
-      throw new ResolutionError(`Unknown module requested: "${moduleName}"`)
-    }
-
-    visiting.add(moduleName)
-    for (const required of moduleDefinition.requires ?? []) {
-      visit(required)
-    }
-    visiting.delete(moduleName)
-
-    visited.add(moduleName)
-    ordered.push(moduleDefinition)
-  }
-
-  for (const selectedModule of selectedModuleNames) {
-    visit(selectedModule)
-  }
-
-  return ordered
 }
 
 interface DependencyNames {
@@ -130,8 +88,14 @@ export function composeModules(
   registry: Map<string, DevstackModule>,
   projectName: string
 ): CompositionResult {
-  const orderedModules = resolveModulesInDependencyOrder(selectedModuleNames, registry)
-  validateModuleSelection(orderedModules)
+  const resolution = resolveStack(selectedModuleNames, registry)
+  const errors = resolution.diagnostics.filter((diagnostic) => diagnostic.severity === 'error')
+  if (errors.length > 0) {
+    throw new ResolutionError(formatDiagnostics(resolution.diagnostics), {
+      diagnostics: resolution.diagnostics
+    })
+  }
+  const orderedModules = resolution.modules
 
   const packageJson = composeProjectPackageJson(projectName, orderedModules)
   const installed = [

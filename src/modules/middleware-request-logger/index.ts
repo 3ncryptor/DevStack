@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   category: 'middleware',
   language: 'node',
   description: 'HTTP request logging using Morgan',
-  requiresAny: ['framework-express', 'framework-nest'],
+  requiresAny: ['http-framework'],
   dependencies: ['morgan'],
   slots: [
     {

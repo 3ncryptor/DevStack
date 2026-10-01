@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   category: 'security',
   language: 'node',
   description: 'Security headers via Helmet middleware for Express or NestJS',
-  requiresAny: ['framework-express', 'framework-nest'],
+  requiresAny: ['http-framework'],
   dependencies: ['helmet'],
   slots: [
     { slot: 'app.imports', code: "import { helmetMiddleware } from './middlewares/helmet.js'" },

@@ -7,7 +7,7 @@ const moduleDefinition: DevstackModule = {
   category: 'middleware',
   language: 'node',
   description: 'CORS middleware for Express or NestJS APIs',
-  requiresAny: ['framework-express', 'framework-nest'],
+  requiresAny: ['http-framework'],
   dependencies: ['cors'],
   env: [
     {

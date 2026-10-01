@@ -33,13 +33,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "4c7d8be306bf5706",
+      "sha256": "d2fc5be2af6a66dc",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": ".env.example",
-      "sha256": "3d58170fca877579",
+      "sha256": "45be23a9863a636b",
       "strategy": "create",
     },
     {
@@ -93,7 +93,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "1f842823345085b6",
+      "sha256": "d9b57ef4eedfc9df",
       "strategy": "create",
     },
     {
@@ -117,7 +117,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/app.ts",
-      "sha256": "61b186c4f1f90410",
+      "sha256": "230c07c417571288",
       "strategy": "create",
     },
     {
@@ -214,17 +214,17 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
   "modules": [
     "language-node",
     "framework-express",
-    "middleware-cors",
-    "security-origin-checks",
-    "security-helmet",
-    "security-rate-limit",
-    "middleware-request-logger",
-    "middleware-compression",
     "orm-prisma",
-    "quality-eslint",
-    "quality-prettier",
-    "quality-husky",
     "arch-clean",
+    "quality-eslint",
+    "quality-husky",
+    "quality-prettier",
+    "middleware-compression",
+    "middleware-cors",
+    "middleware-request-logger",
+    "security-helmet",
+    "security-origin-checks",
+    "security-rate-limit",
   ],
 }
 `;
