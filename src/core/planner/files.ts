@@ -70,7 +70,7 @@ export async function moduleTemplateFiles(
       ...(await readTemplate(root, relativePath, context)),
       mode: FILE_MODE,
       strategy: 'create' as const,
-      source: moduleDefinition.name
+      source: moduleDefinition.id
     }))
   )
 }

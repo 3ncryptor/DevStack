@@ -6,13 +6,13 @@ export async function runAdvancedPrompt(
   prompter: Prompter,
   defaultModules: string[] = []
 ): Promise<string[]> {
-  const modules = Array.from(registry.values()).sort((a, b) => a.name.localeCompare(b.name))
+  const modules = Array.from(registry.values()).sort((a, b) => a.id.localeCompare(b.id))
 
   const selected = await prompter.multiselect({
     message: 'Select modules to include',
     choices: modules.map((moduleDefinition) => ({
-      value: moduleDefinition.name,
-      label: moduleDefinition.name,
+      value: moduleDefinition.id,
+      label: moduleDefinition.title,
       hint: moduleDefinition.description
     })),
     initialValues: defaultModules,

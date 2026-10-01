@@ -2,7 +2,11 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'framework-nest',
+  id: 'framework-nest',
+  title: 'NestJS',
+  category: 'framework',
+  language: 'node',
+  provides: ['http-framework'],
   description: 'NestJS application starter',
   requires: ['language-node'],
   conflictsWith: ['framework-express'],

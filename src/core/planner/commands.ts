@@ -14,7 +14,7 @@ export function planCommands(
   options: CommandOptions
 ): PlannedCommand[] {
   const commands: PlannedCommand[] = []
-  const hasHusky = modules.some((moduleDefinition) => moduleDefinition.name === 'quality-husky')
+  const hasHusky = modules.some((moduleDefinition) => moduleDefinition.id === 'quality-husky')
 
   if (!options.skipGit) {
     commands.push({
@@ -50,7 +50,7 @@ export function planCommands(
         phase: moduleCommand.phase,
         command: packageManager,
         args: getExecArgs(packageManager, binary, args),
-        description: `${moduleDefinition.name}: ${moduleCommand.run.join(' ')}`
+        description: `${moduleDefinition.id}: ${moduleCommand.run.join(' ')}`
       })
     }
   }

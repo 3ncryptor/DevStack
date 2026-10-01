@@ -26,15 +26,15 @@ export interface PlanInput {
 }
 
 function has(modules: readonly DevstackModule[], id: string): boolean {
-  return modules.some((moduleDefinition) => moduleDefinition.name === id)
+  return modules.some((moduleDefinition) => moduleDefinition.id === id)
 }
 
 function lintStagedConfig(modules: readonly DevstackModule[]): Record<string, string[]> {
   const config: Record<string, string[]> = {}
-  if (has(modules, 'formatter-prettier')) {
+  if (has(modules, 'quality-prettier')) {
     config['*.{js,ts,tsx,jsx,json,md,yml,yaml}'] = ['prettier --write']
   }
-  if (has(modules, 'linter-eslint')) {
+  if (has(modules, 'quality-eslint')) {
     config['src/**/*.ts'] = ['eslint --fix']
     config['tests/**/*.ts'] = ['eslint --fix']
   }
@@ -84,7 +84,7 @@ async function collectFiles(
   const manifest = manifestFor({
     projectName: input.projectName,
     packageManager: input.packageManager,
-    modules: modules.map((moduleDefinition) => moduleDefinition.name)
+    modules: modules.map((moduleDefinition) => moduleDefinition.id)
   })
   add(generatedFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`))
   if (has(modules, 'quality-husky')) {
@@ -94,7 +94,7 @@ async function collectFiles(
     projectName: input.projectName,
     packageManager: input.packageManager,
     pm: packageManagerCommands(input.packageManager),
-    modules: modules.map((moduleDefinition) => moduleDefinition.name),
+    modules: modules.map((moduleDefinition) => moduleDefinition.id),
     slots: renderSlots(modules)
   }
   const env = collectEnv(modules)
@@ -129,7 +129,7 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
     projectName: input.projectName,
     projectDir: input.projectDir,
     packageManager: input.packageManager,
-    modules: modules.map((moduleDefinition) => moduleDefinition.name),
+    modules: modules.map((moduleDefinition) => moduleDefinition.id),
     files: await formatPlannedFiles(files),
     commands: planCommands(modules, input.packageManager, input.options),
     env: collectEnv(modules)

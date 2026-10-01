@@ -2,7 +2,11 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'orm-prisma',
+  id: 'orm-prisma',
+  title: 'Prisma + PostgreSQL',
+  category: 'orm',
+  language: 'node',
+  provides: ['orm', 'db:postgres'],
   description: 'Prisma ORM with starter schema and client setup',
   requires: ['language-node'],
   dependencies: ['@prisma/client', '@prisma/adapter-pg', 'pg', 'dotenv'],

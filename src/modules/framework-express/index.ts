@@ -2,7 +2,11 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'framework-express',
+  id: 'framework-express',
+  title: 'Express',
+  category: 'framework',
+  language: 'node',
+  provides: ['http-framework'],
   description: 'Express HTTP server setup',
   requires: ['language-node'],
   dependencies: ['express'],

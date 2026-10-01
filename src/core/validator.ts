@@ -7,13 +7,13 @@ export function validateModuleDefinition(moduleDefinition: DevstackModule): void
 }
 
 export function validateModuleSelection(modules: DevstackModule[]): void {
-  const selected = new Set(modules.map((moduleDefinition) => moduleDefinition.name))
+  const selected = new Set(modules.map((moduleDefinition) => moduleDefinition.id))
 
   for (const moduleDefinition of modules) {
     for (const required of moduleDefinition.requires ?? []) {
       if (!selected.has(required)) {
         throw new ResolutionError(
-          `Module "${moduleDefinition.name}" requires "${required}", but it is not selected`
+          `Module "${moduleDefinition.id}" requires "${required}", but it is not selected`
         )
       }
     }
@@ -23,7 +23,7 @@ export function validateModuleSelection(modules: DevstackModule[]): void {
       const hasAny = requiresAny.some((requiredModuleName) => selected.has(requiredModuleName))
       if (!hasAny) {
         throw new ResolutionError(
-          `Module "${moduleDefinition.name}" requires one of [${requiresAny.join(', ')}], but none are selected`
+          `Module "${moduleDefinition.id}" requires one of [${requiresAny.join(', ')}], but none are selected`
         )
       }
     }
@@ -31,7 +31,7 @@ export function validateModuleSelection(modules: DevstackModule[]): void {
     for (const conflicting of moduleDefinition.conflictsWith ?? []) {
       if (selected.has(conflicting)) {
         throw new ResolutionError(
-          `Module "${moduleDefinition.name}" conflicts with "${conflicting}". Remove one of them.`
+          `Module "${moduleDefinition.id}" conflicts with "${conflicting}". Remove one of them.`
         )
       }
     }

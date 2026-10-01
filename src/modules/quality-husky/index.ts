@@ -1,9 +1,13 @@
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'quality-husky',
+  id: 'quality-husky',
+  title: 'Husky + lint-staged + commitlint',
+  category: 'quality',
+  language: 'node',
+  provides: ['git-hooks'],
   description: 'Husky + lint-staged + commitlint setup',
-  requiresAny: ['linter-eslint', 'formatter-prettier'],
+  requiresAny: ['quality-eslint', 'quality-prettier'],
   devDependencies: ['@commitlint/cli', '@commitlint/config-conventional', 'husky', 'lint-staged'],
   packageJson: {
     scripts: {

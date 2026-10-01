@@ -2,7 +2,10 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'middleware-morgan',
+  id: 'middleware-request-logger',
+  title: 'HTTP request logger (morgan)',
+  category: 'middleware',
+  language: 'node',
   description: 'HTTP request logging using Morgan',
   requiresAny: ['framework-express', 'framework-nest'],
   dependencies: ['morgan'],
@@ -13,7 +16,7 @@ const moduleDefinition: DevstackModule = {
     },
     { slot: 'app.middleware', code: 'app.use(requestLoggerMiddleware)', order: 20 }
   ],
-  filesPath: moduleFilesPath('middleware-morgan')
+  filesPath: moduleFilesPath('middleware-request-logger')
 }
 
 export default moduleDefinition

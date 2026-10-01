@@ -15,7 +15,7 @@ export function collectEnv(modules: readonly DevstackModule[]): PlannedEnvVar[] 
           example: declaration.example,
           required: declaration.required,
           secret: declaration.secret ?? false,
-          owners: [moduleDefinition.name],
+          owners: [moduleDefinition.id],
           warnings
         })
         continue
@@ -24,7 +24,7 @@ export function collectEnv(modules: readonly DevstackModule[]): PlannedEnvVar[] 
         ...existing,
         required: existing.required || declaration.required,
         secret: existing.secret || (declaration.secret ?? false),
-        owners: [...existing.owners, moduleDefinition.name],
+        owners: [...existing.owners, moduleDefinition.id],
         warnings: [...existing.warnings, ...warnings]
       })
     }

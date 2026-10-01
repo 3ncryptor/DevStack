@@ -14,14 +14,14 @@ export const PRESETS: Record<string, PresetDefinition> = {
       'middleware-cors',
       'security-origin-checks',
       'security-helmet',
-      'rate-limit',
-      'middleware-morgan',
+      'security-rate-limit',
+      'middleware-request-logger',
       'middleware-compression',
       'orm-prisma',
-      'linter-eslint',
-      'formatter-prettier',
+      'quality-eslint',
+      'quality-prettier',
       'quality-husky',
-      'folder-clean'
+      'arch-clean'
     ]
   }
 }

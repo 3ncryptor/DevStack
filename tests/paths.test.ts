@@ -9,7 +9,7 @@ describe('module template paths', () => {
     const missing = BUILTIN_MODULES.filter(
       (moduleDefinition) =>
         moduleDefinition.filesPath !== undefined && !existsSync(moduleDefinition.filesPath)
-    ).map((moduleDefinition) => moduleDefinition.name)
+    ).map((moduleDefinition) => moduleDefinition.id)
 
     expect(missing).toEqual([])
   })

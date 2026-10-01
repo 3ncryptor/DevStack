@@ -33,7 +33,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "e224729dfab5d219",
+      "sha256": "4c7d8be306bf5706",
       "strategy": "create",
     },
     {
@@ -217,14 +217,14 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     "middleware-cors",
     "security-origin-checks",
     "security-helmet",
-    "rate-limit",
-    "middleware-morgan",
+    "security-rate-limit",
+    "middleware-request-logger",
     "middleware-compression",
     "orm-prisma",
-    "linter-eslint",
-    "formatter-prettier",
+    "quality-eslint",
+    "quality-prettier",
     "quality-husky",
-    "folder-clean",
+    "arch-clean",
   ],
 }
 `;

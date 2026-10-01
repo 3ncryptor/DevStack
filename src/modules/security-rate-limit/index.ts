@@ -2,7 +2,10 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'rate-limit',
+  id: 'security-rate-limit',
+  title: 'Rate limiting',
+  category: 'security',
+  language: 'node',
   description: 'API rate limiting middleware for Express or NestJS',
   requiresAny: ['framework-express', 'framework-nest'],
   dependencies: ['express-rate-limit'],
@@ -12,7 +15,7 @@ const moduleDefinition: DevstackModule = {
     { slot: 'app.imports', code: "import { apiRateLimiter } from './middlewares/rate-limit.js'" },
     { slot: 'app.middleware', code: 'app.use(apiRateLimiter)', order: 60 }
   ],
-  filesPath: moduleFilesPath('rate-limit')
+  filesPath: moduleFilesPath('security-rate-limit')
 }
 
 export default moduleDefinition

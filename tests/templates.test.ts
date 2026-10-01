@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { renderSlots } from '../src/core/planner/slots'
 import { renderTemplate, type TemplateContext } from '../src/core/planner/templates'
 import { ResolutionError } from '../src/errors'
-import type { DevstackModule } from '../src/types/module'
+import { testModule } from './helpers/modules'
 import { packageManagerCommands } from '../src/utils/package-manager'
 
 const context: TemplateContext = {
@@ -38,28 +38,24 @@ describe('renderTemplate', () => {
   })
 })
 
-function moduleWith(definition: Partial<DevstackModule> & { name: string }): DevstackModule {
-  return { description: definition.name, ...definition }
-}
-
 describe('renderSlots', () => {
-  const framework = moduleWith({
-    name: 'framework-demo',
+  const framework = testModule({
+    id: 'framework-demo',
     exposesSlots: ['app.imports', 'app.middleware']
   })
 
   it('orders fragments by `order`, then module order, and removes duplicates', () => {
     const slots = renderSlots([
       framework,
-      moduleWith({
-        name: 'b',
+      testModule({
+        id: 'b',
         slots: [
           { slot: 'app.imports', code: "import { b } from './b'" },
           { slot: 'app.middleware', code: 'app.use(b)', order: 20 }
         ]
       }),
-      moduleWith({
-        name: 'a',
+      testModule({
+        id: 'a',
         slots: [
           { slot: 'app.imports', code: "import { b } from './b'" },
           { slot: 'app.middleware', code: 'app.use(a)', order: 10 }
@@ -74,8 +70,8 @@ describe('renderSlots', () => {
   it('skips fragments meant for a framework that is not selected', () => {
     const slots = renderSlots([
       framework,
-      moduleWith({
-        name: 'x',
+      testModule({
+        id: 'x',
         slots: [{ slot: 'app.middleware', code: 'nestOnly()', for: 'framework-nest' }]
       })
     ])
@@ -87,7 +83,7 @@ describe('renderSlots', () => {
     expect(() =>
       renderSlots([
         framework,
-        moduleWith({ name: 'x', slots: [{ slot: 'app.routes', code: 'routes()' }] })
+        testModule({ id: 'x', slots: [{ slot: 'app.routes', code: 'routes()' }] })
       ])
     ).toThrow(ResolutionError)
   })

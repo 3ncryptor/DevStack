@@ -2,20 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import { validateModuleSelection } from '../src/core/validator'
 import type { DevstackModule } from '../src/types/module'
+import { testModule } from './helpers/modules'
 
 describe('validator', () => {
   it('throws when conflicting modules are selected', () => {
     const modules: DevstackModule[] = [
-      {
-        name: 'folder-clean',
-        description: 'clean',
-        conflictsWith: ['folder-mvc']
-      },
-      {
-        name: 'folder-mvc',
-        description: 'mvc',
-        conflictsWith: ['folder-clean']
-      }
+      testModule({ id: 'arch-clean', conflictsWith: ['arch-mvc'] }),
+      testModule({ id: 'arch-mvc', conflictsWith: ['arch-clean'] })
     ]
 
     expect(() => validateModuleSelection(modules)).toThrow('conflicts')
@@ -23,11 +16,7 @@ describe('validator', () => {
 
   it('throws when required module is missing', () => {
     const modules: DevstackModule[] = [
-      {
-        name: 'framework-express',
-        description: 'express',
-        requires: ['language-node']
-      }
+      testModule({ id: 'framework-express', requires: ['language-node'] })
     ]
 
     expect(() => validateModuleSelection(modules)).toThrow('requires')
@@ -35,11 +24,7 @@ describe('validator', () => {
 
   it('throws when requiresAny condition is not satisfied', () => {
     const modules: DevstackModule[] = [
-      {
-        name: 'middleware-cors',
-        description: 'cors',
-        requiresAny: ['framework-express', 'framework-nest']
-      }
+      testModule({ id: 'middleware-cors', requiresAny: ['framework-express', 'framework-nest'] })
     ]
 
     expect(() => validateModuleSelection(modules)).toThrow('requires one of')

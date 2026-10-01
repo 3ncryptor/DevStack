@@ -30,9 +30,47 @@ export interface SlotContribution {
   for?: string
 }
 
+/** Closed set of module categories (buildPlan B4, D-12); adding one is a logged decision. */
+export const MODULE_CATEGORIES = [
+  'language',
+  'package-manager',
+  'layout',
+  'framework',
+  'api-style',
+  'database',
+  'orm',
+  'auth',
+  'architecture',
+  'env',
+  'styling',
+  'template',
+  'testing',
+  'quality',
+  'middleware',
+  'security',
+  'devops',
+  'observability',
+  'api-docs',
+  'repo',
+  'ai',
+  'misc'
+] as const
+
+export type ModuleCategory = (typeof MODULE_CATEGORIES)[number]
+
+export type LanguageId = 'node'
+
+/** Module contract v2 (buildPlan B4). */
 export interface DevstackModule {
-  name: string
+  /** Stable forever, kebab-case and category-prefixed; renames go through src/modules/aliases.ts. */
+  id: string
+  /** Shown in prompts. */
+  title: string
   description: string
+  category: ModuleCategory
+  language: LanguageId
+  /** Capability tags this module satisfies, e.g. `http-framework`, `db:postgres`. */
+  provides?: readonly string[]
   /** Catalog package names; versions come from src/catalog (D-08). */
   dependencies?: readonly CatalogName[]
   devDependencies?: readonly CatalogName[]
@@ -49,9 +87,15 @@ export interface DevstackModule {
   slots?: readonly SlotContribution[]
 }
 
+const MODULE_ID = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
+
 export const moduleDefinitionSchema = z.object({
-  name: z.string().min(1),
+  id: z.string().regex(MODULE_ID, 'Module ids are kebab-case, e.g. framework-express.'),
+  title: z.string().min(1),
   description: z.string().min(1),
+  category: z.enum(MODULE_CATEGORIES),
+  language: z.literal('node'),
+  provides: z.array(z.string().min(1)).optional(),
   dependencies: z.array(z.string()).optional(),
   devDependencies: z.array(z.string()).optional(),
   requires: z.array(z.string()).optional(),

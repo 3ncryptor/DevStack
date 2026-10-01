@@ -2,7 +2,10 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'security-helmet',
+  id: 'security-helmet',
+  title: 'Helmet security headers',
+  category: 'security',
+  language: 'node',
   description: 'Security headers via Helmet middleware for Express or NestJS',
   requiresAny: ['framework-express', 'framework-nest'],
   dependencies: ['helmet'],

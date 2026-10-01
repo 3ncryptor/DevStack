@@ -14,7 +14,7 @@ interface PlacedFragment extends SlotContribution {
  * selected is what is imported; nothing is discovered at runtime.
  */
 export function renderSlots(modules: readonly DevstackModule[]): Record<string, string> {
-  const selected = new Set(modules.map((moduleDefinition) => moduleDefinition.name))
+  const selected = new Set(modules.map((moduleDefinition) => moduleDefinition.id))
   const exposed = new Set(
     modules.flatMap((moduleDefinition) => moduleDefinition.exposesSlots ?? [])
   )
@@ -22,7 +22,7 @@ export function renderSlots(modules: readonly DevstackModule[]): Record<string, 
   const fragments: PlacedFragment[] = modules.flatMap((moduleDefinition, moduleIndex) =>
     (moduleDefinition.slots ?? [])
       .filter((contribution) => contribution.for === undefined || selected.has(contribution.for))
-      .map((contribution) => ({ ...contribution, owner: moduleDefinition.name, moduleIndex }))
+      .map((contribution) => ({ ...contribution, owner: moduleDefinition.id, moduleIndex }))
   )
 
   for (const fragment of fragments) {

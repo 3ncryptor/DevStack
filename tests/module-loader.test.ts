@@ -11,7 +11,7 @@ describe('module-loader', () => {
     expect(modules.has('framework-express')).toBe(true)
     expect(modules.has('framework-nest')).toBe(true)
     expect(modules.has('orm-prisma')).toBe(true)
-    expect(modules.has('rate-limit')).toBe(true)
+    expect(modules.has('security-rate-limit')).toBe(true)
     expect(modules.has('quality-husky')).toBe(true)
     expect(modules.has('middleware-cors')).toBe(true)
     expect(modules.has('security-helmet')).toBe(true)

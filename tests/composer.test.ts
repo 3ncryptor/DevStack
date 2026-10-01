@@ -4,9 +4,10 @@ import { NODE_CATALOG, type CatalogName } from '../src/catalog/node'
 import { composeModules } from '../src/core/composer'
 import { loadModules } from '../src/core/module-loader'
 import type { DevstackModule } from '../src/types/module'
+import { testModule } from './helpers/modules'
 
 function createModuleRegistry(modules: DevstackModule[]): Map<string, DevstackModule> {
-  return new Map(modules.map((moduleDefinition) => [moduleDefinition.name, moduleDefinition]))
+  return new Map(modules.map((moduleDefinition) => [moduleDefinition.id, moduleDefinition]))
 }
 
 describe('composer', () => {
@@ -14,7 +15,7 @@ describe('composer', () => {
     const registry = loadModules()
 
     const result = composeModules(['framework-express'], registry, 'test-app')
-    const moduleNames = result.orderedModules.map((moduleDefinition) => moduleDefinition.name)
+    const moduleNames = result.orderedModules.map((moduleDefinition) => moduleDefinition.id)
 
     expect(moduleNames).toEqual(['language-node', 'framework-express'])
   })
@@ -23,7 +24,7 @@ describe('composer', () => {
     const registry = loadModules()
 
     const result = composeModules(['framework-nest'], registry, 'nest-app')
-    const moduleNames = result.orderedModules.map((moduleDefinition) => moduleDefinition.name)
+    const moduleNames = result.orderedModules.map((moduleDefinition) => moduleDefinition.id)
 
     expect(moduleNames).toEqual(['language-node', 'framework-nest'])
     expect(result.packageJson.dependencies?.['@nestjs/core']).toBeDefined()
@@ -33,7 +34,7 @@ describe('composer', () => {
     const registry = loadModules()
 
     const result = composeModules(
-      ['framework-nest', 'middleware-cors', 'security-helmet', 'rate-limit'],
+      ['framework-nest', 'middleware-cors', 'security-helmet', 'security-rate-limit'],
       registry,
       'nest-api'
     )
@@ -50,7 +51,7 @@ describe('composer', () => {
     expect(withoutHusky.packageJson.scripts?.prepare).toBeUndefined()
 
     const withHusky = composeModules(
-      ['framework-express', 'linter-eslint', 'quality-husky'],
+      ['framework-express', 'quality-eslint', 'quality-husky'],
       registry,
       'app-with-husky'
     )
@@ -62,7 +63,7 @@ describe('composer', () => {
     const registry = loadModules()
 
     const result = composeModules(
-      ['framework-express', 'orm-prisma', 'formatter-prettier'],
+      ['framework-express', 'orm-prisma', 'quality-prettier'],
       registry,
       'api-app'
     )
@@ -83,7 +84,7 @@ describe('composer', () => {
 
   it('adds the paired @types package when a module only lists the runtime package', () => {
     const registry = createModuleRegistry([
-      { name: 'uses-express', description: 'needs express', dependencies: ['express'] }
+      testModule({ id: 'uses-express', dependencies: ['express'] })
     ])
 
     const result = composeModules(['uses-express'], registry, 'pair-app')
@@ -95,11 +96,10 @@ describe('composer', () => {
 
   it('rejects a package that is not in the catalog', () => {
     const registry = createModuleRegistry([
-      {
-        name: 'rogue',
-        description: 'lists an unknown package',
+      testModule({
+        id: 'rogue',
         dependencies: ['left-pad-9000' as CatalogName]
-      }
+      })
     ])
 
     expect(() => composeModules(['rogue'], registry, 'rogue-app')).toThrow(

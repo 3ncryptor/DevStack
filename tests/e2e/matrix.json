@@ -6,12 +6,12 @@
       "framework-nest",
       "security-helmet",
       "middleware-cors",
-      "rate-limit",
+      "security-rate-limit",
       "orm-prisma",
-      "linter-eslint",
-      "formatter-prettier",
+      "quality-eslint",
+      "quality-prettier",
       "quality-husky",
-      "docker-basic"
+      "devops-docker"
     ]
   }
 ]

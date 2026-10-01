@@ -2,7 +2,11 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'linter-eslint',
+  id: 'quality-eslint',
+  title: 'ESLint',
+  category: 'quality',
+  language: 'node',
+  provides: ['linter'],
   description: 'ESLint setup for TypeScript projects',
   requires: ['language-node'],
   devDependencies: [
@@ -12,7 +16,7 @@ const moduleDefinition: DevstackModule = {
     'globals',
     'typescript-eslint'
   ],
-  filesPath: moduleFilesPath('linter-eslint'),
+  filesPath: moduleFilesPath('quality-eslint'),
   packageJson: {
     scripts: {
       lint: 'eslint .',

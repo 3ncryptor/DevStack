@@ -2,10 +2,14 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'formatter-prettier',
+  id: 'quality-prettier',
+  title: 'Prettier',
+  category: 'quality',
+  language: 'node',
+  provides: ['formatter'],
   description: 'Prettier formatting defaults',
   devDependencies: ['prettier'],
-  filesPath: moduleFilesPath('formatter-prettier'),
+  filesPath: moduleFilesPath('quality-prettier'),
   packageJson: {
     scripts: {
       format: 'prettier . --check',

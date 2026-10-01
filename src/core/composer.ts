@@ -3,6 +3,7 @@ import deepmerge from 'deepmerge'
 import { buildApprovalsFor, isCatalogName, NODE_CATALOG } from '../catalog/node'
 import { TYPE_PAIRS } from '../catalog/pairs'
 import { ResolutionError } from '../errors'
+import { canonicalModuleId } from '../modules/aliases'
 import { CLI_PACKAGE } from './manifest'
 import type { DevstackModule } from '../types/module'
 import type { DependencyMap, PackageJson } from '../types/package-json'
@@ -23,7 +24,9 @@ function resolveModulesInDependencyOrder(
   const visiting = new Set<string>()
   const ordered: DevstackModule[] = []
 
-  const visit = (moduleName: string): void => {
+  const visit = (requestedName: string): void => {
+    // old ids keep working after a rename (buildPlan B4)
+    const moduleName = canonicalModuleId(requestedName)
     if (visited.has(moduleName)) {
       return
     }
@@ -65,10 +68,10 @@ function collectDependencyNames(modules: DevstackModule[]): DependencyNames {
   const devDependencies = new Map<string, string>()
   for (const moduleDefinition of modules) {
     for (const name of moduleDefinition.dependencies ?? []) {
-      if (!dependencies.has(name)) dependencies.set(name, moduleDefinition.name)
+      if (!dependencies.has(name)) dependencies.set(name, moduleDefinition.id)
     }
     for (const name of moduleDefinition.devDependencies ?? []) {
-      if (!devDependencies.has(name)) devDependencies.set(name, moduleDefinition.name)
+      if (!devDependencies.has(name)) devDependencies.set(name, moduleDefinition.id)
     }
   }
   for (const name of dependencies.keys()) {

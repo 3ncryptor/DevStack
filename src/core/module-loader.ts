@@ -11,11 +11,11 @@ export function loadModules(
   for (const moduleDefinition of modules) {
     validateModuleDefinition(moduleDefinition)
 
-    if (registry.has(moduleDefinition.name)) {
-      throw new Error(`Duplicate module name found: "${moduleDefinition.name}"`)
+    if (registry.has(moduleDefinition.id)) {
+      throw new Error(`Duplicate module name found: "${moduleDefinition.id}"`)
     }
 
-    registry.set(moduleDefinition.name, moduleDefinition)
+    registry.set(moduleDefinition.id, moduleDefinition)
   }
 
   return registry

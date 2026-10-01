@@ -13,13 +13,13 @@ const FRAMEWORKS: ModuleChoice[] = [
 ]
 
 const ARCHITECTURES: ModuleChoice[] = [
-  { value: 'folder-clean', label: 'Clean architecture' },
-  { value: 'folder-mvc', label: 'MVC' }
+  { value: 'arch-clean', label: 'Clean architecture' },
+  { value: 'arch-mvc', label: 'MVC' }
 ]
 
 const QUALITY: ModuleChoice[] = [
-  { value: 'linter-eslint', label: 'ESLint', checked: true },
-  { value: 'formatter-prettier', label: 'Prettier', checked: true },
+  { value: 'quality-eslint', label: 'ESLint', checked: true },
+  { value: 'quality-prettier', label: 'Prettier', checked: true },
   { value: 'quality-husky', label: 'Husky + lint-staged + commitlint', checked: true }
 ]
 
@@ -27,12 +27,12 @@ const SECURITY: ModuleChoice[] = [
   { value: 'middleware-cors', label: 'CORS middleware', checked: true },
   { value: 'security-origin-checks', label: 'Origin allowlist checks (ALLOWED_ORIGINS)' },
   { value: 'security-helmet', label: 'Helmet security headers', checked: true },
-  { value: 'rate-limit', label: 'Rate limiting', checked: true },
-  { value: 'middleware-morgan', label: 'HTTP request logger (morgan)', checked: true },
+  { value: 'security-rate-limit', label: 'Rate limiting', checked: true },
+  { value: 'middleware-request-logger', label: 'HTTP request logger (morgan)', checked: true },
   { value: 'middleware-compression', label: 'Response compression' }
 ]
 
-const EXTRAS: ModuleChoice[] = [{ value: 'docker-basic', label: 'Docker setup' }]
+const EXTRAS: ModuleChoice[] = [{ value: 'devops-docker', label: 'Docker setup' }]
 
 function available(registry: Registry, choices: ModuleChoice[]): ModuleChoice[] {
   return choices.filter((choice) => registry.has(choice.value))

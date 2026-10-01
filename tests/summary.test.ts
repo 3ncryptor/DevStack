@@ -88,7 +88,7 @@ describe('buildSummary', () => {
 })
 
 describe('docker-basic templates', () => {
-  const dockerModules = (extra: string[]) => ['framework-express', 'docker-basic', ...extra]
+  const dockerModules = (extra: string[]) => ['framework-express', 'devops-docker', ...extra]
 
   it('builds a multi-stage, non-root image with the project package manager', async () => {
     const plan = await planFor(dockerModules(['orm-prisma']), 'pnpm')
@@ -103,7 +103,7 @@ describe('docker-basic templates', () => {
   })
 
   it('starts the Nest entry point for Nest projects', async () => {
-    const plan = await planFor(['framework-nest', 'docker-basic'], 'npm')
+    const plan = await planFor(['framework-nest', 'devops-docker'], 'npm')
     const dockerfile = plan.files.find((file) => file.path === 'Dockerfile')?.content ?? ''
 
     expect(dockerfile).toContain('RUN npm ci')

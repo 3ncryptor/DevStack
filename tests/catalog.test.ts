@@ -40,7 +40,7 @@ describe('module contract', () => {
     const unknown = BUILTIN_MODULES.flatMap((moduleDefinition) =>
       [...(moduleDefinition.dependencies ?? []), ...(moduleDefinition.devDependencies ?? [])]
         .filter((name) => !(name in NODE_CATALOG))
-        .map((name) => `${moduleDefinition.name}: ${name}`)
+        .map((name) => `${moduleDefinition.id}: ${name}`)
     )
 
     expect(unknown).toEqual([])
@@ -48,7 +48,7 @@ describe('module contract', () => {
 
   it('never hardcodes a version in a module definition (D-08)', () => {
     const literalVersion = /['"][\^~]?\d+\.\d+(\.\d+)?['"]/
-    const offenders = BUILTIN_MODULES.map((moduleDefinition) => moduleDefinition.name).filter(
+    const offenders = BUILTIN_MODULES.map((moduleDefinition) => moduleDefinition.id).filter(
       (id) => {
         const source = readFileSync(
           path.join(PACKAGE_ROOT, 'src', 'modules', id, 'index.ts'),

@@ -2,7 +2,10 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'language-node',
+  id: 'language-node',
+  title: 'Node.js + TypeScript',
+  category: 'language',
+  language: 'node',
   description: 'Node.js + TypeScript runtime foundation',
   devDependencies: ['@types/node', 'tsx', 'typescript'],
   filesPath: moduleFilesPath('language-node'),

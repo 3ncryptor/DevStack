@@ -2,11 +2,14 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
-  name: 'folder-clean',
-  description: 'Clean architecture source folder structure',
+  id: 'arch-mvc',
+  title: 'MVC',
+  category: 'architecture',
+  language: 'node',
+  description: 'MVC oriented source folder structure',
   requires: ['language-node'],
-  conflictsWith: ['folder-mvc'],
-  filesPath: moduleFilesPath('folder-clean')
+  conflictsWith: ['arch-clean'],
+  filesPath: moduleFilesPath('arch-mvc')
 }
 
 export default moduleDefinition
