@@ -8,6 +8,7 @@ import frameworkExpress from './framework-express/index'
 import frameworkNest from './framework-nest/index'
 import languageNode from './language-node/index'
 import linterEslint from './quality-eslint/index'
+import middlewareAsyncHandler from './middleware-async-handler/index'
 import middlewareCompression from './middleware-compression/index'
 import middlewareCors from './middleware-cors/index'
 import middlewareMorgan from './middleware-request-logger/index'
@@ -38,5 +39,6 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   rateLimit,
   middlewareMorgan,
   middlewareCompression,
+  middlewareAsyncHandler,
   dockerBasic
 ]

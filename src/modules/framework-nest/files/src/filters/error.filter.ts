@@ -1,7 +1,7 @@
 import { Catch, HttpException, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common'
 import type { Request, Response } from 'express'
 
-import { AppError, toErrorResponse } from '../lib/errors.js'
+import { ApiError, toErrorResponse } from '../lib/errors.js'
 import type { Logger } from '../lib/logger.js'
 
 const CODES: Readonly<Record<number, string>> = {
@@ -15,11 +15,11 @@ const CODES: Readonly<Record<number, string>> = {
   429: 'TOO_MANY_REQUESTS'
 }
 
-/** Nest's own 4xx exceptions (unknown route, bad JSON) are client errors like any AppError. */
+/** Nest's own 4xx exceptions (unknown route, bad JSON) are client errors like any ApiError. */
 function fromNest(exception: unknown): unknown {
   if (!(exception instanceof HttpException) || exception.getStatus() >= 500) return exception
   const status = exception.getStatus()
-  return new AppError(status, CODES[status] ?? 'CLIENT_ERROR', exception.message)
+  return new ApiError(status, CODES[status] ?? 'CLIENT_ERROR', exception.message)
 }
 
 /** Every error becomes the error envelope (B17.2); 5xx are logged with the cause. */

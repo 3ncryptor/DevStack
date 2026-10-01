@@ -1,11 +1,16 @@
 import { Controller, Get, HttpStatus, Inject, Res } from '@nestjs/common'
 import type { Response } from 'express'
 
+import { RawResponse } from '../interceptors/envelope.interceptor.js'
 import { runReadiness, type ReadinessCheck, type ReadinessReport } from '../lib/readiness.js'
 
 export const READINESS_CHECKS = Symbol('READINESS_CHECKS')
 
-/** GET /health is liveness and never touches dependencies; GET /ready runs every check. */
+/**
+ * GET /health is liveness and never touches dependencies; GET /ready runs every check. Both stay
+ * outside the success envelope: orchestrators expect these shapes.
+ */
+@RawResponse()
 @Controller()
 export class HealthController {
   constructor(@Inject(READINESS_CHECKS) private readonly checks: readonly ReadinessCheck[]) {}

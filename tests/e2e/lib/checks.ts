@@ -44,8 +44,13 @@ export function readyProblems(status: number, body: unknown, expected: ReadyExpe
 
 /** Unknown routes answer 404 with the error envelope (B17.2) carrying the request id. */
 export function envelopeProblems(status: number, body: unknown, requestId: string): string[] {
-  const error = (body as { error?: { code?: unknown; requestId?: unknown } } | null)?.error
+  const envelope = body as {
+    success?: unknown
+    error?: { code?: unknown; requestId?: unknown }
+  } | null
+  const error = envelope?.error
   const problems: string[] = []
+  if (envelope?.success !== false) problems.push('error envelope lacks success: false (D-61)')
   if (status !== 404) problems.push(`unknown route returned ${status}, expected 404`)
   if (error?.code !== 'NOT_FOUND') problems.push(`unknown route error code: ${String(error?.code)}`)
   if (error?.requestId !== requestId) problems.push('error envelope does not carry the request id')

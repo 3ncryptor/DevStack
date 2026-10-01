@@ -1,5 +1,5 @@
 /** An error meant for the client. Anything else becomes a generic 500 (B17.2). */
-export class AppError extends Error {
+export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
@@ -11,32 +11,33 @@ export class AppError extends Error {
   }
 }
 
-export class ValidationError extends AppError {
+export class ValidationError extends ApiError {
   constructor(message = 'Request is invalid', details?: unknown) {
     super(400, 'VALIDATION_ERROR', message, details)
   }
 }
 
-export class UnauthorizedError extends AppError {
+export class UnauthorizedError extends ApiError {
   constructor(message = 'Authentication required') {
     super(401, 'UNAUTHORIZED', message)
   }
 }
 
-export class ForbiddenError extends AppError {
+export class ForbiddenError extends ApiError {
   constructor(message = 'Not allowed') {
     super(403, 'FORBIDDEN', message)
   }
 }
 
-export class NotFoundError extends AppError {
+export class NotFoundError extends ApiError {
   constructor(message = 'Not found') {
     super(404, 'NOT_FOUND', message)
   }
 }
 
-/** Every error response has this shape; stack traces never leave the process. */
+/** Every error response has this shape (D-61); stack traces never leave the process. */
 export interface ErrorBody {
+  success: false
   error: { code: string; message: string; requestId: string; details?: unknown }
 }
 
@@ -56,21 +57,27 @@ function isClientError(error: unknown): error is { status: number; message: stri
 }
 
 export function toErrorResponse(error: unknown, requestId: string): ErrorResponse {
-  if (error instanceof AppError) {
+  if (error instanceof ApiError) {
     const details = error.details === undefined ? {} : { details: error.details }
     return {
       status: error.status,
-      body: { error: { code: error.code, message: error.message, requestId, ...details } }
+      body: {
+        success: false,
+        error: { code: error.code, message: error.message, requestId, ...details }
+      }
     }
   }
   if (isClientError(error)) {
     return {
       status: error.status,
-      body: { error: { code: 'BAD_REQUEST', message: error.message, requestId } }
+      body: { success: false, error: { code: 'BAD_REQUEST', message: error.message, requestId } }
     }
   }
   return {
     status: 500,
-    body: { error: { code: 'INTERNAL_ERROR', message: 'Something went wrong', requestId } }
+    body: {
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Something went wrong', requestId }
+    }
   }
 }

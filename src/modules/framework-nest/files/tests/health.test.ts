@@ -45,9 +45,10 @@ await test('GET /ready is 503 with per-check status when a check fails', () =>
 await test('unknown routes get the error envelope with the request id', () =>
   withApp([], async (server) => {
     const response = await request(server).get('/missing').set('x-request-id', 'test-id')
-    const body = response.body as { error: { code: string; requestId: string } }
+    const body = response.body as { success: boolean; error: { code: string; requestId: string } }
 
     assert.equal(response.status, 404)
+    assert.equal(body.success, false)
     assert.equal(body.error.code, 'NOT_FOUND')
     assert.equal(body.error.requestId, 'test-id')
   }))

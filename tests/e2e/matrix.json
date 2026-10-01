@@ -16,6 +16,17 @@
     ]
   },
   {
+    "id": "express-docker",
+    "modules": [
+      "framework-express",
+      "middleware-async-handler",
+      "security-helmet",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
     "id": "node-prisma",
     "modules": ["language-node", "orm-prisma", "quality-eslint", "quality-prettier"],
     "boot": false

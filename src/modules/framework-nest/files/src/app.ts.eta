@@ -1,10 +1,11 @@
-import { NestFactory } from '@nestjs/core'
+import { NestFactory, Reflector } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 
 <%~ it.slots['app.imports'] %>
 
 import { AppModule } from './app.module.js'
 import { ErrorFilter } from './filters/error.filter.js'
+import { EnvelopeInterceptor } from './interceptors/envelope.interceptor.js'
 import type { Logger } from './lib/logger.js'
 import { NestLogger } from './lib/nest-logger.js'
 import type { ReadinessCheck } from './lib/readiness.js'
@@ -29,5 +30,6 @@ export async function createApp(deps: AppDeps): Promise<NestExpressApplication> 
   <%~ it.slots['app.middleware'] %>
 
   app.useGlobalFilters(new ErrorFilter(deps.logger))
+  app.useGlobalInterceptors(new EnvelopeInterceptor(app.get(Reflector)))
   return app
 }

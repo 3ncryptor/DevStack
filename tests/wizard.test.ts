@@ -62,6 +62,7 @@ describe('guided wizard (A0.2 order)', () => {
       true,
       false,
       ['middleware-cors', 'security-helmet'],
+      false,
       'generate'
     ])
 
@@ -76,6 +77,7 @@ describe('guided wizard (A0.2 order)', () => {
       'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
       'Add a Dockerfile and docker compose?',
       'App setup (app.ts)',
+      'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
       'What next?'
     ])
     expect(sorted(result.modules)).toEqual(
@@ -102,6 +104,7 @@ describe('guided wizard (A0.2 order)', () => {
       false,
       false,
       [],
+      false,
       'generate'
     ])
 
@@ -227,17 +230,21 @@ describe('review screen', () => {
       'framework',
       'framework-express',
       'arch-clean',
+      true,
       'generate'
     ])
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    expect(prompter.asked.slice(-4)).toEqual([
+    expect(prompter.asked.slice(-5)).toEqual([
       'Which answer?',
       'Backend framework',
       'Backend architecture',
+      'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
       'What next?'
     ])
+    // asked only once it applies, and the yes adds the module
+    expect(result.modules).toContain('middleware-async-handler')
     expect(result.modules).toContain('framework-express')
     expect(result.modules).toContain('arch-clean')
     expect(result.modules).not.toContain('framework-nest')
@@ -430,22 +437,25 @@ describe('answers ↔ modules', () => {
     for (const framework of ['framework-express', 'framework-nest']) {
       for (const database of ['postgres', 'none'] as const) {
         for (const architecture of ['arch-clean', 'arch-mvc', 'none']) {
-          for (const preCommit of [true, false]) {
-            for (const docker of [true, false]) {
-              for (const appSetup of subsets(APP_SETUP_CHOICES.map((choice) => choice.value))) {
-                const answers: WizardAnswers = {
-                  appType: 'backend',
-                  framework,
-                  database,
-                  orm: 'orm-prisma',
-                  architecture,
-                  preCommit,
-                  docker,
-                  appSetup
-                }
-                const modules = modulesFromAnswers(answers, registry)
-                if (resolveStack(modules, registry).diagnostics.length > 0) {
-                  failures.push(JSON.stringify(answers))
+          for (const asyncHandler of [true, false]) {
+            for (const preCommit of [true, false]) {
+              for (const docker of [true, false]) {
+                for (const appSetup of subsets(APP_SETUP_CHOICES.map((choice) => choice.value))) {
+                  const answers: WizardAnswers = {
+                    appType: 'backend',
+                    framework,
+                    database,
+                    orm: 'orm-prisma',
+                    architecture,
+                    preCommit,
+                    docker,
+                    appSetup,
+                    asyncHandler
+                  }
+                  const modules = modulesFromAnswers(answers, registry)
+                  if (resolveStack(modules, registry).diagnostics.length > 0) {
+                    failures.push(JSON.stringify(answers))
+                  }
                 }
               }
             }

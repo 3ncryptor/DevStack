@@ -26,7 +26,11 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
   need no open port:
   - environment validated with Zod at startup, every missing or invalid variable listed at once;
   - pino JSON logs with a request id per request (echoed in `x-request-id`);
-  - one error envelope, `{ error: { code, message, requestId, details? } }`, with no stack traces;
+  - one response envelope: `{ success: true, data, meta? }` (`ApiSuccess`, with pagination
+    `meta`) and `{ success: false, error: { code, message, requestId, details? } }` (`ApiError`),
+    with no stack traces; Nest wraps return values for you;
+  - Zod for env, request bodies, queries and params (`validate()` in Express, a pipe in Nest),
+    and an optional `asyncHandler()` for Express;
   - `GET /health` (liveness) and `GET /ready` (503 with per-check status while, say, the database
     is down);
   - graceful shutdown: `SIGTERM`/`SIGINT` stop accepting connections, finish in-flight requests,

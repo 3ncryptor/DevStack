@@ -170,8 +170,14 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     },
     {
       "mode": "644",
+      "path": "src/lib/api-response.ts",
+      "sha256": "e1dcd5f6cc636bf3",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
       "path": "src/lib/errors.ts",
-      "sha256": "95f97d618572df53",
+      "sha256": "a2b60bb16e8a6e94",
       "strategy": "create",
     },
     {
@@ -272,8 +278,14 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     },
     {
       "mode": "644",
+      "path": "tests/api-response.test.ts",
+      "sha256": "7fe6aff12dafe4d7",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
       "path": "tests/health.test.ts",
-      "sha256": "ee6ae9529789684d",
+      "sha256": "34e5fbbf39f5c6b1",
       "strategy": "create",
     },
     {

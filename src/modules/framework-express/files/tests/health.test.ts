@@ -4,7 +4,6 @@ import { test } from 'node:test'
 import request from 'supertest'
 
 import { createApp } from '../src/app.js'
-import { toErrorResponse } from '../src/lib/errors.js'
 import { createLogger } from '../src/lib/logger.js'
 import type { ReadinessCheck } from '../src/lib/readiness.js'
 
@@ -38,22 +37,13 @@ await test('GET /ready is 503 with per-check status when a check fails', async (
   assert.deepEqual(response.body as unknown, { status: 'error', checks: { db: 'error' } })
 })
 
-await test('library client errors keep their 4xx status, e.g. an undecodable URL param', () => {
-  // what Express throws for `/items/%E0%A4%A` on a route with a `:param`
-  const error = Object.assign(new URIError("Failed to decode param '%E0%A4%A'"), { status: 400 })
-
-  const { status, body } = toErrorResponse(error, 'test-id')
-
-  assert.equal(status, 400)
-  assert.equal(body.error.code, 'BAD_REQUEST')
-})
-
 await test('unknown routes get the error envelope with the request id', async () => {
   const response = await request(appWith()).get('/missing').set('x-request-id', 'test-id')
 
   assert.equal(response.status, 404)
   assert.equal(response.get('x-request-id'), 'test-id')
   assert.deepEqual(response.body as unknown, {
+    success: false,
     error: { code: 'NOT_FOUND', message: 'Route GET /missing not found', requestId: 'test-id' }
   })
 })

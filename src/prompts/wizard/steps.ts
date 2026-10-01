@@ -20,6 +20,7 @@ export interface WizardAnswers {
   preCommit?: boolean
   docker?: boolean
   appSetup?: string[]
+  asyncHandler?: boolean
 }
 
 export interface StepEnvironment {
@@ -129,19 +130,30 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
   }
 }
 
-function confirmStep(
-  key: 'preCommit' | 'docker',
-  label: string,
-  message: string,
+interface ConfirmStepDefinition {
+  key: 'preCommit' | 'docker' | 'asyncHandler'
+  label: string
+  message: string
   moduleId: string
-): WizardStep {
+  defaultValue: boolean
+  applies?: (answers: WizardAnswers) => boolean
+}
+
+function confirmStep({
+  key,
+  label,
+  message,
+  moduleId,
+  defaultValue,
+  applies = () => true
+}: ConfirmStepDefinition): WizardStep {
   return {
     key,
     label,
-    applies: () => true,
+    applies: (answers) => applies(answers),
     ask: async (prompter, answers) => ({
       ...answers,
-      [key]: await prompter.confirm({ message, initialValue: answers[key] ?? true })
+      [key]: await prompter.confirm({ message, initialValue: answers[key] ?? defaultValue })
     }),
     describe: (answers) => yesNo(answers[key]),
     modules: (answers) => (answers[key] === true ? [moduleId] : [])
@@ -242,14 +254,30 @@ export const STEPS: readonly WizardStep[] = [
     applies: (answers) => answers.framework === 'framework-express',
     addsModule: true
   }),
-  confirmStep(
-    'preCommit',
-    'Pre-commit hooks',
-    'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
-    'quality-husky'
-  ),
-  confirmStep('docker', 'Docker', 'Add a Dockerfile and docker compose?', 'devops-docker'),
-  appSetupStep
+  confirmStep({
+    key: 'preCommit',
+    label: 'Pre-commit hooks',
+    message: 'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
+    moduleId: 'quality-husky',
+    defaultValue: true
+  }),
+  confirmStep({
+    key: 'docker',
+    label: 'Docker',
+    message: 'Add a Dockerfile and docker compose?',
+    moduleId: 'devops-docker',
+    defaultValue: true
+  }),
+  appSetupStep,
+  confirmStep({
+    key: 'asyncHandler',
+    label: 'asyncHandler',
+    message:
+      'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
+    moduleId: 'middleware-async-handler',
+    defaultValue: false,
+    applies: (answers) => answers.framework === 'framework-express'
+  })
 ]
 
 /** The stack the answers describe; steps that do not apply add nothing. */
@@ -275,6 +303,7 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     architecture: firstOf(modules, ARCHITECTURES) ?? NONE,
     preCommit: modules.includes('quality-husky'),
     docker: modules.includes('devops-docker'),
+    asyncHandler: modules.includes('middleware-async-handler'),
     appSetup: APP_SETUP_CHOICES.map((choice) => choice.value).filter((id) => modules.includes(id))
   }
 }

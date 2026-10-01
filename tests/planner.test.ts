@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { loadModules } from '../src/core/module-loader'
 import { buildGenerationPlan, type PlanInput } from '../src/core/planner/index'
 import { toProjectRelativePath } from '../src/core/planner/files'
-import { getPreset } from '../src/core/presets'
+import { getPreset, PRESETS } from '../src/core/presets'
 import type { GenerationPlan } from '../src/types/plan'
 
 const BACKEND_MODULES = [...(getPreset('backend')?.modules ?? [])]
@@ -48,8 +48,10 @@ describe('buildGenerationPlan', () => {
     expect(second).toEqual(first)
   })
 
-  it('matches the recorded plan for the backend preset', async () => {
-    const plan = await buildGenerationPlan(planInput())
+  it.each(Object.keys(PRESETS))('matches the recorded plan for the %s preset', async (name) => {
+    const plan = await buildGenerationPlan(
+      planInput({ selectedModuleNames: [...(PRESETS[name]?.modules ?? [])] })
+    )
 
     expect(summarise(plan)).toMatchSnapshot()
   })
