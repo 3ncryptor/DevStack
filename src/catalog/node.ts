@@ -54,6 +54,10 @@ export const NODE_CATALOG = {
   pino: { version: '^10.3.1' },
   zod: { version: '^4.6.5' },
   supertest: { version: '^7.3.0' },
+  vitest: { version: '^5.0.3' },
+  'unplugin-swc': { version: '^2.0.0' },
+  secretlint: { version: '^13.0.6' },
+  '@secretlint/secretlint-rule-preset-recommend': { version: '^13.0.6' },
   '@types/supertest': { version: '^7.2.1' },
 
   // middleware and security

@@ -25,6 +25,7 @@ export interface WizardAnswers {
   docker?: boolean
   appSetup?: string[]
   rateLimitAlgorithm?: string
+  tests?: string
   apiVersioning?: boolean
   asyncHandler?: boolean
 }
@@ -100,6 +101,12 @@ const FRONTEND_ARCHITECTURES: Choice<string>[] = [
   { value: 'arch-web-atomic', label: 'Atomic design', hint: 'atoms, molecules, organisms' }
 ]
 
+/** Question 12: the test runner; node:test needs nothing extra (D-60). */
+const TEST_RUNNERS: Choice<string>[] = [
+  { value: 'testing-vitest', label: 'Vitest' },
+  { value: NONE, label: "Node's built-in test runner", hint: 'node --test, no extra dependency' }
+]
+
 /** Question 16a (D-64): how rate limiting counts. */
 const RATE_LIMIT_ALGORITHMS: Choice<string>[] = [
   { value: 'fixed-window', label: 'Fixed window', hint: 'N per window; simplest' },
@@ -140,6 +147,7 @@ interface SelectStepDefinition {
     | 'orm'
     | 'architecture'
     | 'rateLimitAlgorithm'
+    | 'tests'
   label: string
   message: string
   choices: Choice<string>[]
@@ -366,6 +374,15 @@ export const STEPS: readonly WizardStep[] = [
     moduleId: 'quality-husky',
     defaultValue: true
   }),
+  selectStep({
+    key: 'tests',
+    label: 'Tests',
+    message: 'Test runner',
+    choices: TEST_RUNNERS,
+    defaultValue: 'testing-vitest',
+    applies: (answers) => isModule(answers.framework),
+    addsModule: true
+  }),
   confirmStep({
     key: 'docker',
     label: 'Docker',
@@ -418,7 +435,10 @@ export function modulesFromAnswers(answers: WizardAnswers, registry: Registry): 
   )
   // a fullstack app lives in a monorepo: apps/api, apps/web, packages/shared (B8)
   const layout = isFullstack(answers) ? ['layout-monorepo'] : []
-  return [...new Set([...ALWAYS_INCLUDED, ...layout, ...chosen])]
+  // Vitest for the API also tests the web apps
+  const webTests =
+    isFullstack(answers) && chosen.includes('testing-vitest') ? ['testing-vitest-web'] : []
+  return [...new Set([...ALWAYS_INCLUDED, ...layout, ...chosen, ...webTests])]
 }
 
 const firstOf = (modules: readonly string[], choices: Choice<string>[]): string | undefined =>
@@ -436,6 +456,7 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     admin: modules.includes('app-admin'),
     frontendArchitecture: firstOf(modules, FRONTEND_ARCHITECTURES),
     apiVersioning: modules.includes('api-versioning'),
+    tests: modules.includes('testing-vitest') ? 'testing-vitest' : NONE,
     // a module list carries no options: a preset with rate limiting starts from the default
     rateLimitAlgorithm: modules.includes('security-rate-limit') ? 'fixed-window' : undefined,
     database: orm === undefined ? NONE : 'postgres',

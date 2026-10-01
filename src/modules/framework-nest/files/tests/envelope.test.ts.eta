@@ -1,7 +1,8 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
 import 'reflect-metadata'
 
 import assert from 'node:assert/strict'
-import { test } from 'node:test'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
 import type { ExecutionContext } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
@@ -31,13 +32,13 @@ const intercept = (handler: () => void, value: unknown): Promise<unknown> =>
 
 const json = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
 
-await test('wraps a returned value as { success: true, data }', async () => {
+<%= vitest ? '' : 'await ' %>test('wraps a returned value as { success: true, data }', async () => {
   const body = await intercept(Routes.prototype.wrapped, { id: 1 })
 
   assert.deepEqual(json(body), { success: true, data: { id: 1 } })
 })
 
-await test('keeps an ApiSuccess the handler built, with its meta', async () => {
+<%= vitest ? '' : 'await ' %>test('keeps an ApiSuccess the handler built, with its meta', async () => {
   const body = await intercept(
     Routes.prototype.wrapped,
     ApiSuccess.paginated([1, 2], { total: 5, page: 1, limit: 2 })
@@ -50,7 +51,7 @@ await test('keeps an ApiSuccess the handler built, with its meta', async () => {
   })
 })
 
-await test('leaves @RawResponse() routes unwrapped', async () => {
+<%= vitest ? '' : 'await ' %>test('leaves @RawResponse() routes unwrapped', async () => {
   const body = await intercept(Routes.prototype.raw, { status: 'ok' })
 
   assert.deepEqual(body, { status: 'ok' })

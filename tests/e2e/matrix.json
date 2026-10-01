@@ -1,6 +1,14 @@
 [
-  { "id": "backend-preset", "preset": "backend" },
-  { "id": "backend-bare", "preset": "backend", "depth": "bare", "boot": false },
+  {
+    "id": "backend-preset",
+    "preset": "backend"
+  },
+  {
+    "id": "backend-bare",
+    "preset": "backend",
+    "depth": "bare",
+    "boot": false
+  },
   {
     "id": "nest-prisma",
     "modules": [
@@ -12,7 +20,8 @@
       "quality-eslint",
       "quality-prettier",
       "quality-husky",
-      "devops-docker"
+      "devops-docker",
+      "testing-vitest"
     ]
   },
   {
@@ -62,7 +71,12 @@
       "orm-prisma",
       "security-helmet",
       "middleware-cors",
-      { "id": "security-rate-limit", "options": { "algorithm": "leaky-bucket" } },
+      {
+        "id": "security-rate-limit",
+        "options": {
+          "algorithm": "leaky-bucket"
+        }
+      },
       "middleware-request-logger",
       "api-versioning",
       "framework-nextjs",
@@ -71,7 +85,9 @@
       "app-admin",
       "quality-eslint",
       "quality-prettier",
-      "quality-husky"
+      "quality-husky",
+      "testing-vitest",
+      "testing-vitest-web"
     ]
   },
   {

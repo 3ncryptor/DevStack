@@ -17,7 +17,9 @@ const moduleDefinition: DevstackModule = {
     'rxjs'
   ],
   // SWC keeps decorator metadata in dev, which Nest's dependency injection needs (D-51)
-  devDependencies: ['@swc-node/register', '@swc/core', '@types/express'],
+  // unplugin-swc: Vitest compiles Nest tests with SWC, which keeps decorator metadata
+  devDependencies: ['@swc-node/register', '@swc/core', '@types/express', 'unplugin-swc'],
+  files: [{ path: 'vitest.config.ts', when: { has: 'testing-vitest' }, depth: 'wired' }],
   exposesSlots: ['app.imports', 'app.middleware'],
   env: [
     {
@@ -40,7 +42,8 @@ const moduleDefinition: DevstackModule = {
     {
       name: 'test',
       run: 'node --import @swc-node/register/esm-register --test "tests/**/*.test.ts"',
-      depth: 'wired'
+      depth: 'wired',
+      when: { not: { has: 'testing-vitest' } }
     }
   ]
 }

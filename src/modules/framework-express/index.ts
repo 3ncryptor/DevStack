@@ -22,7 +22,14 @@ const moduleDefinition: DevstackModule = {
   ],
   filesPath: moduleFilesPath('framework-express'),
   // dev, build and start come from language-node: the entry point is src/index.ts
-  scripts: [{ name: 'test', run: 'node --import tsx --test "tests/**/*.test.ts"', depth: 'wired' }]
+  scripts: [
+    {
+      name: 'test',
+      run: 'node --import tsx --test "tests/**/*.test.ts"',
+      depth: 'wired',
+      when: { not: { has: 'testing-vitest' } }
+    }
+  ]
 }
 
 export default moduleDefinition

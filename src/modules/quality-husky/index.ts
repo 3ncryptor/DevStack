@@ -11,7 +11,15 @@ const moduleDefinition: DevstackModule = {
   provides: ['git-hooks'],
   description: 'Husky + lint-staged + commitlint setup',
   requiresAny: ['linter', 'formatter'],
-  devDependencies: ['@commitlint/cli', '@commitlint/config-conventional', 'husky', 'lint-staged'],
+  // secretlint: staged files are scanned for keys and tokens before a commit (Q-13)
+  devDependencies: [
+    '@commitlint/cli',
+    '@commitlint/config-conventional',
+    '@secretlint/secretlint-rule-preset-recommend',
+    'husky',
+    'lint-staged',
+    'secretlint'
+  ],
   packageJson: {
     scripts: {
       prepare: 'husky',

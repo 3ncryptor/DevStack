@@ -15,7 +15,8 @@ function lintStagedConfig(
   modules: readonly DevstackModule[],
   monorepo: boolean
 ): Record<string, string[]> {
-  const config: Record<string, string[]> = {}
+  // every staged file is scanned for credentials first (Q-13)
+  const config: Record<string, string[]> = { '*': ['secretlint'] }
   if (has(modules, 'quality-prettier')) {
     config['*.{js,ts,tsx,jsx,json,md,yml,yaml}'] = ['prettier --write']
   }
@@ -42,6 +43,11 @@ export function huskyFiles(
     generatedFile(
       'commitlint.config.cjs',
       "module.exports = { extends: ['@commitlint/config-conventional'] }\n",
+      { strategy: 'skip-if-exists' }
+    ),
+    generatedFile(
+      '.secretlintrc.json',
+      `${JSON.stringify({ rules: [{ id: '@secretlint/secretlint-rule-preset-recommend' }] }, null, 2)}\n`,
       { strategy: 'skip-if-exists' }
     ),
     generatedFile(

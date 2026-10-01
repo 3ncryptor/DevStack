@@ -26,6 +26,8 @@ import rateLimit from './security-rate-limit/index'
 import securityHelmet from './security-helmet/index'
 import securityOriginChecks from './security-origin-checks/index'
 import sharedApi from './shared-api/index'
+import testingVitest from './testing-vitest/index'
+import testingVitestWeb from './testing-vitest-web/index'
 import uiTailwind from './ui-tailwind/index'
 
 /**
@@ -44,6 +46,8 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   archWebLayer,
   archWebAtomic,
   appAdmin,
+  testingVitest,
+  testingVitestWeb,
   sharedApi,
   ormPrisma,
   folderFeature,

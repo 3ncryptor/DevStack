@@ -1,5 +1,6 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
 import assert from 'node:assert/strict'
-import { test } from 'node:test'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
 import request from 'supertest'
 
@@ -12,14 +13,14 @@ const logger = createLogger('silent')
 const appWith = (readinessChecks: readonly ReadinessCheck[] = []) =>
   createApp({ logger, readinessChecks })
 
-await test('GET /health reports the process is alive', async () => {
+<%= vitest ? '' : 'await ' %>test('GET /health reports the process is alive', async () => {
   const response = await request(appWith()).get('/health')
 
   assert.equal(response.status, 200)
   assert.equal((response.body as { status: string }).status, 'ok')
 })
 
-await test('GET /ready is 200 when every check passes', async () => {
+<%= vitest ? '' : 'await ' %>test('GET /ready is 200 when every check passes', async () => {
   const healthy: ReadinessCheck = { name: 'db', check: () => Promise.resolve() }
 
   const response = await request(appWith([healthy])).get('/ready')
@@ -28,7 +29,7 @@ await test('GET /ready is 200 when every check passes', async () => {
   assert.deepEqual(response.body as unknown, { status: 'ok', checks: { db: 'ok' } })
 })
 
-await test('GET /ready is 503 with per-check status when a check fails', async () => {
+<%= vitest ? '' : 'await ' %>test('GET /ready is 503 with per-check status when a check fails', async () => {
   const failing: ReadinessCheck = { name: 'db', check: () => Promise.reject(new Error('down')) }
 
   const response = await request(appWith([failing])).get('/ready')
@@ -37,7 +38,7 @@ await test('GET /ready is 503 with per-check status when a check fails', async (
   assert.deepEqual(response.body as unknown, { status: 'error', checks: { db: 'error' } })
 })
 
-await test('unknown routes get the error envelope with the request id', async () => {
+<%= vitest ? '' : 'await ' %>test('unknown routes get the error envelope with the request id', async () => {
   const response = await request(appWith()).get('/missing').set('x-request-id', 'test-id')
 
   assert.equal(response.status, 404)

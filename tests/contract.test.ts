@@ -20,7 +20,8 @@ const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   // baselines every framework requires; never selected on their own
   misc: ['core-', 'shared-', 'app-'],
   styling: ['ui-'],
-  'api-style': ['api-']
+  'api-style': ['api-'],
+  testing: ['testing-']
 }
 
 describe('module contract v2', () => {

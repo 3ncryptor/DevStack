@@ -1,8 +1,9 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
 import 'reflect-metadata'
 
 import assert from 'node:assert/strict'
 import type { Server } from 'node:http'
-import { test } from 'node:test'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
 import request from 'supertest'
 
@@ -26,7 +27,7 @@ async function withApp(
   }
 }
 
-await test('GET /health reports the process is alive', () =>
+<%= vitest ? '' : 'await ' %>test('GET /health reports the process is alive', () =>
   withApp([], async (server) => {
     const response = await request(server).get('/health')
 
@@ -34,7 +35,7 @@ await test('GET /health reports the process is alive', () =>
     assert.equal((response.body as { status: string }).status, 'ok')
   }))
 
-await test('GET /ready is 503 with per-check status when a check fails', () =>
+<%= vitest ? '' : 'await ' %>test('GET /ready is 503 with per-check status when a check fails', () =>
   withApp([{ name: 'db', check: () => Promise.reject(new Error('down')) }], async (server) => {
     const response = await request(server).get('/ready')
 
@@ -42,7 +43,7 @@ await test('GET /ready is 503 with per-check status when a check fails', () =>
     assert.deepEqual(response.body as unknown, { status: 'error', checks: { db: 'error' } })
   }))
 
-await test('unknown routes get the error envelope with the request id', () =>
+<%= vitest ? '' : 'await ' %>test('unknown routes get the error envelope with the request id', () =>
   withApp([], async (server) => {
     const response = await request(server).get('/missing').set('x-request-id', 'test-id')
     const body = response.body as { success: boolean; error: { code: string; requestId: string } }

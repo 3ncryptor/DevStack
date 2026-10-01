@@ -61,6 +61,7 @@ describe('guided wizard (A0.2 order)', () => {
       'pnpm',
       'arch-mvc',
       true,
+      'none',
       false,
       ['middleware-cors', 'security-helmet'],
       false,
@@ -78,6 +79,7 @@ describe('guided wizard (A0.2 order)', () => {
       'Package manager',
       'Backend architecture',
       'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
+      'Test runner',
       'Add a Dockerfile and docker compose?',
       'App setup (app.ts)',
       'Version the API under /v1? (health routes stay unversioned)',
@@ -107,6 +109,7 @@ describe('guided wizard (A0.2 order)', () => {
       'npm',
       'arch-clean',
       false,
+      'none',
       false,
       [],
       false,
@@ -129,6 +132,7 @@ describe('guided wizard (A0.2 order)', () => {
       'none',
       'npm',
       false,
+      'none',
       false,
       [],
       false,
@@ -149,6 +153,7 @@ describe('guided wizard (A0.2 order)', () => {
       'framework-nest',
       'none',
       false,
+      'none',
       false,
       [],
       false,
@@ -174,6 +179,7 @@ describe('guided wizard (A0.2 order)', () => {
       'none',
       'npm',
       false,
+      'none',
       false,
       [],
       false,
@@ -228,6 +234,7 @@ describe('rate limiting and versioning answers (D-64)', () => {
       'none',
       'npm',
       false,
+      'none',
       false,
       ['security-rate-limit'],
       'leaky-bucket',
@@ -245,6 +252,22 @@ describe('rate limiting and versioning answers (D-64)', () => {
   })
 })
 
+describe('test runner answer (task 3.5)', () => {
+  it('adds Vitest for the API and, in a fullstack app, for the web apps', () => {
+    const modules = modulesFromAnswers(
+      {
+        appType: 'fullstack',
+        framework: 'framework-express',
+        frontend: 'framework-nextjs',
+        tests: 'testing-vitest'
+      },
+      registry
+    )
+
+    expect(modules).toEqual(expect.arrayContaining(['testing-vitest', 'testing-vitest-web']))
+  })
+})
+
 describe('fullstack app type', () => {
   it('asks for the frontend styling, skips Docker, and builds a monorepo', async () => {
     const prompter = new ScriptedPrompter([
@@ -258,6 +281,7 @@ describe('fullstack app type', () => {
       'npm',
       'arch-clean',
       true,
+      'none',
       [],
       false,
       false,
@@ -299,6 +323,7 @@ describe('review screen', () => {
     'none',
     'npm',
     false,
+    'none',
     false,
     [],
     false
@@ -406,6 +431,7 @@ describe('review problems', () => {
     'none',
     'npm',
     false,
+    'none',
     false,
     [],
     false
@@ -429,6 +455,7 @@ describe('review problems', () => {
       'none',
       'bun',
       false,
+      'none',
       false,
       [],
       false,
