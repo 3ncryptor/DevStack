@@ -52,7 +52,8 @@ export async function checkAnswers(
     ...checkSelection({
       installedPackageManagers: environment.installedPackageManagers,
       packageManager: selection.packageManager,
-      skipInstall: selection.skipInstall
+      skipInstall: selection.skipInstall,
+      nodeVersion: process.versions.node
     }),
     ...(selection.usesDocker ? [await inspectDocker(probe)] : [])
   ]

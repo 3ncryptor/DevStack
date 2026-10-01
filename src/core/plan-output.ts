@@ -3,11 +3,12 @@ import { createHash } from 'node:crypto'
 import type { GenerationPlan } from '../types/plan'
 import type { ClassifiedFile, FileStatus } from './apply/index'
 
-const STATUS_MARK: Record<FileStatus, string> = { new: '+', overwrite: '~', keep: '=' }
+const STATUS_MARK: Record<FileStatus, string> = { new: '+', overwrite: '~', keep: '=', merge: '±' }
 const STATUS_LABEL: Record<FileStatus, string> = {
   new: 'new',
   overwrite: 'exists (conflict)',
-  keep: 'exists (kept)'
+  keep: 'exists (kept)',
+  merge: 'exists (merged: additions only)'
 }
 
 /** Human-readable plan for `--dry-run` / `--print-plan`. */

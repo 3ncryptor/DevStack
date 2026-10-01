@@ -4,8 +4,12 @@ import type { PackageManagerId as PackageManager } from '../adapters/package-man
  * How a planned file treats an existing file at the same path:
  * - `create`: an existing file is a conflict (the conflict policy decides; `--yes` never overwrites)
  * - `skip-if-exists`: an existing file is kept as-is, without asking
+ * - `json-merge`: missing keys are added to the existing JSON object; existing values win
+ * - `line-merge`: missing lines are appended (e.g. .gitignore); existing lines stay
+ * A merge only adds, so it needs no confirmation; the original is still backed up. A file that
+ * cannot be merged (invalid JSON) falls back to `create`'s conflict policy.
  */
-export type WriteStrategy = 'create' | 'skip-if-exists'
+export type WriteStrategy = 'create' | 'skip-if-exists' | 'json-merge' | 'line-merge'
 
 export interface PlannedFile {
   /** Project-relative, forward slashes. */

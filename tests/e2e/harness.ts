@@ -2,7 +2,7 @@
  * e2e harness (buildPlan task 0.2): packs the CLI as npm would publish it, generates each
  * matrix combination, and checks that the generated project passes its own gates.
  *
- *   npx tsx tests/e2e/harness.ts [--pm npm|pnpm] [--only <id>] [--keep] [--report <file>]
+ *   npx tsx tests/e2e/harness.ts [--pm npm|pnpm|yarn|bun] [--only <id>] [--keep] [--report <file>]
  */
 import { existsSync, rmSync } from 'node:fs'
 import { access, mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises'
@@ -14,7 +14,11 @@ import { bootAndProbe } from './lib/boot'
 import { parseMatrix, type Combination, type ReadyExpectation } from './lib/checks'
 import { killAllGroups, run } from './lib/process'
 
-type PackageManager = 'npm' | 'pnpm'
+const PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const
+type PackageManager = (typeof PACKAGE_MANAGERS)[number]
+
+const isPackageManager = (value: string): value is PackageManager =>
+  (PACKAGE_MANAGERS as readonly string[]).includes(value)
 
 interface HarnessArgs {
   pm: PackageManager
@@ -52,8 +56,8 @@ function parseArgs(argv: string[]): HarnessArgs {
     return index === -1 ? undefined : argv[index + 1]
   }
   const pm = valueOf('--pm') ?? 'npm'
-  if (pm !== 'npm' && pm !== 'pnpm') {
-    throw new Error(`--pm must be npm or pnpm, got "${pm}"`)
+  if (!isPackageManager(pm)) {
+    throw new Error(`--pm must be one of ${PACKAGE_MANAGERS.join(', ')}, got "${pm}"`)
   }
   return { pm, only: valueOf('--only'), keep: argv.includes('--keep'), report: valueOf('--report') }
 }

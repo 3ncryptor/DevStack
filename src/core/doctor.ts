@@ -7,6 +7,9 @@ import { PACKAGE_MANAGERS, type PackageManagerId } from '../adapters/package-man
 /** Lowest Node.js the CLI supports; kept equal to `engines.node` in package.json by a test. */
 export const MIN_NODE_VERSION = '22.12.0'
 
+/** Node.js the generated projects need (`engines.node` of language-node, D-09). */
+export const PROJECT_NODE_VERSION = '24.0.0'
+
 /** How long one probe may take. A corepack shim may fetch its package manager on first use. */
 const PROBE_TIMEOUT_MS = 10_000
 
@@ -167,10 +170,36 @@ export interface SelectionCheckInput {
   installedPackageManagers: ReadonlySet<PackageManagerId>
   packageManager: PackageManagerId
   skipInstall: boolean
+  /** The Node.js that will install and run the project; checked against its engines field. */
+  nodeVersion?: string
+}
+
+/** yarn (classic) enforces `engines` and stops the install; the others only warn. */
+function projectNodeCheck(input: SelectionCheckInput): DoctorCheck[] {
+  if (input.nodeVersion === undefined || versionAtLeast(input.nodeVersion, PROJECT_NODE_VERSION)) {
+    return []
+  }
+  const major = PROJECT_NODE_VERSION.split('.')[0] ?? PROJECT_NODE_VERSION
+  const blocks = input.packageManager === 'yarn' && !input.skipInstall
+  return [
+    {
+      id: 'project-node',
+      label: 'Node.js for the project',
+      status: blocks ? 'error' : 'warn',
+      detail: `generated projects need Node ${major}+, this is v${input.nodeVersion.replace(/^v/, '')}`,
+      hint: blocks
+        ? `yarn refuses to install on an older Node. Use Node ${major} (e.g. nvm install ${major}), another package manager, or --skip-install.`
+        : `The project installs, but run it on Node ${major} or newer.`
+    }
+  ]
 }
 
 /** Checks that depend on the answers: fail before writing anything rather than mid-install. */
 export function checkSelection(input: SelectionCheckInput): DoctorCheck[] {
+  return [...projectNodeCheck(input), ...packageManagerInstalledCheck(input)]
+}
+
+function packageManagerInstalledCheck(input: SelectionCheckInput): DoctorCheck[] {
   if (input.skipInstall || input.installedPackageManagers.has(input.packageManager)) {
     return []
   }

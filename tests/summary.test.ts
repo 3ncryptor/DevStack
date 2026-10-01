@@ -23,7 +23,7 @@ async function planFor(
   })
 }
 
-const noResult = { written: [], overwritten: [], kept: [] }
+const noResult = { written: [], overwritten: [], kept: [], merged: [], notes: [] }
 
 describe('.env.example from module env declarations', () => {
   it('lists every declared variable once, grouped by module, with descriptions', async () => {
@@ -92,6 +92,8 @@ describe('buildSummary', () => {
         written: ['a'],
         overwritten: ['src/app.ts'],
         kept: ['README.md'],
+        merged: ['package.json'],
+        notes: ['package.json: kept your scripts.dev (generated values differ)'],
         backupDir: '/tmp/backup'
       },
       { inPlace: true, skipInstall: false }
@@ -99,6 +101,9 @@ describe('buildSummary', () => {
 
     expect(summary).not.toContain('cd summary-app')
     expect(summary).toContain('README.md')
+    expect(summary).toContain('Overwrote src/app.ts')
+    expect(summary).toContain('Added to your existing package.json')
+    expect(summary).toContain('kept your scripts.dev')
     expect(summary).toContain('/tmp/backup')
   })
 })

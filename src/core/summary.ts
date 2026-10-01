@@ -49,10 +49,17 @@ function warningLines(plan: GenerationPlan, result: ApplyResult): string[] {
       `Kept your existing ${result.kept.join(', ')}; generated versions were not written.`
     )
   }
-  if (result.backupDir !== undefined) {
+  if (result.merged.length > 0) {
     warnings.push(
-      `Overwrote ${result.overwritten.join(', ')}; the originals are in ${result.backupDir}`
+      `Added to your existing ${result.merged.join(', ')}; nothing in them was removed.`
     )
+  }
+  warnings.push(...result.notes)
+  if (result.overwritten.length > 0) {
+    warnings.push(`Overwrote ${result.overwritten.join(', ')}.`)
+  }
+  if (result.backupDir !== undefined) {
+    warnings.push(`Originals of changed files are in ${result.backupDir}`)
   }
   return warnings
 }

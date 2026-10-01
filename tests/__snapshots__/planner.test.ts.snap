@@ -52,7 +52,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
       "mode": "644",
       "path": ".gitignore",
       "sha256": "ef4553fdf74885ae",
-      "strategy": "create",
+      "strategy": "line-merge",
     },
     {
       "mode": "755",
@@ -100,7 +100,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
       "mode": "644",
       "path": "package.json",
       "sha256": "2a862fd9077b1090",
-      "strategy": "create",
+      "strategy": "json-merge",
     },
     {
       "mode": "644",

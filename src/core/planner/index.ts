@@ -39,6 +39,13 @@ function modulesAtDepth(modules: readonly DevstackModule[], depth: Depth): Devst
   return modules.filter((moduleDefinition) => includedAtDepth(moduleDepth(moduleDefinition), depth))
 }
 
+/** Files generation adds to when they exist (task 1.3), e.g. generating into an existing repo. */
+const MERGE_STRATEGIES: Readonly<Record<string, PlannedFile['strategy']>> = {
+  'package.json': 'json-merge',
+  '.gitignore': 'line-merge',
+  '.dockerignore': 'line-merge'
+}
+
 /** Whether a file, slot fragment or script rule of a module applies to this stack and depth. */
 function ruleIncluded(
   modules: readonly DevstackModule[],
@@ -210,7 +217,12 @@ async function collectFiles(
     ))
       add(file)
   }
-  return [...files.values()].sort((a, b) => a.path.localeCompare(b.path))
+  return [...files.values()]
+    .map((file) => {
+      const strategy = MERGE_STRATEGIES[file.path]
+      return strategy === undefined ? file : { ...file, strategy }
+    })
+    .sort((a, b) => a.path.localeCompare(b.path))
 }
 
 /** Resolves the stack and describes everything generation will write and run (buildPlan B3). */

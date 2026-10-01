@@ -9,10 +9,12 @@ import {
   hasErrors,
   inspectEnvironment,
   MIN_NODE_VERSION,
+  PROJECT_NODE_VERSION,
   systemProbe,
   type Probe
 } from '../src/core/doctor'
 import { CLI_PACKAGE } from '../src/core/manifest'
+import languageNode from '../src/modules/language-node/index'
 
 /** A probe that answers from a table; anything not listed behaves like a missing binary. */
 function fakeProbe(answers: Record<string, string>): Probe & { calls: string[] } {
@@ -160,6 +162,33 @@ describe('checkSelection', () => {
     expect(
       checkSelection({ installedPackageManagers, packageManager: 'pnpm', skipInstall: false })
     ).toEqual([])
+  })
+})
+
+describe('checkSelection: Node for the generated project', () => {
+  const installedPackageManagers = new Set(['npm', 'yarn'] as const)
+  const statuses = (nodeVersion: string, packageManager: 'npm' | 'yarn', skipInstall = false) =>
+    checkSelection({ installedPackageManagers, packageManager, skipInstall, nodeVersion }).map(
+      (check) => check.status
+    )
+
+  it('fails for yarn, which refuses to install when engines.node is not met', () => {
+    expect(statuses('22.23.3', 'yarn')).toEqual(['error'])
+  })
+
+  it('warns for the others, which install anyway', () => {
+    expect(statuses('22.23.3', 'npm')).toEqual(['warn'])
+    expect(statuses('22.23.3', 'yarn', true)).toEqual(['warn'])
+  })
+
+  it('says nothing on a new enough Node', () => {
+    expect(statuses(PROJECT_NODE_VERSION, 'yarn')).toEqual([])
+  })
+
+  it('keeps PROJECT_NODE_VERSION in step with the generated engines field', () => {
+    const engines = languageNode.packageJson?.engines?.node
+
+    expect(engines).toBe(`>=${PROJECT_NODE_VERSION.split('.')[0]}`)
   })
 })
 

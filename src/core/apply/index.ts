@@ -1,15 +1,22 @@
+import { readFile } from 'node:fs/promises'
+
 import { Aborted, InputError } from '../../errors'
 import type { Prompter } from '../../intake/prompter'
 import type { GenerationPlan, PlannedFile } from '../../types/plan'
 import type { Logger } from '../../utils/logger'
+import { resolveInside } from '../project-name'
 import { assertPlanPaths, inspectTarget } from './inspect'
+import { mergeJson, mergeLines } from './merge'
 import { discardStaging, stageFiles, writeIntoProject } from './write'
 
-export type FileStatus = 'new' | 'overwrite' | 'keep'
+export type FileStatus = 'new' | 'overwrite' | 'keep' | 'merge'
 
 export interface ClassifiedFile {
+  /** For `merge`, `content` is the merged result that will be written. */
   file: PlannedFile
   status: FileStatus
+  /** For `merge`: values of the user's file that were kept although the generated ones differ. */
+  kept?: string[]
 }
 
 export interface ApplyOptions {
@@ -25,11 +32,27 @@ export interface ApplyResult {
   written: string[]
   overwritten: string[]
   kept: string[]
-  /** Where the originals of overwritten files were copied, if any were overwritten. */
+  /** Existing files that generation added to (task 1.3); their originals are backed up too. */
+  merged: string[]
+  /** What the summary should point out about merges, e.g. kept scripts. */
+  notes: string[]
+  /** Where the originals of overwritten or merged files were copied, if any were. */
   backupDir?: string
 }
 
 const CONFLICT_PREVIEW_LIMIT = 15
+
+/** An existing file under a merge strategy: merged, unchanged, or a conflict if unmergeable. */
+async function classifyMerge(plan: GenerationPlan, file: PlannedFile): Promise<ClassifiedFile> {
+  const existing = await readFile(resolveInside(plan.projectDir, file.path), 'utf8')
+  const merged =
+    file.strategy === 'json-merge'
+      ? mergeJson(existing, file.content)
+      : { content: mergeLines(existing, file.content), kept: [] }
+  if (merged === undefined) return { file, status: 'overwrite' }
+  if (merged.content === existing) return { file, status: 'keep' }
+  return { file: { ...file, content: merged.content }, status: 'merge', kept: merged.kept }
+}
 
 /** Read-only: how each planned file relates to what is already on disk. */
 export async function classifyFiles(plan: GenerationPlan): Promise<ClassifiedFile[]> {
@@ -38,9 +61,22 @@ export async function classifyFiles(plan: GenerationPlan): Promise<ClassifiedFil
     plan.files.map(async (file): Promise<ClassifiedFile> => {
       const state = await inspectTarget(plan.projectDir, file.path)
       if (state === 'absent') return { file, status: 'new' }
-      return { file, status: file.strategy === 'skip-if-exists' ? 'keep' : 'overwrite' }
+      if (file.strategy === 'skip-if-exists') return { file, status: 'keep' }
+      if (file.strategy === 'json-merge' || file.strategy === 'line-merge') {
+        return classifyMerge(plan, file)
+      }
+      return { file, status: 'overwrite' }
     })
   )
+}
+
+function mergeNotes(classified: readonly ClassifiedFile[]): string[] {
+  return classified
+    .filter((entry) => entry.status === 'merge' && (entry.kept ?? []).length > 0)
+    .map(
+      (entry) =>
+        `${entry.file.path}: kept your ${(entry.kept ?? []).join(', ')} (generated values differ)`
+    )
 }
 
 function conflictSummary(conflicts: readonly ClassifiedFile[]): string {
@@ -101,9 +137,11 @@ export async function applyPlan(plan: GenerationPlan, options: ApplyOptions): Pr
   const entries = classified
     .filter(
       (entry) =>
-        entry.status === 'new' || (entry.status === 'overwrite' && decision === 'overwrite')
+        entry.status === 'new' ||
+        entry.status === 'merge' ||
+        (entry.status === 'overwrite' && decision === 'overwrite')
     )
-    .map((entry) => ({ file: entry.file, replaces: entry.status === 'overwrite' }))
+    .map((entry) => ({ file: entry.file, replaces: entry.status !== 'new' }))
   const stagingDir = await stageFiles(
     entries.map((entry) => entry.file),
     options.tempRoot
@@ -116,10 +154,13 @@ export async function applyPlan(plan: GenerationPlan, options: ApplyOptions): Pr
       (entry) => entry.status === 'keep' || (entry.status === 'overwrite' && decision === 'skip')
     )
     .map((entry) => entry.file.path)
+  const merged = classified.filter((entry) => entry.status === 'merge').map((e) => e.file.path)
   return {
     written: [...outcome.written].sort(),
-    overwritten: [...outcome.overwritten].sort(),
+    overwritten: outcome.overwritten.filter((filePath) => !merged.includes(filePath)).sort(),
     kept: kept.sort(),
+    merged: merged.sort(),
+    notes: mergeNotes(classified),
     backupDir: outcome.backupDir
   }
 }
