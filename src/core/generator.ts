@@ -15,6 +15,7 @@ export interface GenerateProjectInput {
   projectDir: string
   selectedModuleNames: string[]
   moduleOptions?: Readonly<Record<string, unknown>>
+  depth?: 'bare' | 'wired'
   registry: Map<string, DevstackModule>
   packageManager: PackageManager
   options: GeneratorOptions
@@ -47,6 +48,7 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
     projectDir: input.projectDir,
     selectedModuleNames: input.selectedModuleNames,
     moduleOptions: input.moduleOptions,
+    depth: input.depth,
     registry: input.registry,
     packageManager: input.packageManager,
     options: { skipInstall: input.options.skipInstall, skipGit: input.options.skipGit }

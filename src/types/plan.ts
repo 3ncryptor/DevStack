@@ -52,4 +52,6 @@ export interface GenerationPlan {
   files: PlannedFile[]
   commands: PlannedCommand[]
   env: PlannedEnvVar[]
+  /** `bare` or `wired` (task 1.9). */
+  depth: 'bare' | 'wired'
 }

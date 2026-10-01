@@ -16,7 +16,11 @@ function nextSteps(plan: GenerationPlan, options: SummaryOptions): string[] {
   if (options.skipInstall) steps.push(`${plan.packageManager} install`)
   if (plan.env.length > 0) steps.push('cp .env.example .env   # then fill in the values below')
   if (plan.modules.includes('orm-prisma')) steps.push(run('prisma:migrate'))
-  steps.push(run('dev'))
+  if (plan.depth === 'bare') {
+    steps.push('add your code under src/ (generated with --depth bare: tooling only)')
+  } else {
+    steps.push(run('dev'))
+  }
   return steps
 }
 

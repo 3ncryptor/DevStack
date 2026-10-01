@@ -37,7 +37,8 @@ function planFor(projectDir: string, files: PlannedFile[]): GenerationPlan {
     modules: [],
     files,
     commands: [],
-    env: []
+    env: [],
+    depth: 'wired'
   }
 }
 

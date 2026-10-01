@@ -52,6 +52,7 @@ create-devstack-app my-app --preset backend --print-plan json
 | --------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `--preset <name>`           | Use a built-in preset (`backend`)                                                                              |
 | `--pm <name>`               | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm) |
+| `--depth <level>`           | `wired` (default): integration code included. `bare`: config, tooling and folders only                         |
 | `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                    |
 | `--yes`                     | Accept defaults, never ask. Never overwrites existing files                                                    |
 | `--force`                   | Overwrite existing files. Originals are backed up first                                                        |

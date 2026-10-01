@@ -169,6 +169,7 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     projectDir: target.projectDir,
     selectedModuleNames: selectedModules,
     moduleOptions: config === undefined ? {} : splitModuleEntries(config.modules).options,
+    depth: options.depth ?? config?.depth ?? 'wired',
     registry,
     packageManager,
     options,

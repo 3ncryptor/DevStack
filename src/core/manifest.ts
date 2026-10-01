@@ -37,6 +37,7 @@ export const stackConfigSchema = z.strictObject({
       ])
     )
     .min(1, 'List at least one module.'),
+  depth: z.enum(['bare', 'wired']).optional(),
   generatedBy: z.strictObject({ name: z.string(), version: z.string() }).optional()
 })
 
@@ -57,6 +58,7 @@ export interface ManifestInput {
   modules: readonly string[]
   /** Resolved options per module id; recorded so a replay renders the same files. */
   options?: Readonly<Record<string, Record<string, unknown>>>
+  depth: 'bare' | 'wired'
 }
 
 /** The manifest contents; deterministic (no timestamps), so the same stack gives the same file. */
@@ -69,6 +71,7 @@ export function manifestFor(input: ManifestInput): StackConfig {
       const options = input.options?.[id]
       return options === undefined ? id : { id, options }
     }),
+    depth: input.depth,
     generatedBy: { name: CLI_PACKAGE.name, version: CLI_PACKAGE.version }
   }
 }

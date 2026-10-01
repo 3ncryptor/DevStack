@@ -13,7 +13,10 @@ interface PlacedFragment extends SlotContribution {
  * Fragments render in `order`, then module order; identical fragments appear once. What you
  * selected is what is imported; nothing is discovered at runtime.
  */
-export function renderSlots(modules: readonly DevstackModule[]): Record<string, string> {
+export function renderSlots(
+  modules: readonly DevstackModule[],
+  include: (moduleDefinition: DevstackModule, fragment: SlotContribution) => boolean = () => true
+): Record<string, string> {
   const selected = new Set(modules.map((moduleDefinition) => moduleDefinition.id))
   const exposed = new Set(
     modules.flatMap((moduleDefinition) => moduleDefinition.exposesSlots ?? [])
@@ -22,6 +25,7 @@ export function renderSlots(modules: readonly DevstackModule[]): Record<string, 
   const fragments: PlacedFragment[] = modules.flatMap((moduleDefinition, moduleIndex) =>
     (moduleDefinition.slots ?? [])
       .filter((contribution) => contribution.for === undefined || selected.has(contribution.for))
+      .filter((contribution) => include(moduleDefinition, contribution))
       .map((contribution) => ({ ...contribution, owner: moduleDefinition.id, moduleIndex }))
   )
 

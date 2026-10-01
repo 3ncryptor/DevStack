@@ -122,7 +122,13 @@ async function checkCombination(
   const steps: StepResult[] = []
   const generate = await run(
     cliBin,
-    [combination.id, ...(await stackArgs(combination, projectsDir)), '--yes', '--skip-git'],
+    [
+      combination.id,
+      ...(await stackArgs(combination, projectsDir)),
+      ...(combination.depth === undefined ? [] : ['--depth', combination.depth]),
+      '--yes',
+      '--skip-git'
+    ],
     { cwd: projectsDir, timeoutMs: INSTALL_TIMEOUT_MS, env: { npm_config_user_agent: `${pm}/e2e` } }
   )
   steps.push(toStep('generate + install', generate, generate.output))
@@ -135,7 +141,9 @@ async function checkCombination(
   steps.push(...(await runGateScripts(projectDir, pm)))
 
   const built = steps.find((step) => step.step === 'build')?.ok === true
-  if (built) {
+  if (combination.boot === false) {
+    steps.push({ step: 'boot + /health (skipped: no server)', ok: true, durationMs: 0, detail: '' })
+  } else if (built) {
     const startedAt = Date.now()
     const [command, ...args] = await startCommand(projectDir)
     const boot = await bootAndProbe(projectDir, command, args, BOOT_TIMEOUT_MS)

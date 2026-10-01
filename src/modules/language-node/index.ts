@@ -6,6 +6,11 @@ const moduleDefinition: DevstackModule = {
   title: 'Node.js + TypeScript',
   category: 'language',
   language: 'node',
+  depth: 'bare',
+  files: [
+    // placeholder entry point: only without a framework entry point, or when bare has no app code
+    { path: 'src/index.ts', when: { any: [{ not: { has: 'http-framework' } }, { depth: 'bare' }] } }
+  ],
   description: 'Node.js + TypeScript runtime foundation',
   devDependencies: ['@types/node', 'tsx', 'typescript'],
   filesPath: moduleFilesPath('language-node'),

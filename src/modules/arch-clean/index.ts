@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Clean architecture',
   category: 'architecture',
   language: 'node',
+  depth: 'bare',
   description: 'Clean architecture source folder structure',
   requires: ['language-node'],
   filesPath: moduleFilesPath('arch-clean')

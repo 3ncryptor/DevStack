@@ -56,17 +56,28 @@ async function readTemplate(
 }
 
 /** Reads a module's template directory into planned files. */
+/** Where a template lands in the project: dotfile restored, `.eta` suffix removed. */
+export function templateOutputPath(relativePath: string): string {
+  const withoutSuffix = relativePath.endsWith(TEMPLATE_SUFFIX)
+    ? relativePath.slice(0, -TEMPLATE_SUFFIX.length)
+    : relativePath
+  return toProjectRelativePath(withoutSuffix)
+}
+
 export async function moduleTemplateFiles(
   moduleDefinition: DevstackModule,
   sharedContext: Omit<TemplateContext, 'options'>,
-  options: Record<string, unknown> = {}
+  options: Record<string, unknown> = {},
+  include: (outputPath: string) => boolean = () => true
 ): Promise<PlannedFile[]> {
   const context: TemplateContext = { ...sharedContext, options }
   if (moduleDefinition.filesPath === undefined) {
     return []
   }
   const root = moduleDefinition.filesPath
-  const relativePaths = await listFiles(root)
+  const relativePaths = (await listFiles(root)).filter((relativePath) =>
+    include(templateOutputPath(relativePath))
+  )
   return Promise.all(
     relativePaths.map(async (relativePath) => ({
       ...(await readTemplate(root, relativePath, context)),

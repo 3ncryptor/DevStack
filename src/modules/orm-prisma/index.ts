@@ -6,6 +6,9 @@ const moduleDefinition: DevstackModule = {
   title: 'Prisma + PostgreSQL',
   category: 'orm',
   language: 'node',
+  depth: 'bare',
+  // schema and config are tooling; the client wrapper is integration code
+  files: [{ path: 'src/lib/prisma.ts', depth: 'wired' }],
   provides: ['orm', 'db:postgres'],
   description: 'Prisma ORM with starter schema and client setup',
   requires: ['language-node'],

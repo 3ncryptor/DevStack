@@ -1,4 +1,4 @@
-import type { DevstackModule } from '../../types/module'
+import type { Depth, DevstackModule, SlotContribution } from '../../types/module'
 import type { PackageJson } from '../../types/package-json'
 import type { GenerationPlan, PlannedFile } from '../../types/plan'
 import { NODE_LANGUAGE } from '../../adapters/language/node'
@@ -11,6 +11,7 @@ import { CLI_PACKAGE, MANIFEST_PATH, manifestFor } from '../manifest'
 import { planCommands, type CommandOptions } from './commands'
 import { collectEnv, envExample } from './env'
 import { EXECUTABLE_MODE, generatedFile, moduleTemplateFiles } from './files'
+import { conditionContextFor, evaluateCondition, includedAtDepth, moduleDepth } from './conditions'
 import { formatPlannedFiles } from './format'
 import { resolveModuleOptions, type ResolvedModuleOptions } from './options'
 import { pnpmWorkspaceYaml } from './pnpm'
@@ -25,7 +26,43 @@ export interface PlanInput {
   /** Options per module id, e.g. `{ 'security-rate-limit': { limit: 500 } }` (task 1.6). */
   moduleOptions?: Readonly<Record<string, unknown>>
   packageManager: PackageManager
+  /** `bare` (config and tooling) or `wired` (default, adds integration code). */
+  depth?: Depth
   options: CommandOptions
+}
+
+const plannedDepth = (input: PlanInput): Depth => input.depth ?? 'wired'
+
+/** Modules whose files, slots and env appear at this depth (task 1.9). */
+function modulesAtDepth(modules: readonly DevstackModule[], depth: Depth): DevstackModule[] {
+  return modules.filter((moduleDefinition) => includedAtDepth(moduleDepth(moduleDefinition), depth))
+}
+
+function fileIncluded(
+  modules: readonly DevstackModule[],
+  moduleDefinition: DevstackModule,
+  outputPath: string,
+  moduleOptions: ResolvedModuleOptions,
+  depth: Depth
+): boolean {
+  const rule = moduleDefinition.files?.find((candidate) => candidate.path === outputPath)
+  if (!includedAtDepth(rule?.depth ?? moduleDepth(moduleDefinition), depth)) return false
+  if (rule?.when === undefined) return true
+  const context = conditionContextFor(modules, moduleOptions[moduleDefinition.id] ?? {}, depth)
+  return evaluateCondition(rule.when, context)
+}
+
+function fragmentIncluded(
+  modules: readonly DevstackModule[],
+  moduleDefinition: DevstackModule,
+  fragment: SlotContribution,
+  moduleOptions: ResolvedModuleOptions,
+  depth: Depth
+): boolean {
+  if (!includedAtDepth(fragment.depth ?? moduleDepth(moduleDefinition), depth)) return false
+  if (fragment.when === undefined) return true
+  const context = conditionContextFor(modules, moduleOptions[moduleDefinition.id] ?? {}, depth)
+  return evaluateCondition(fragment.when, context)
 }
 
 function has(modules: readonly DevstackModule[], id: string): boolean {
@@ -90,7 +127,8 @@ async function collectFiles(
     projectName: input.projectName,
     packageManager: input.packageManager,
     modules: modules.map((moduleDefinition) => moduleDefinition.id),
-    options: moduleOptions
+    options: moduleOptions,
+    depth: plannedDepth(input)
   })
   add(generatedFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`))
   if (has(modules, 'quality-husky')) {
@@ -102,17 +140,22 @@ async function collectFiles(
     pm: packageManagerAdapter(input.packageManager).docker,
     language: NODE_LANGUAGE,
     modules: modules.map((moduleDefinition) => moduleDefinition.id),
-    slots: renderSlots(modules)
+    slots: renderSlots(modules, (moduleDefinition, fragment) =>
+      fragmentIncluded(modules, moduleDefinition, fragment, moduleOptions, plannedDepth(input))
+    )
   }
-  const env = collectEnv(modules)
+  const env = collectEnv(modulesAtDepth(modules, plannedDepth(input)))
   if (env.length > 0) {
     add(generatedFile('.env.example', envExample(env)))
   }
   for (const moduleDefinition of modules) {
+    const include = (outputPath: string): boolean =>
+      fileIncluded(modules, moduleDefinition, outputPath, moduleOptions, plannedDepth(input))
     for (const file of await moduleTemplateFiles(
       moduleDefinition,
       context,
-      moduleOptions[moduleDefinition.id]
+      moduleOptions[moduleDefinition.id],
+      include
     ))
       add(file)
   }
@@ -146,6 +189,7 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
     modules: modules.map((moduleDefinition) => moduleDefinition.id),
     files: await formatPlannedFiles(files),
     commands: planCommands(modules, input.packageManager, input.options),
-    env: collectEnv(modules)
+    env: collectEnv(modulesAtDepth(modules, plannedDepth(input))),
+    depth: plannedDepth(input)
   }
 }

@@ -33,7 +33,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "8f8bdb819173ff81",
+      "sha256": "03f4996a107cb250",
       "strategy": "create",
     },
     {
@@ -130,12 +130,6 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
       "mode": "644",
       "path": "src/domain/.gitkeep",
       "sha256": "e3b0c44298fc1c14",
-      "strategy": "create",
-    },
-    {
-      "mode": "644",
-      "path": "src/index.ts",
-      "sha256": "43211c37c3a1cec8",
       "strategy": "create",
     },
     {

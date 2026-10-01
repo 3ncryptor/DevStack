@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'MVC',
   category: 'architecture',
   language: 'node',
+  depth: 'bare',
   description: 'MVC oriented source folder structure',
   requires: ['language-node'],
   filesPath: moduleFilesPath('arch-mvc')

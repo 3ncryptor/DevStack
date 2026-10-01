@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Prettier',
   category: 'quality',
   language: 'node',
+  depth: 'bare',
   provides: ['formatter'],
   description: 'Prettier formatting defaults',
   devDependencies: ['prettier'],

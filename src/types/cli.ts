@@ -8,6 +8,8 @@ export const cliOptionSchema = z.strictObject({
   config: z.string().optional(),
   /** Package manager for the generated project; beats config and detection. */
   pm: z.enum(PACKAGE_MANAGERS).optional(),
+  /** `bare` or `wired`; beats the config, default wired. */
+  depth: z.enum(['bare', 'wired']).optional(),
   yes: z.boolean().default(false),
   advanced: z.boolean().default(false),
   inPlace: z.boolean().default(false),

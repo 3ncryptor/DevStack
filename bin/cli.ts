@@ -9,6 +9,7 @@ import type { CliOptions } from '../src/types/cli'
 interface InitFlags {
   preset?: string
   pm?: string
+  depth?: string
   config?: string
   yes: boolean
   advanced: boolean
@@ -36,6 +37,10 @@ program
   .description('Create a new project')
   .argument('[project-name]', 'Name of the project to create')
   .option('--preset <name>', 'Use a predefined preset (example: backend)')
+  .option(
+    '--depth <level>',
+    'bare (config and tooling only) or wired (default, adds integration code)'
+  )
   .option('--pm <name>', 'Package manager for the project: npm, pnpm, yarn or bun')
   .option('--config <file>', "Generate from a stack config, e.g. a project's .devstack/stack.json")
   .option('--yes', 'Skip interactive prompts and use defaults', false)
@@ -48,12 +53,13 @@ program
   .option('--dry-run', 'Show what would be written and run, then stop', false)
   .option('--print-plan [format]', 'Print the plan as text or json and write nothing')
   .action(async (projectName: string | undefined, flags: InitFlags) => {
-    const { printPlan, pm, ...rest } = flags
+    const { printPlan, pm, depth, ...rest } = flags
     await runCreateDevstack({
       projectName,
       options: {
         ...rest,
         pm: pm as CliOptions['pm'],
+        depth: depth as CliOptions['depth'],
         printPlan: printPlan as CliOptions['printPlan']
       }
     })

@@ -20,6 +20,26 @@ export interface ModuleCommand {
   run: readonly [binary: string, ...args: string[]]
 }
 
+/** How much code is generated (D-27, D-39): `bare` is config and tooling, `wired` adds integration code. */
+export type Depth = 'bare' | 'wired'
+
+/** Evaluated against the resolved stack when planning (buildPlan B4). */
+export type Condition =
+  | { has: string }
+  | { framework: string }
+  | { option: string; equals: unknown }
+  | { depth: Depth }
+  | { all: readonly Condition[] }
+  | { any: readonly Condition[] }
+  | { not: Condition }
+
+/** Narrows when one of a module's template files is generated, by its project-relative path. */
+export interface FileRule {
+  path: string
+  when?: Condition
+  depth?: Depth
+}
+
 /** A code fragment rendered into a framework template's slot (D-07, buildPlan B6). */
 export interface SlotContribution {
   slot: string
@@ -28,6 +48,8 @@ export interface SlotContribution {
   order?: number
   /** Only when this module (usually a framework) is selected. */
   for?: string
+  when?: Condition
+  depth?: Depth
 }
 
 /** Closed set of module categories (buildPlan B4, D-12); adding one is a logged decision. */
@@ -71,6 +93,10 @@ export interface DevstackModule {
   language: LanguageId
   /** Capability tags this module satisfies, e.g. `http-framework`, `db:postgres`. */
   provides?: readonly string[]
+  /** Depth of this module's files, slots and env; default `wired`. Tooling modules are `bare`. */
+  depth?: Depth
+  /** Per-file `when`/`depth` overrides for templates under `filesPath`. */
+  files?: readonly FileRule[]
   /** Catalog package names; versions come from src/catalog (D-08). */
   dependencies?: readonly CatalogName[]
   devDependencies?: readonly CatalogName[]
@@ -91,6 +117,20 @@ export interface DevstackModule {
 
 const MODULE_ID = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 
+const depthSchema = z.enum(['bare', 'wired'])
+
+const conditionSchema: z.ZodType<Condition> = z.lazy(() =>
+  z.union([
+    z.strictObject({ has: z.string().min(1) }),
+    z.strictObject({ framework: z.string().min(1) }),
+    z.strictObject({ option: z.string().min(1), equals: z.unknown() }),
+    z.strictObject({ depth: depthSchema }),
+    z.strictObject({ all: z.array(conditionSchema) }),
+    z.strictObject({ any: z.array(conditionSchema) }),
+    z.strictObject({ not: conditionSchema })
+  ])
+)
+
 export const moduleDefinitionSchema = z.object({
   id: z.string().regex(MODULE_ID, 'Module ids are kebab-case, e.g. framework-express.'),
   title: z.string().min(1),
@@ -98,6 +138,16 @@ export const moduleDefinitionSchema = z.object({
   category: z.enum(MODULE_CATEGORIES),
   language: z.literal('node'),
   provides: z.array(z.string().min(1)).optional(),
+  depth: depthSchema.optional(),
+  files: z
+    .array(
+      z.strictObject({
+        path: z.string().min(1),
+        when: conditionSchema.optional(),
+        depth: depthSchema.optional()
+      })
+    )
+    .optional(),
   dependencies: z.array(z.string()).optional(),
   devDependencies: z.array(z.string()).optional(),
   requires: z.array(z.string()).optional(),
@@ -124,7 +174,9 @@ export const moduleDefinitionSchema = z.object({
         slot: z.string().min(1),
         code: z.string(),
         order: z.number().optional(),
-        for: z.string().optional()
+        for: z.string().optional(),
+        when: conditionSchema.optional(),
+        depth: depthSchema.optional()
       })
     )
     .optional(),

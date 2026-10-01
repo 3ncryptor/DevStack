@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'ESLint',
   category: 'quality',
   language: 'node',
+  depth: 'bare',
   provides: ['linter'],
   description: 'ESLint setup for TypeScript projects',
   requires: ['language-node'],

@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Docker and docker compose',
   category: 'devops',
   language: 'node',
+  depth: 'bare',
   description: 'Basic Dockerfile and docker-compose setup',
   filesPath: moduleFilesPath('devops-docker')
 }

@@ -1,5 +1,6 @@
 [
   { "id": "backend-preset", "preset": "backend" },
+  { "id": "backend-bare", "preset": "backend", "depth": "bare", "boot": false },
   {
     "id": "nest-prisma",
     "modules": [
@@ -13,5 +14,10 @@
       "quality-husky",
       "devops-docker"
     ]
+  },
+  {
+    "id": "node-only",
+    "modules": ["language-node", "quality-eslint", "quality-prettier"],
+    "boot": false
   }
 ]
