@@ -16,6 +16,11 @@
     ]
   },
   {
+    "id": "node-prisma",
+    "modules": ["language-node", "orm-prisma", "quality-eslint", "quality-prettier"],
+    "boot": false
+  },
+  {
     "id": "node-only",
     "modules": ["language-node", "quality-eslint", "quality-prettier"],
     "boot": false

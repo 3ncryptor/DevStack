@@ -1,4 +1,5 @@
 import type { DevstackModule } from '../types/module'
+import coreBackend from './core-backend/index'
 import dockerBasic from './devops-docker/index'
 import folderClean from './arch-clean/index'
 import folderMvc from './arch-mvc/index'
@@ -22,6 +23,7 @@ import securityOriginChecks from './security-origin-checks/index'
  */
 export const BUILTIN_MODULES: readonly DevstackModule[] = [
   languageNode,
+  coreBackend,
   frameworkExpress,
   frameworkNest,
   ormPrisma,

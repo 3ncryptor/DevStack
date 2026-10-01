@@ -127,7 +127,9 @@ describe('framework slots (D-07)', () => {
     expect(app).not.toContain('require(')
     expect(app).not.toContain('.eta')
     const mounted = [...app.matchAll(/app\.use\((?:'[^']*',\s*)?(\w+)/g)].map((match) => match[1])
+    // B17.2: request id, logging, security, body parsing, routes, not found, errors
     expect(mounted).toEqual([
+      'requestId',
       'requestLoggerMiddleware',
       'helmetMiddleware',
       'corsMiddleware',
@@ -135,7 +137,9 @@ describe('framework slots (D-07)', () => {
       'apiRateLimiter',
       'compressionMiddleware',
       'express',
-      'healthRouter'
+      'createHealthRouter',
+      'notFound',
+      'errorHandler'
     ])
     expect(app).toContain("import { helmetMiddleware } from './middlewares/helmet.js'")
   })
@@ -147,24 +151,28 @@ describe('framework slots (D-07)', () => {
     expect(fileAt(plan, 'src/app.ts')?.content).not.toContain('helmet')
   })
 
-  it('shuts the server down gracefully on SIGTERM and SIGINT', async () => {
+  it('shuts the server down gracefully on SIGTERM and SIGINT, then runs the disposers', async () => {
     const plan = await buildGenerationPlan(planInput())
-    const server = fileAt(plan, 'src/server.ts')?.content ?? ''
+    const entry = fileAt(plan, 'src/index.ts')?.content ?? ''
+    const shutdown = fileAt(plan, 'src/lib/shutdown.ts')?.content ?? ''
 
-    expect(server).toContain("process.once('SIGTERM'")
-    expect(server).toContain("process.once('SIGINT'")
+    expect(entry).toContain('handleShutdownSignals({')
+    expect(entry).toContain('disposers,')
+    expect(shutdown).toContain("process.on('SIGTERM', shutdown)")
+    expect(shutdown).toContain("process.on('SIGINT', shutdown)")
   })
 
   it('mounts the same middleware in a Nest app', async () => {
     const plan = await buildGenerationPlan(
       planInput({ selectedModuleNames: ['framework-nest', 'security-helmet', 'middleware-cors'] })
     )
+    const app = fileAt(plan, 'src/app.ts')?.content ?? ''
     const main = fileAt(plan, 'src/main.ts')?.content ?? ''
 
-    expect(main).not.toContain('require(')
-    expect(main).toContain('app.use(helmetMiddleware)')
-    expect(main).toContain("process.once('SIGTERM'")
-    expect(main).toContain('app.close()')
+    expect(app).not.toContain('require(')
+    expect(app).toContain('app.use(helmetMiddleware)')
+    expect(app).toContain('app.useGlobalFilters(new ErrorFilter(')
+    expect(main).toContain('close: () => app.close()')
   })
 })
 

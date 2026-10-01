@@ -12,6 +12,8 @@ services:
     environment:
       # the container always listens on 3000 (EXPOSE, healthcheck); PORT only picks the host port
       PORT: 3000
+      # .env is for local development; the container runs the production build
+      NODE_ENV: production
 <% if (hasDatabase) { %>      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
     depends_on:
       db:

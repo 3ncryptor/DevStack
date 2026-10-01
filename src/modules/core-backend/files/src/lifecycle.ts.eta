@@ -1,0 +1,13 @@
+import type { ReadinessCheck } from './lib/readiness.js'
+import type { Disposer } from './lib/shutdown.js'
+<%~ it.slots['lifecycle.imports'] %>
+
+/** Checks behind GET /ready, registered by the selected modules (slot `app.readiness`). */
+export const readinessChecks: readonly ReadinessCheck[] = [
+<%~ it.slots['app.readiness'] %>
+]
+
+/** Run in order on shutdown, after the server stops accepting connections (slot `app.shutdown`). */
+export const disposers: readonly Disposer[] = [
+<%~ it.slots['app.shutdown'] %>
+]

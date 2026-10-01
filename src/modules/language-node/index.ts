@@ -18,7 +18,8 @@ const moduleDefinition: DevstackModule = {
     // generated projects are ESM (D-53); NodeNext resolution needs .js import extensions
     type: 'module',
     scripts: {
-      build: 'tsc -p tsconfig.json',
+      // tsconfig.json also covers tests/ for typecheck and lint; the build compiles src/ only
+      build: 'tsc -p tsconfig.build.json',
       dev: 'tsx watch src/index.ts',
       start: 'node dist/index.js',
       typecheck: 'tsc --noEmit'

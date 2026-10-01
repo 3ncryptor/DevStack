@@ -8,7 +8,7 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   provides: ['http-framework'],
   description: 'NestJS application starter',
-  requires: ['language-node'],
+  requires: ['language-node', 'core-backend'],
   dependencies: [
     '@nestjs/common',
     '@nestjs/core',
@@ -24,16 +24,25 @@ const moduleDefinition: DevstackModule = {
       name: 'PORT',
       description: 'Port the HTTP server listens on',
       example: '3000',
-      required: false
+      required: false,
+      schema: 'z.coerce.number().int().min(1).max(65535).default(3000)'
     }
   ],
   filesPath: moduleFilesPath('framework-nest'),
-  packageJson: {
-    scripts: {
-      dev: 'node --watch --import @swc-node/register/esm-register src/main.ts',
-      start: 'node dist/main.js'
+  // wired only: at bare there is no src/main.ts and language-node's src/index.ts scripts apply
+  scripts: [
+    {
+      name: 'dev',
+      run: 'node --watch --import @swc-node/register/esm-register src/main.ts',
+      depth: 'wired'
+    },
+    { name: 'start', run: 'node dist/main.js', depth: 'wired' },
+    {
+      name: 'test',
+      run: 'node --import @swc-node/register/esm-register --test "tests/**/*.test.ts"',
+      depth: 'wired'
     }
-  }
+  ]
 }
 
 export default moduleDefinition

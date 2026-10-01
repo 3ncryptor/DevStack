@@ -1,20 +1,21 @@
-import type { Depth, DevstackModule, SlotContribution } from '../../types/module'
+import type { Condition, Depth, DevstackModule } from '../../types/module'
 import type { PackageJson } from '../../types/package-json'
-import type { GenerationPlan, PlannedFile } from '../../types/plan'
+import type { GenerationPlan, PlannedEnvVar, PlannedFile } from '../../types/plan'
 import { NODE_LANGUAGE } from '../../adapters/language/node'
 import {
   packageManagerAdapter,
   type PackageManagerId as PackageManager
 } from '../../adapters/package-manager/index'
 import { composeModules } from '../composer'
-import { CLI_PACKAGE, MANIFEST_PATH, manifestFor } from '../manifest'
+import { MANIFEST_PATH, manifestFor } from '../manifest'
 import { planCommands, type CommandOptions } from './commands'
-import { collectEnv, envExample } from './env'
+import { collectEnv, dotEnv, envExample } from './env'
 import { EXECUTABLE_MODE, generatedFile, moduleTemplateFiles } from './files'
 import { conditionContextFor, evaluateCondition, includedAtDepth, moduleDepth } from './conditions'
 import { formatPlannedFiles } from './format'
 import { resolveModuleOptions, type ResolvedModuleOptions } from './options'
 import { pnpmWorkspaceYaml } from './pnpm'
+import { projectReadme } from './readme'
 import { renderSlots } from './slots'
 import type { TemplateContext } from './templates'
 
@@ -38,31 +39,34 @@ function modulesAtDepth(modules: readonly DevstackModule[], depth: Depth): Devst
   return modules.filter((moduleDefinition) => includedAtDepth(moduleDepth(moduleDefinition), depth))
 }
 
-function fileIncluded(
+/** Whether a file, slot fragment or script rule of a module applies to this stack and depth. */
+function ruleIncluded(
   modules: readonly DevstackModule[],
   moduleDefinition: DevstackModule,
-  outputPath: string,
+  rule: { depth?: Depth; when?: Condition } | undefined,
   moduleOptions: ResolvedModuleOptions,
   depth: Depth
 ): boolean {
-  const rule = moduleDefinition.files?.find((candidate) => candidate.path === outputPath)
   if (!includedAtDepth(rule?.depth ?? moduleDepth(moduleDefinition), depth)) return false
   if (rule?.when === undefined) return true
   const context = conditionContextFor(modules, moduleOptions[moduleDefinition.id] ?? {}, depth)
   return evaluateCondition(rule.when, context)
 }
 
-function fragmentIncluded(
+/** Adds each module's conditional scripts (`ScriptRule`) that apply to this stack. */
+function withScriptRules(
+  packageJson: PackageJson,
   modules: readonly DevstackModule[],
-  moduleDefinition: DevstackModule,
-  fragment: SlotContribution,
   moduleOptions: ResolvedModuleOptions,
   depth: Depth
-): boolean {
-  if (!includedAtDepth(fragment.depth ?? moduleDepth(moduleDefinition), depth)) return false
-  if (fragment.when === undefined) return true
-  const context = conditionContextFor(modules, moduleOptions[moduleDefinition.id] ?? {}, depth)
-  return evaluateCondition(fragment.when, context)
+): PackageJson {
+  const extra = modules.flatMap((moduleDefinition) =>
+    (moduleDefinition.scripts ?? [])
+      .filter((rule) => ruleIncluded(modules, moduleDefinition, rule, moduleOptions, depth))
+      .map((rule): [string, string] => [rule.name, rule.run])
+  )
+  if (extra.length === 0) return packageJson
+  return { ...packageJson, scripts: { ...packageJson.scripts, ...Object.fromEntries(extra) } }
 }
 
 function has(modules: readonly DevstackModule[], id: string): boolean {
@@ -82,7 +86,6 @@ function lintStagedConfig(modules: readonly DevstackModule[]): Record<string, st
 }
 
 function huskyFiles(
-  projectName: string,
   modules: readonly DevstackModule[],
   packageManager: PackageManager
 ): PlannedFile[] {
@@ -90,9 +93,6 @@ function huskyFiles(
   const lintStaged = pm.hookCommand('lint-staged')
   const commitlint = `${pm.hookCommand('commitlint')} --edit "$1"`
   return [
-    generatedFile('README.md', `# ${projectName}\n\nGenerated with ${CLI_PACKAGE.name}.\n`, {
-      strategy: 'skip-if-exists'
-    }),
     generatedFile(
       'commitlint.config.cjs',
       "module.exports = { extends: ['@commitlint/config-conventional'] }\n",
@@ -110,19 +110,15 @@ function huskyFiles(
   ]
 }
 
-async function collectFiles(
+/** Files DevStack writes itself rather than from module templates. */
+function generatedFiles(
   input: PlanInput,
   modules: readonly DevstackModule[],
   packageJson: PackageJson,
   buildApprovals: readonly string[],
-  moduleOptions: ResolvedModuleOptions
-): Promise<PlannedFile[]> {
-  const files = new Map<string, PlannedFile>()
-  const add = (file: PlannedFile): void => {
-    files.set(file.path, file) // later contributions replace earlier ones
-  }
-
-  add(generatedFile('package.json', `${JSON.stringify(packageJson, null, 2)}\n`))
+  moduleOptions: ResolvedModuleOptions,
+  env: readonly PlannedEnvVar[]
+): PlannedFile[] {
   const manifest = manifestFor({
     projectName: input.projectName,
     packageManager: input.packageManager,
@@ -130,27 +126,82 @@ async function collectFiles(
     options: moduleOptions,
     depth: plannedDepth(input)
   })
-  add(generatedFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`))
-  if (has(modules, 'quality-husky')) {
-    for (const file of huskyFiles(input.projectName, modules, input.packageManager)) add(file)
-  }
+  return [
+    generatedFile('package.json', `${JSON.stringify(packageJson, null, 2)}\n`),
+    generatedFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`),
+    generatedFile(
+      'README.md',
+      projectReadme({
+        projectName: input.projectName,
+        packageManager: input.packageManager,
+        modules,
+        packageJson,
+        env
+      }),
+      { strategy: 'skip-if-exists' }
+    ),
+    ...(env.length === 0
+      ? []
+      : [
+          generatedFile('.env.example', envExample(env)),
+          // local values only; an existing .env holds the developer's own settings
+          generatedFile('.env', dotEnv(env), { strategy: 'skip-if-exists' })
+        ]),
+    ...(has(modules, 'quality-husky') ? huskyFiles(modules, input.packageManager) : []),
+    ...(input.packageManager === 'pnpm' && buildApprovals.length > 0
+      ? [
+          generatedFile('pnpm-workspace.yaml', pnpmWorkspaceYaml(buildApprovals), {
+            strategy: 'skip-if-exists'
+          })
+        ]
+      : [])
+  ]
+}
+
+async function collectFiles(
+  input: PlanInput,
+  modules: readonly DevstackModule[],
+  packageJson: PackageJson,
+  buildApprovals: readonly string[],
+  moduleOptions: ResolvedModuleOptions
+): Promise<PlannedFile[]> {
+  const depth = plannedDepth(input)
+  const env = collectEnv(modulesAtDepth(modules, depth))
   const context: Omit<TemplateContext, 'options'> = {
     projectName: input.projectName,
     packageManager: input.packageManager,
     pm: packageManagerAdapter(input.packageManager).docker,
     language: NODE_LANGUAGE,
     modules: modules.map((moduleDefinition) => moduleDefinition.id),
+    env,
     slots: renderSlots(modules, (moduleDefinition, fragment) =>
-      fragmentIncluded(modules, moduleDefinition, fragment, moduleOptions, plannedDepth(input))
+      ruleIncluded(modules, moduleDefinition, fragment, moduleOptions, depth)
     )
   }
-  const env = collectEnv(modulesAtDepth(modules, plannedDepth(input)))
-  if (env.length > 0) {
-    add(generatedFile('.env.example', envExample(env)))
+
+  const files = new Map<string, PlannedFile>()
+  const add = (file: PlannedFile): void => {
+    files.set(file.path, file) // later contributions replace earlier ones
+  }
+  for (const file of generatedFiles(
+    input,
+    modules,
+    packageJson,
+    buildApprovals,
+    moduleOptions,
+    env
+  )) {
+    add(file)
   }
   for (const moduleDefinition of modules) {
     const include = (outputPath: string): boolean =>
-      fileIncluded(modules, moduleDefinition, outputPath, moduleOptions, plannedDepth(input))
+      ruleIncluded(
+        modules,
+        moduleDefinition,
+        moduleDefinition.files?.find((rule) => rule.path === outputPath),
+        moduleOptions,
+        depth
+      )
     for (const file of await moduleTemplateFiles(
       moduleDefinition,
       context,
@@ -158,13 +209,6 @@ async function collectFiles(
       include
     ))
       add(file)
-  }
-  if (input.packageManager === 'pnpm' && buildApprovals.length > 0) {
-    add(
-      generatedFile('pnpm-workspace.yaml', pnpmWorkspaceYaml(buildApprovals), {
-        strategy: 'skip-if-exists'
-      })
-    )
   }
   return [...files.values()].sort((a, b) => a.path.localeCompare(b.path))
 }
@@ -177,7 +221,7 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
   const files = await collectFiles(
     input,
     modules,
-    composition.packageJson,
+    withScriptRules(composition.packageJson, modules, moduleOptions, plannedDepth(input)),
     composition.buildApprovals,
     moduleOptions
   )

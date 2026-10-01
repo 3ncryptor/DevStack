@@ -8,14 +8,21 @@ export interface SummaryOptions {
   skipInstall: boolean
 }
 
+/** Scripts of the planned package.json, so steps never name a script that does not exist. */
+function plannedScripts(plan: GenerationPlan): Record<string, string> {
+  const manifest = plan.files.find((file) => file.path === 'package.json')?.content ?? '{}'
+  return (JSON.parse(manifest) as { scripts?: Record<string, string> }).scripts ?? {}
+}
+
 function nextSteps(plan: GenerationPlan, options: SummaryOptions): string[] {
   const pm = packageManagerAdapter(plan.packageManager)
   const run = (script: string): string => [plan.packageManager, ...pm.run(script)].join(' ')
+  const scripts = plannedScripts(plan)
   const steps: string[] = []
   if (!options.inPlace) steps.push(`cd ${projectDirectoryName(plan.projectName)}`)
   if (options.skipInstall) steps.push(`${plan.packageManager} install`)
-  if (plan.env.length > 0) steps.push('cp .env.example .env   # then fill in the values below')
-  if (plan.modules.includes('orm-prisma')) steps.push(run('prisma:migrate'))
+  // B17.1: data services first, as a separate step, then the app
+  if (scripts['db:up'] !== undefined) steps.push(`${run('db:up')}   # start the database`)
   if (plan.depth === 'bare') {
     steps.push('add your code under src/ (generated with --depth bare: tooling only)')
   } else {

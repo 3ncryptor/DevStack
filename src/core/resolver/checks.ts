@@ -130,8 +130,11 @@ export function checkSlots(context: CheckContext): Diagnostic[] {
   )
   return [...context.selected.values()].flatMap((moduleDefinition) =>
     (moduleDefinition.slots ?? [])
+      // a fragment with `when` may not apply (depth, options); renderSlots checks it after
+      // evaluating the condition
       .filter(
         (fragment) =>
+          fragment.when === undefined &&
           (fragment.for === undefined || context.selected.has(fragment.for)) &&
           !exposed.has(fragment.slot)
       )

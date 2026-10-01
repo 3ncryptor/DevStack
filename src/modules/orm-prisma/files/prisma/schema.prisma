@@ -3,14 +3,9 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
-// The connection URL lives in prisma.config.ts (Prisma 7).
+// The connection URL lives in prisma.config.mjs (Prisma 7).
 datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// Add your models here, then run the db:migrate script.

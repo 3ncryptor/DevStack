@@ -1,7 +1,7 @@
 /**
  * Version catalog for generated Node projects (buildPlan B9, D-08). Modules reference packages by
  * name only; every version a generated project installs comes from here. Verified against the
- * npm registry on 2026-09-30.
+ * npm registry on 2026-09-30 (backend baseline packages on 2026-10-01).
  *
  * Generated projects are ESM, which Nest 12 (ESM-only) and Prisma 7 (ESM-first) require (D-53).
  */
@@ -38,6 +38,12 @@ export const NODE_CATALOG = {
   pg: { version: '^8.23.0' },
   '@types/pg': { version: '^8.23.1' },
   dotenv: { version: '^18.0.4' },
+
+  // backend baseline (B17.2)
+  pino: { version: '^10.3.1' },
+  zod: { version: '^4.6.5' },
+  supertest: { version: '^7.3.0' },
+  '@types/supertest': { version: '^7.2.1' },
 
   // middleware and security
   cors: { version: '^2.8.6' },

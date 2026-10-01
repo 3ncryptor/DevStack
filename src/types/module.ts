@@ -13,6 +13,12 @@ export interface EnvDeclaration {
   secret?: boolean
   /** Shown in the summary when the variable is left empty (permissive defaults, D-B10). */
   warnIfUnset?: string
+  /**
+   * Zod expression validating the value in the generated `config/env.ts`, e.g.
+   * `z.coerce.number().int().positive().default(3000)`. Default: a non-empty string, optional
+   * unless `required`.
+   */
+  schema?: string
 }
 
 export interface ModuleCommand {
@@ -36,6 +42,14 @@ export type Condition =
 /** Narrows when one of a module's template files is generated, by its project-relative path. */
 export interface FileRule {
   path: string
+  when?: Condition
+  depth?: Depth
+}
+
+/** A package.json script that depends on the stack, e.g. `db:up` only when compose has a database. */
+export interface ScriptRule {
+  name: string
+  run: string
   when?: Condition
   depth?: Depth
 }
@@ -105,6 +119,11 @@ export interface DevstackModule {
   conflictsWith?: string[]
   filesPath?: string
   packageJson?: PackageJsonFragment
+  /**
+   * Scripts added only when their condition holds; unconditional ones go in `packageJson`. A rule
+   * replaces a `packageJson` script of the same name (e.g. Nest's `dev` over language-node's).
+   */
+  scripts?: readonly ScriptRule[]
   /** Commands run after install, as data (buildPlan B4). `run` is a binary and its arguments. */
   commands?: readonly ModuleCommand[]
   /** Slots this module's templates render, e.g. `app.middleware`. */
@@ -164,7 +183,8 @@ export const moduleDefinitionSchema = z.object({
         example: z.string().optional(),
         required: z.boolean(),
         secret: z.boolean().optional(),
-        warnIfUnset: z.string().optional()
+        warnIfUnset: z.string().optional(),
+        schema: z.string().min(1).optional()
       })
     )
     .optional(),
@@ -175,6 +195,16 @@ export const moduleDefinitionSchema = z.object({
         code: z.string(),
         order: z.number().optional(),
         for: z.string().optional(),
+        when: conditionSchema.optional(),
+        depth: depthSchema.optional()
+      })
+    )
+    .optional(),
+  scripts: z
+    .array(
+      z.strictObject({
+        name: z.string().min(1),
+        run: z.string().min(1),
         when: conditionSchema.optional(),
         depth: depthSchema.optional()
       })

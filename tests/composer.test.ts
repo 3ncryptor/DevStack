@@ -17,7 +17,7 @@ describe('composer', () => {
     const result = composeModules(['framework-express'], registry, 'test-app')
     const moduleNames = result.orderedModules.map((moduleDefinition) => moduleDefinition.id)
 
-    expect(moduleNames).toEqual(['language-node', 'framework-express'])
+    expect(moduleNames).toEqual(['language-node', 'core-backend', 'framework-express'])
   })
 
   it('supports nest framework composition', () => {
@@ -26,7 +26,7 @@ describe('composer', () => {
     const result = composeModules(['framework-nest'], registry, 'nest-app')
     const moduleNames = result.orderedModules.map((moduleDefinition) => moduleDefinition.id)
 
-    expect(moduleNames).toEqual(['language-node', 'framework-nest'])
+    expect(moduleNames).toEqual(['language-node', 'core-backend', 'framework-nest'])
     expect(result.packageJson.dependencies?.['@nestjs/core']).toBeDefined()
   })
 
@@ -71,7 +71,7 @@ describe('composer', () => {
     expect(result.packageJson.dependencies?.express).toBeDefined()
     expect(result.packageJson.dependencies?.['@prisma/client']).toBeDefined()
     expect(result.packageJson.devDependencies?.typescript).toBeDefined()
-    expect(result.packageJson.scripts?.['prisma:generate']).toBe('prisma generate')
+    expect(result.packageJson.scripts?.['db:generate']).toBe('prisma generate')
     expect(result.packageJson.scripts?.format).toBe('prettier . --check')
   })
 

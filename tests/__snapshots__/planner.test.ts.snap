@@ -33,13 +33,19 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "03f4996a107cb250",
+      "sha256": "cc12d427aa2853d0",
       "strategy": "create",
     },
     {
       "mode": "644",
+      "path": ".env",
+      "sha256": "f18cea6c31c3825e",
+      "strategy": "skip-if-exists",
+    },
+    {
+      "mode": "644",
       "path": ".env.example",
-      "sha256": "45be23a9863a636b",
+      "sha256": "dbfb81377f9567ad",
       "strategy": "create",
     },
     {
@@ -93,7 +99,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "d9b57ef4eedfc9df",
+      "sha256": "2a862fd9077b1090",
       "strategy": "create",
     },
     {
@@ -105,19 +111,19 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "prisma/schema.prisma",
-      "sha256": "172880a592de53dd",
+      "sha256": "94c7bc2816e9a523",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "25a6ec74b7b8ad8f",
+      "sha256": "79551bca280cdec9",
       "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
       "path": "src/app.ts",
-      "sha256": "230c07c417571288",
+      "sha256": "0d6d4edfd903d79d",
       "strategy": "create",
     },
     {
@@ -128,8 +134,26 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     },
     {
       "mode": "644",
+      "path": "src/config/env.ts",
+      "sha256": "3ae19ac28fae2f98",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/db/client.ts",
+      "sha256": "c8c15119f39e7ba4",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
       "path": "src/domain/.gitkeep",
       "sha256": "e3b0c44298fc1c14",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/index.ts",
+      "sha256": "7c136dfa5ae4ee4d",
       "strategy": "create",
     },
     {
@@ -146,8 +170,32 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     },
     {
       "mode": "644",
-      "path": "src/lib/prisma.ts",
-      "sha256": "bee0323891a42428",
+      "path": "src/lib/errors.ts",
+      "sha256": "95f97d618572df53",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/logger.ts",
+      "sha256": "b4d54bb2e3d882fc",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/readiness.ts",
+      "sha256": "2213ff0b93c82d9f",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/shutdown.ts",
+      "sha256": "372e0b7a2063268f",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lifecycle.ts",
+      "sha256": "4426122564d53b5f",
       "strategy": "create",
     },
     {
@@ -164,8 +212,20 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     },
     {
       "mode": "644",
+      "path": "src/middlewares/error-handler.ts",
+      "sha256": "995b16d4377983f6",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
       "path": "src/middlewares/helmet.ts",
       "sha256": "fcd2176ce0ddb5f7",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/middlewares/not-found.ts",
+      "sha256": "5a682f6a71a7d664",
       "strategy": "create",
     },
     {
@@ -182,32 +242,55 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     },
     {
       "mode": "644",
+      "path": "src/middlewares/request-id.ts",
+      "sha256": "0dea0abb29e54cf7",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
       "path": "src/middlewares/request-logger.ts",
       "sha256": "08feb1cb39f2edb8",
       "strategy": "create",
     },
     {
       "mode": "644",
-      "path": "src/routes/health.ts",
-      "sha256": "e9174cb18ab3674c",
+      "path": "src/middlewares/validate.ts",
+      "sha256": "41948f20eee5cc29",
       "strategy": "create",
     },
     {
       "mode": "644",
-      "path": "src/server.ts",
-      "sha256": "013c98164a93f787",
+      "path": "src/routes/health.ts",
+      "sha256": "5b724233d0f69fc2",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/types/express.d.ts",
+      "sha256": "ed83a806633a0b2c",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tests/health.test.ts",
+      "sha256": "ee6ae9529789684d",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tsconfig.build.json",
+      "sha256": "561407be5e72f46b",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "tsconfig.json",
-      "sha256": "a8e6f723d9617de5",
+      "sha256": "17e1f6e71c105e40",
       "strategy": "create",
     },
   ],
   "modules": [
     "language-node",
-    "framework-express",
     "orm-prisma",
     "arch-clean",
     "quality-eslint",
@@ -219,6 +302,8 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     "security-helmet",
     "security-origin-checks",
     "security-rate-limit",
+    "core-backend",
+    "framework-express",
   ],
 }
 `;

@@ -15,7 +15,9 @@ const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   quality: ['quality-'],
   middleware: ['middleware-'],
   security: ['security-'],
-  devops: ['devops-']
+  devops: ['devops-'],
+  // baselines every framework requires; never selected on their own
+  misc: ['core-']
 }
 
 describe('module contract v2', () => {

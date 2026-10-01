@@ -4,13 +4,14 @@
  *
  *   npx tsx tests/e2e/harness.ts [--pm npm|pnpm] [--only <id>] [--keep] [--report <file>]
  */
-import { rmSync } from 'node:fs'
+import { existsSync, rmSync } from 'node:fs'
 import { access, mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { parseEnv } from 'node:util'
 
 import { bootAndProbe } from './lib/boot'
-import { parseMatrix, type Combination } from './lib/checks'
+import { parseMatrix, type Combination, type ReadyExpectation } from './lib/checks'
 import { killAllGroups, run } from './lib/process'
 
 type PackageManager = 'npm' | 'pnpm'
@@ -37,6 +38,8 @@ interface CombinationReport {
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..')
 const GATE_SCRIPTS = ['lint', 'format', 'typecheck', 'build'] as const
+/** Run when the project has them; `bare` projects have no tests yet. */
+const OPTIONAL_GATE_SCRIPTS = ['test'] as const
 const REQUIRED_FILES = ['package.json', '.gitignore', 'tsconfig.json'] as const
 const MINUTE_MS = 60_000
 const INSTALL_TIMEOUT_MS = 10 * MINUTE_MS
@@ -146,7 +149,11 @@ async function checkCombination(
   } else if (built) {
     const startedAt = Date.now()
     const [command, ...args] = await startCommand(projectDir)
-    const boot = await bootAndProbe(projectDir, command, args, BOOT_TIMEOUT_MS)
+    const boot = await bootAndProbe(projectDir, command, args, {
+      timeoutMs: BOOT_TIMEOUT_MS,
+      env: await bootEnv(projectDir),
+      ready: readyExpectation(projectDir)
+    })
     const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
     steps.push(
       toStep('boot + /health', { ok: boot.ok, durationMs: Date.now() - startedAt }, detail)
@@ -178,6 +185,29 @@ async function startCommand(projectDir: string): Promise<string[]> {
   return start.split(/\s+/)
 }
 
+/**
+ * The project's .env, as a deployment would provide it. E2E_DATABASE_URL points the app at a
+ * real database (CI service container, or one you started yourself); otherwise none is reachable.
+ */
+async function bootEnv(projectDir: string): Promise<Record<string, string>> {
+  const file = path.join(projectDir, '.env')
+  const fromFile = existsSync(file) ? parseEnv(await readFile(file, 'utf8')) : {}
+  const databaseUrl = process.env.E2E_DATABASE_URL
+  return Object.fromEntries(
+    Object.entries({ ...fromFile, ...(databaseUrl ? { DATABASE_URL: databaseUrl } : {}) }).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined
+    )
+  )
+}
+
+/** With a database module and no reachable database, /ready must say so with a 503. */
+function readyExpectation(projectDir: string): ReadyExpectation {
+  const hasDatabase = existsSync(path.join(projectDir, 'src', 'db', 'client.ts'))
+  return hasDatabase && process.env.E2E_DATABASE_URL === undefined
+    ? { status: 503, failing: ['db'] }
+    : { status: 200, failing: [] }
+}
+
 /** Files every generated project must contain; dotfiles are the ones npm packing drops. */
 async function checkRequiredFiles(projectDir: string): Promise<StepResult> {
   const missing: string[] = []
@@ -204,6 +234,11 @@ async function runGateScripts(projectDir: string, pm: PackageManager): Promise<S
       results.push({ step: script, ok: false, durationMs: 0, detail: 'script missing' })
       continue
     }
+    const result = await run(pm, ['run', script], { cwd: projectDir, timeoutMs: STEP_TIMEOUT_MS })
+    results.push(toStep(script, result, result.output))
+  }
+  for (const script of OPTIONAL_GATE_SCRIPTS) {
+    if (manifest.scripts?.[script] === undefined) continue
     const result = await run(pm, ['run', script], { cwd: projectDir, timeoutMs: STEP_TIMEOUT_MS })
     results.push(toStep(script, result, result.output))
   }

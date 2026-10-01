@@ -19,6 +19,39 @@ export function securityHeaderProblems(headers: Headers): string[] {
   return [...missing, ...leaked]
 }
 
+/** What GET /ready must answer: 200, or 503 with these checks failing (e.g. no database). */
+export interface ReadyExpectation {
+  status: 200 | 503
+  failing: readonly string[]
+}
+
+export function readyProblems(status: number, body: unknown, expected: ReadyExpectation): string[] {
+  const checks = (body as { checks?: Record<string, string> } | null)?.checks ?? {}
+  const failing = Object.entries(checks)
+    .filter(([, value]) => value !== 'ok')
+    .map(([name]) => name)
+    .sort()
+  const problems: string[] = []
+  if (status !== expected.status)
+    problems.push(`GET /ready returned ${status}, expected ${expected.status}`)
+  if (failing.join(',') !== [...expected.failing].sort().join(',')) {
+    problems.push(
+      `GET /ready failing checks: [${failing.join(', ')}], expected [${expected.failing.join(', ')}]`
+    )
+  }
+  return problems
+}
+
+/** Unknown routes answer 404 with the error envelope (B17.2) carrying the request id. */
+export function envelopeProblems(status: number, body: unknown, requestId: string): string[] {
+  const error = (body as { error?: { code?: unknown; requestId?: unknown } } | null)?.error
+  const problems: string[] = []
+  if (status !== 404) problems.push(`unknown route returned ${status}, expected 404`)
+  if (error?.code !== 'NOT_FOUND') problems.push(`unknown route error code: ${String(error?.code)}`)
+  if (error?.requestId !== requestId) problems.push('error envelope does not carry the request id')
+  return problems
+}
+
 export interface Combination {
   id: string
   /** Exactly one of preset / modules. */

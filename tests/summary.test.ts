@@ -44,10 +44,26 @@ describe('buildSummary', () => {
     const summary = buildSummary(plan, noResult, { inPlace: false, skipInstall: false })
 
     expect(summary).toContain('cd summary-app')
-    expect(summary).toContain('cp .env.example .env')
-    expect(summary).toContain('pnpm run prisma:migrate')
     expect(summary).toContain('pnpm run dev')
     expect(summary).not.toContain('pnpm install')
+    // a local .env is generated, so there is nothing to copy
+    expect(summary).not.toContain('cp .env.example')
+  })
+
+  it('starts the database first when compose has one (B17.1), naming only scripts that exist', async () => {
+    const withDocker = buildSummary(
+      await planFor([...BACKEND_MODULES, 'devops-docker'], 'pnpm'),
+      noResult,
+      { inPlace: false, skipInstall: false }
+    )
+    const withoutDocker = buildSummary(await planFor(BACKEND_MODULES, 'pnpm'), noResult, {
+      inPlace: false,
+      skipInstall: false
+    })
+
+    expect(withDocker.indexOf('pnpm run db:up')).toBeGreaterThan(-1)
+    expect(withDocker.indexOf('pnpm run db:up')).toBeLessThan(withDocker.indexOf('pnpm run dev'))
+    expect(withoutDocker).not.toContain('db:up')
   })
 
   it('tells the user to install when installation was skipped', async () => {
@@ -98,8 +114,17 @@ describe('docker-basic templates', () => {
     expect(dockerfile).toContain('USER node')
     expect(dockerfile).toContain('pnpm install --frozen-lockfile')
     expect(dockerfile).toContain('pnpm exec prisma generate')
-    expect(dockerfile).toContain('CMD ["node", "dist/server.js"]')
+    expect(dockerfile).toContain('CMD ["node", "dist/index.js"]')
     expect(dockerfile).toContain('HEALTHCHECK')
+  })
+
+  it('keeps .env, git data and host node_modules out of the build context', async () => {
+    const plan = await planFor(dockerModules(['orm-prisma']), 'pnpm')
+    const ignore = plan.files.find((file) => file.path === '.dockerignore')?.content ?? ''
+
+    for (const entry of ['node_modules', 'dist', '.git', '.env', '.env.*', '!.env.example']) {
+      expect(ignore.split('\n')).toContain(entry)
+    }
   })
 
   it('starts the Nest entry point for Nest projects', async () => {

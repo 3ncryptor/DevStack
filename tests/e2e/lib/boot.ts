@@ -1,6 +1,11 @@
 import net from 'node:net'
 
-import { securityHeaderProblems } from './checks'
+import {
+  envelopeProblems,
+  readyProblems,
+  securityHeaderProblems,
+  type ReadyExpectation
+} from './checks'
 import { describeExit, signalGroup, spawnGroup, type ExitStatus } from './process'
 
 export interface BootResult {
@@ -60,14 +65,48 @@ async function pollHealth(
  * then sends SIGTERM to its process group and requires exit code 0 (graceful shutdown).
  * Callers pass the app's own command (not a package-manager wrapper) so the status is the app's.
  */
+export interface BootOptions {
+  timeoutMs: number
+  /** Extra environment, e.g. the project's .env values (production never loads .env itself). */
+  env: Record<string, string>
+  ready: ReadyExpectation
+}
+
+const PROBE_REQUEST_ID = 'e2e-probe-1'
+
+/** The golden-path routes (B17.2): readiness, error envelope and request id. */
+async function probeGoldenPath(baseUrl: string, expected: ReadyExpectation): Promise<string[]> {
+  try {
+    const ready = await fetch(`${baseUrl}/ready`, { signal: AbortSignal.timeout(5000) })
+    const missing = await fetch(`${baseUrl}/devstack-e2e-missing`, {
+      headers: { 'x-request-id': PROBE_REQUEST_ID },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    })
+    return [
+      ...readyProblems(ready.status, await ready.json(), expected),
+      ...envelopeProblems(missing.status, await missing.json(), PROBE_REQUEST_ID),
+      ...(missing.headers.get('x-request-id') === PROBE_REQUEST_ID
+        ? []
+        : ['x-request-id is not echoed on responses'])
+    ]
+  } catch (error: unknown) {
+    return [`golden-path probe failed: ${error instanceof Error ? error.message : String(error)}`]
+  }
+}
+
 export async function bootAndProbe(
   cwd: string,
   command: string,
   args: string[],
-  timeoutMs: number
+  options: BootOptions
 ): Promise<BootResult> {
+  const { timeoutMs } = options
   const port = await findFreePort()
-  const child = spawnGroup(command, args, cwd, { PORT: String(port), NODE_ENV: 'production' })
+  const child = spawnGroup(command, args, cwd, {
+    ...options.env,
+    PORT: String(port),
+    NODE_ENV: 'production'
+  })
 
   let output = ''
   const append = (chunk: Buffer): void => {
@@ -96,6 +135,7 @@ export async function bootAndProbe(
     problems.push(`GET /health did not return 2xx within ${timeoutMs} ms`)
   } else {
     problems.push(...securityHeaderProblems(response.headers))
+    problems.push(...(await probeGoldenPath(`http://127.0.0.1:${port}`, options.ready)))
   }
 
   const stopped = await stopGroup(child.pid, exited)

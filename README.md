@@ -22,19 +22,29 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
 
 ## What you get
 
-- **Express 5 or NestJS 12** on ESM TypeScript (NodeNext), with a `/health` route and graceful
-  shutdown: `SIGTERM`/`SIGINT` stop accepting connections, finish in-flight requests, and exit 0.
+- **Express 5 or NestJS 12** on ESM TypeScript (NodeNext), built around `createApp(deps)` so tests
+  need no open port:
+  - environment validated with Zod at startup, every missing or invalid variable listed at once;
+  - pino JSON logs with a request id per request (echoed in `x-request-id`);
+  - one error envelope, `{ error: { code, message, requestId, details? } }`, with no stack traces;
+  - `GET /health` (liveness) and `GET /ready` (503 with per-check status while, say, the database
+    is down);
+  - graceful shutdown: `SIGTERM`/`SIGINT` stop accepting connections, finish in-flight requests,
+    close the database, and exit 0;
+  - a Supertest test that passes on day one (`node:test`).
 - **Security middleware you pick, imported explicitly:** Helmet, CORS, origin checks, rate
   limiting, request logging and compression. There is no runtime discovery, so a missing
   middleware is a compile error, never a silent no-op. Open CORS logs a warning at startup.
-- **Prisma 7 + PostgreSQL** (optional): driver adapter, `prisma.config.mjs`, and a client generated
-  into `src/generated` after install.
+- **Prisma 7 + PostgreSQL** (optional): driver adapter, `prisma.config.mjs`, a client generated
+  into `src/generated` after install, wired into `/ready` and shutdown, and `db:*` scripts
+  (`db:up` starts the compose database when Docker is selected).
 - **Tooling that passes on day one:** ESLint 10 (flat config), Prettier, Husky + lint-staged +
   commitlint. Every generated file is formatted with the project's own Prettier config.
 - **Docker** (optional): a multi-stage, non-root Dockerfile for your package manager with a
   `/health` healthcheck, and a compose file that only adds Postgres when you chose a database.
-- **`.env.example`** built from what each module needs, and `.devstack/stack.json`, a record of the
-  stack you can regenerate from.
+- **`.env.example`** built from what each module needs, a local `.env` with working defaults
+  (never overwritten), a README for your stack, and `.devstack/stack.json`, a record of the stack
+  you can regenerate from.
 - **npm, pnpm, yarn or bun**, including pnpm's build-script approval (`allowBuilds`).
 
 ## Usage

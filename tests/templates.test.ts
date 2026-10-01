@@ -13,6 +13,7 @@ const context: TemplateContext = {
   pm: packageManagerAdapter('pnpm').docker,
   language: NODE_LANGUAGE,
   modules: [],
+  env: [],
   options: {},
   slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' }
 }

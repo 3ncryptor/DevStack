@@ -96,9 +96,14 @@ describe('--depth wired (default)', () => {
     expect(files).toContain('src/middlewares/helmet.ts')
   })
 
-  it('no longer writes the unused src/index.ts next to a framework entry point', async () => {
-    expect(paths(await planAt('wired'))).not.toContain('src/index.ts')
-    expect(paths(await planAt('wired', ['language-node']))).toContain('src/index.ts')
+  it('uses the framework entry point as src/index.ts instead of the placeholder', async () => {
+    const wired = await planAt('wired')
+    const nodeOnly = await planAt('wired', ['language-node'])
+    const entry = (plan: GenerationPlan): string =>
+      plan.files.find((file) => file.path === 'src/index.ts')?.content ?? ''
+
+    expect(entry(wired)).toContain('createApp(')
+    expect(entry(nodeOnly)).not.toContain('createApp(')
   })
 })
 

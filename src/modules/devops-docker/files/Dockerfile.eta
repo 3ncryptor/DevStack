@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Multi-stage build: build tools and dev dependencies never reach the runtime image.
-<% const entry = it.modules.includes('framework-nest') ? 'dist/main.js' : 'dist/server.js' %>
+<% const entry = it.modules.includes('framework-nest') ? 'dist/main.js' : 'dist/index.js' %>
 FROM <%= it.language.dockerBaseImage %> AS base
 WORKDIR /app
 <% if (it.pm.setup !== '') { %><%= it.pm.setup %>

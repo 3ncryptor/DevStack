@@ -1,0 +1,30 @@
+// config/env.js comes first: importing it loads .env before other modules read process.env
+import { loadEnvOrExit } from './config/env.js'
+import { createApp } from './app.js'
+import { disposers, readinessChecks } from './lifecycle.js'
+import { createLogger } from './lib/logger.js'
+import { reportReadiness } from './lib/readiness.js'
+import { handleShutdownSignals } from './lib/shutdown.js'
+
+const env = loadEnvOrExit()
+const logger = createLogger(env.LOG_LEVEL)
+const app = createApp({ logger, readinessChecks })
+
+const server = app.listen(env.PORT, (error?: Error) => {
+  if (error) {
+    logger.fatal({ err: error }, `could not listen on port ${env.PORT}`)
+    process.exit(1)
+  }
+  logger.info(`listening on http://localhost:${env.PORT}`)
+  void reportReadiness(readinessChecks, logger)
+})
+
+handleShutdownSignals({
+  logger,
+  disposers,
+  close: () =>
+    new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()))
+      server.closeIdleConnections()
+    })
+})

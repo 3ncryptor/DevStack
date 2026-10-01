@@ -1,5 +1,8 @@
-import type { DevstackModule } from '../../types/module'
+import type { DevstackModule, EnvDeclaration } from '../../types/module'
 import type { PlannedEnvVar } from '../../types/plan'
+
+const defaultSchema = (declaration: EnvDeclaration): string =>
+  declaration.required ? 'z.string().min(1)' : 'z.string().optional()'
 
 /** Merges every module's env declarations; the first module to declare a variable owns its text. */
 export function collectEnv(modules: readonly DevstackModule[]): PlannedEnvVar[] {
@@ -15,6 +18,7 @@ export function collectEnv(modules: readonly DevstackModule[]): PlannedEnvVar[] 
           example: declaration.example,
           required: declaration.required,
           secret: declaration.secret ?? false,
+          schema: declaration.schema ?? defaultSchema(declaration),
           owners: [moduleDefinition.id],
           warnings
         })
@@ -49,5 +53,18 @@ export function envExample(env: readonly PlannedEnvVar[]): string {
     lines.push(`# ${variable.description} (${flags.join(', ')})`)
     lines.push(`${variable.name}=${variable.example ?? ''}`)
   }
+  return `${lines.join('\n')}\n`
+}
+
+/** Local development values (B17.7, D-31): each variable's example, which is a local default. */
+export function dotEnv(env: readonly PlannedEnvVar[]): string {
+  const lines = [
+    '# Local development only; never commit this file. Production sets these in its environment.',
+    ...env.map((variable) =>
+      variable.example === undefined
+        ? `# ${variable.name}=`
+        : `${variable.name}=${variable.example}`
+    )
+  ]
   return `${lines.join('\n')}\n`
 }

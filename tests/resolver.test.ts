@@ -39,6 +39,7 @@ describe('resolveStack with the built-in modules', () => {
   it('pulls in required modules', () => {
     expect(ids(resolveStack(['framework-express'], registry).modules)).toEqual([
       'language-node',
+      'core-backend',
       'framework-express'
     ])
   })
@@ -121,6 +122,17 @@ describe('resolveStack rules', () => {
     expect(codes(resolveStack(['framework-a', 'misc-x'], registry).diagnostics)).toEqual([
       'unknown-slot'
     ])
+  })
+
+  it('leaves conditional fragments to the planner, which evaluates their condition', () => {
+    const registry = registryOf([
+      testModule({
+        id: 'misc-x',
+        slots: [{ slot: 'app.routes', code: 'routes()', when: { has: 'framework-a' } }]
+      })
+    ])
+
+    expect(resolveStack(['misc-x'], registry).diagnostics).toEqual([])
   })
 
   it('reports packages missing from the version catalog', () => {

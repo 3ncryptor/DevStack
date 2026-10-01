@@ -2,6 +2,7 @@ import { Eta } from 'eta'
 
 import type { LanguageAdapter } from '../../adapters/language/node'
 import type { DockerCommands } from '../../adapters/package-manager/index'
+import type { PlannedEnvVar } from '../../types/plan'
 
 /** Only files ending in this suffix are rendered; the suffix is removed (D-10). */
 export const TEMPLATE_SUFFIX = '.eta'
@@ -15,6 +16,8 @@ export interface TemplateContext {
   language: LanguageAdapter
   /** Selected module ids, e.g. for `it.modules.includes('orm-prisma')`. */
   modules: readonly string[]
+  /** Env vars of the modules at this depth, e.g. for the generated `config/env.ts`. */
+  env: readonly PlannedEnvVar[]
   /** Rendered slot output, keyed by slot name (e.g. `app.middleware`). */
   slots: Record<string, string>
   /** Resolved options of the module whose template is rendering (task 1.6). */
