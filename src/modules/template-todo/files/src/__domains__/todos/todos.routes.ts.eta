@@ -1,0 +1,104 @@
+<% const jwt = it.modules.includes('auth-jwt') %>
+<% const authed = jwt || it.modules.includes('auth-better-auth') %>
+<%/* without auth, todos are shared by everyone who can reach the API: no owner */%>
+<% const ownerOf = authed ? 'owner(request)' : 'undefined' %>
+import { Router, type Request, type RequestHandler, type Response } from 'express'
+
+import { ApiSuccess } from '../../lib/api-response.js'
+import { validate } from '../../middlewares/validate.js'
+<% if (authed) { %>
+<% if (jwt) { %>
+import type { AuthService } from '../auth/auth.service.js'
+<% } else { %>
+import type { Auth as AuthService } from '../auth/auth.js'
+<% } %>
+import { requireAuth } from '../auth/require-auth.js'
+<% } %>
+import {
+  createTodoSchema,
+  listTodosSchema,
+  todoParamsSchema,
+  updateTodoSchema,
+  type CreateTodoInput,
+  type ListTodosInput,
+  type UpdateTodoInput
+} from './todos.schemas.js'
+import type { TodosService } from './todos.service.js'
+
+type Handler = (request: Request, response: Response) => Promise<void>
+
+/** Express 5 forwards rejected promises too; this keeps the handlers lint-clean. */
+const handle =
+  (handler: Handler): RequestHandler =>
+  (request, response, next) => {
+    handler(request, response).catch(next)
+  }
+
+const idOf = (request: Request): string => String(request.params.id)
+
+/**
+ * GET/POST /todos, GET/PATCH/DELETE /todos/:id and POST /todos/:id/toggle (B17.8).<% if (authed) { %> Every route
+ * needs a session, and each user sees only their own todos.<% } %>
+ */
+export function createTodosRouter(todos: TodosService<% if (authed) { %>, auth: AuthService<% } %>): Router {
+  const router = Router()
+<% if (authed) { %>
+  router.use(requireAuth(auth))
+  // requireAuth sets request.user on every request that reaches the handlers
+  const owner = (request: Request): string | undefined => request.user?.userId
+<% } %>
+
+  router.get(
+    '/',
+    validate({ query: listTodosSchema }),
+    handle(async (request, response) => {
+      const page = await todos.list(<%~ ownerOf %>, request.query as unknown as ListTodosInput)
+      response.json(new ApiSuccess(page.items, { nextCursor: page.nextCursor }))
+    })
+  )
+
+  router.post(
+    '/',
+    validate({ body: createTodoSchema }),
+    handle(async (request, response) => {
+      const todo = await todos.create(<%~ ownerOf %>, request.body as CreateTodoInput)
+      response.status(201).json(new ApiSuccess(todo))
+    })
+  )
+
+  router.get(
+    '/:id',
+    validate({ params: todoParamsSchema }),
+    handle(async (request, response) => {
+      response.json(new ApiSuccess(await todos.get(<%~ ownerOf %>, idOf(request))))
+    })
+  )
+
+  router.patch(
+    '/:id',
+    validate({ params: todoParamsSchema, body: updateTodoSchema }),
+    handle(async (request, response) => {
+      const changes = request.body as UpdateTodoInput
+      response.json(new ApiSuccess(await todos.update(<%~ ownerOf %>, idOf(request), changes)))
+    })
+  )
+
+  router.post(
+    '/:id/toggle',
+    validate({ params: todoParamsSchema }),
+    handle(async (request, response) => {
+      response.json(new ApiSuccess(await todos.toggle(<%~ ownerOf %>, idOf(request))))
+    })
+  )
+
+  router.delete(
+    '/:id',
+    validate({ params: todoParamsSchema }),
+    handle(async (request, response) => {
+      await todos.remove(<%~ ownerOf %>, idOf(request))
+      response.json(new ApiSuccess(null))
+    })
+  )
+
+  return router
+}

@@ -2,6 +2,7 @@
 <% const title = it.target === 'admin' ? `${it.projectName} admin` : it.projectName %>
 <% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
 <% const guarded = authed && it.target === 'admin' %>
+<% const todos = it.modules.includes('template-todo') && it.target !== 'admin' %>
 <% if (guarded) { %>
 import { RequireAuth } from '../lib/auth/require-auth'
 <% } %>
@@ -31,6 +32,11 @@ export default async function Home() {
       <p data-testid="status" className="text-neutral-600">
         {line}
       </p>
+<% if (todos) { %>
+      <a href="/todos" className="underline">
+        Todos
+      </a>
+<% } %>
 <% if (authed && !guarded) { %>
       <nav className="flex justify-center gap-4 underline">
         <a href="/login">Log in</a>
@@ -43,6 +49,9 @@ export default async function Home() {
     <main>
       <h1><%= title %></h1>
       <p data-testid="status">{line}</p>
+<% if (todos) { %>
+      <a href="/todos">Todos</a>
+<% } %>
 <% if (authed && !guarded) { %>
       <nav>
         <a href="/login">Log in</a> · <a href="/register">Register</a> · <a href="/account">Account</a>

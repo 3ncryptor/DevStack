@@ -41,6 +41,7 @@ const Q = {
   database: 'Database',
   orm: 'ORM',
   auth: 'Authentication',
+  template: 'App template',
   oauth: 'OAuth providers (client id and secret go in .env later)',
   packageManager: 'Package manager',
   architecture: 'Backend architecture',
@@ -54,6 +55,7 @@ const Q = {
   ci: 'Add GitHub Actions CI? (lint, format, typecheck, build, test)',
   asyncHandler:
     'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
+  repoExtras: 'Repo extras',
   next: 'What next?',
   which: 'Which answer?',
   saveAs: 'Save as'
@@ -102,7 +104,8 @@ const NEST: ReadonlyArray<readonly [string, unknown]> = [
   [Q.docker, false],
   [Q.appSetup, []],
   [Q.versioning, false],
-  [Q.ci, false]
+  [Q.ci, false],
+  [Q.repoExtras, []]
 ]
 
 describe('guided wizard (A0.2 order)', () => {
@@ -117,6 +120,7 @@ describe('guided wizard (A0.2 order)', () => {
       Q.framework,
       Q.database,
       Q.auth,
+      Q.template,
       Q.packageManager,
       Q.architecture,
       Q.preCommit,
@@ -128,6 +132,7 @@ describe('guided wizard (A0.2 order)', () => {
       Q.versioning,
       Q.ci,
       Q.asyncHandler,
+      Q.repoExtras,
       Q.next
     ])
     // the defaults: Express, Postgres + Prisma, feature folders, everything recommended on
@@ -170,6 +175,14 @@ describe('guided wizard (A0.2 order)', () => {
     expect(prompter.asked).toContain(Q.oauth)
     expect(result.modules).toContain('auth-better-auth')
     expect(result.moduleOptions['auth-better-auth']).toEqual({ github: true, google: false })
+  })
+
+  it('adds the Todo template when chosen (D-39)', async () => {
+    const prompter = new AnswerPrompter([[Q.template, 'template-todo']])
+
+    const result = await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(result.modules).toContain('template-todo')
   })
 
   it('does not offer auth without Express and Prisma (M3 scope)', async () => {

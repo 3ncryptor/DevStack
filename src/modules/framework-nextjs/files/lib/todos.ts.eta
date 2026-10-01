@@ -1,0 +1,55 @@
+<% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
+import { api } from './api'
+<% if (authed) { %>
+import { auth } from './auth'
+<% } %>
+
+/** A todo as the API returns it (dates as ISO strings). */
+export interface Todo {
+  id: string
+  title: string
+  completed: boolean
+  dueAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type TodoFilter = 'all' | 'active' | 'done'
+
+export interface TodoPage {
+  items: Todo[]
+  nextCursor: string | null
+}
+
+<% if (authed) { %>
+// every call carries the session; an expired one is refreshed once
+const call = <T>(request: () => Promise<T>): Promise<T> => auth.withSession(request)
+<% } else { %>
+const call = <T>(request: () => Promise<T>): Promise<T> => request()
+<% } %>
+
+/** Typed calls to the API's /todos routes (B17.8). */
+export async function listTodos(filter: TodoFilter, cursor?: string): Promise<TodoPage> {
+  const query = new URLSearchParams({ limit: '20' })
+  if (filter !== 'all') query.set('completed', String(filter === 'done'))
+  if (cursor !== undefined) query.set('cursor', cursor)
+  const { data, meta } = await call(() => api.get<Todo[]>(`/todos?${query.toString()}`))
+  const nextCursor = typeof meta?.nextCursor === 'string' ? meta.nextCursor : null
+  return { items: data, nextCursor }
+}
+
+export async function createTodo(title: string): Promise<Todo> {
+  return (await call(() => api.post<Todo>('/todos', { title }))).data
+}
+
+export async function renameTodo(id: string, title: string): Promise<Todo> {
+  return (await call(() => api.patch<Todo>(`/todos/${id}`, { title }))).data
+}
+
+export async function toggleTodo(id: string): Promise<Todo> {
+  return (await call(() => api.post<Todo>(`/todos/${id}/toggle`, {}))).data
+}
+
+export async function deleteTodo(id: string): Promise<void> {
+  await call(() => api.delete<null>(`/todos/${id}`))
+}

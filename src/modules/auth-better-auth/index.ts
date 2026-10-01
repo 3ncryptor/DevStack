@@ -9,7 +9,7 @@ const GOOGLE: Condition = { option: 'google', equals: true }
 
 // Better Auth's tables (1.7) plus the admin plugin's fields, in Prisma (D-69); lowercase table
 // names are what its Prisma adapter expects by default
-const MODELS = `model User {
+const MODELS_TEMPLATE = `model User {
   id            String    @id
   name          String
   email         String    @unique
@@ -23,7 +23,7 @@ const MODELS = `model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
-
+__TODOS__
   @@map("user")
 }
 
@@ -74,6 +74,10 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }`
+
+/** The User model gains its side of Todo.owner when the Todo template is selected (B17.8). */
+const MODELS = MODELS_TEMPLATE.replace('__TODOS__', '')
+const MODELS_WITH_TODOS = MODELS_TEMPLATE.replace('__TODOS__', '  todos         Todo[]\n')
 
 /** Better Auth's handler, before express.json() (it reads the body itself), at {prefix}/auth. */
 const mount = (prefix: string, when: Condition): SlotContribution => ({
@@ -147,7 +151,8 @@ const moduleDefinition: DevstackModule = {
     ...providerEnv('GOOGLE', 'Google', GOOGLE)
   ],
   slots: [
-    { slot: 'prisma.models', code: MODELS },
+    { slot: 'prisma.models', code: MODELS, when: { not: { has: 'template-todo' } } },
+    { slot: 'prisma.models', code: MODELS_WITH_TODOS, when: { has: 'template-todo' } },
     {
       slot: 'app.imports',
       code: [

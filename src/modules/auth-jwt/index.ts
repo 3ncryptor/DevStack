@@ -2,7 +2,7 @@ import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 import { AUTH_OPENAPI_SLOTS } from './openapi'
 
-const USER_MODELS = `enum Role {
+const USER_MODELS_TEMPLATE = `enum Role {
   USER
   ADMIN
 }
@@ -16,7 +16,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
-}
+__TODOS__}
 
 /// One row per issued refresh token, stored as a SHA-256 hash; rotated on every use (D-66).
 model RefreshToken {
@@ -30,6 +30,10 @@ model RefreshToken {
 
   @@index([userId])
 }`
+
+/** The User model gains its side of Todo.owner when the Todo template is selected (B17.8). */
+const USER_MODELS = USER_MODELS_TEMPLATE.replace('__TODOS__', '')
+const USER_MODELS_WITH_TODOS = USER_MODELS_TEMPLATE.replace('__TODOS__', '  todos         Todo[]\n')
 
 /**
  * Email + password auth with JWTs (B17.5, D-66): a short-lived access token and a rotating
@@ -82,7 +86,8 @@ const moduleDefinition: DevstackModule = {
     }
   ],
   slots: [
-    { slot: 'prisma.models', code: USER_MODELS },
+    { slot: 'prisma.models', code: USER_MODELS, when: { not: { has: 'template-todo' } } },
+    { slot: 'prisma.models', code: USER_MODELS_WITH_TODOS, when: { has: 'template-todo' } },
     {
       slot: 'app.imports',
       code: [

@@ -51,7 +51,10 @@ export const PRESETS: Record<string, PresetDefinition> = {
       'devops-github-actions',
       'quality-eslint',
       'quality-prettier',
-      'quality-husky'
+      'quality-husky',
+      'repo-agents-md',
+      'repo-vscode',
+      'repo-github-hygiene'
     ]
   }
 }

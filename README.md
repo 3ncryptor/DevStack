@@ -66,6 +66,12 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
 - **Login pages in the web apps** whenever an API has auth: login, register, account and
   logout, OAuth buttons, and `<RequireAuth>` for protected pages; the admin app only lets admins
   in.
+- **A Todo app to start from** (optional): list, filters, cursor pagination, create, edit,
+  toggle and delete, from the Prisma model to a page in the web app; each user sees only their
+  own todos when you pick auth; `db:seed` adds sample data and a demo user.
+- **Repo extras** (on by default): `AGENTS.md` and `CLAUDE.md` describing your stack for AI
+  assistants, VS Code settings, extensions and a debug launch, and GitHub hygiene files
+  (Dependabot, PR and issue templates, CODEOWNERS).
 - **Tooling that passes on day one:** ESLint 10 (flat config), Prettier, Husky + lint-staged +
   commitlint. Every generated file is formatted with the project's own Prettier config.
 - **Docker** (optional): a multi-stage, non-root Dockerfile for your package manager with a
@@ -165,6 +171,7 @@ npm run e2e                       # smoke: 4 stacks on pnpm, in parallel (~1 min
 npm run e2e:full                  # every stack on npm, pnpm, yarn and bun (~10 min)
 npm run e2e -- --only fullstack-docker --keep   # one stack, keeping the project
 npm run lint && npm run typecheck && npm run build
+npm run graph                     # knowledge graph of the codebase in graphify-out/ (needs uv)
 ```
 
 The end-to-end harness (`tests/e2e`) packs the CLI as npm publishes it, generates every

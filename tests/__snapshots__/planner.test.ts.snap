@@ -375,7 +375,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "ab926b6cccf072a2",
+      "sha256": "a4d2e9c724d58635",
       "strategy": "create",
     },
     {
@@ -383,6 +383,36 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
       "path": ".dockerignore",
       "sha256": "6e493f7af86fb56a",
       "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".github/CODEOWNERS",
+      "sha256": "4ab38df29e540715",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".github/dependabot.yml",
+      "sha256": "460381f65ffdbe6c",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "sha256": "4b62583755a00f05",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "sha256": "20a243cf54ae8b13",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".github/pull_request_template.md",
+      "sha256": "6a17d5ca6e5e265f",
+      "strategy": "create",
     },
     {
       "mode": "644",
@@ -430,6 +460,30 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
       "mode": "644",
       "path": ".secretlintrc.json",
       "sha256": "1c0e86ca72216c22",
+      "strategy": "skip-if-exists",
+    },
+    {
+      "mode": "644",
+      "path": ".vscode/extensions.json",
+      "sha256": "3721e99f092c5dd1",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".vscode/launch.json",
+      "sha256": "c7187eeba471a09e",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".vscode/settings.json",
+      "sha256": "cbf6695d07798f73",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "AGENTS.md",
+      "sha256": "0e0cebef7d734f9d",
       "strategy": "skip-if-exists",
     },
     {
@@ -794,6 +848,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     },
     {
       "mode": "644",
+      "path": "CLAUDE.md",
+      "sha256": "336cc4fbf19beaad",
+      "strategy": "skip-if-exists",
+    },
+    {
+      "mode": "644",
       "path": "commitlint.config.cjs",
       "sha256": "23b0be1422f088bf",
       "strategy": "skip-if-exists",
@@ -849,7 +909,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "c88871aec5254f0a",
+      "sha256": "ddf5ec0c0e8da4c7",
       "strategy": "skip-if-exists",
     },
     {
@@ -875,6 +935,9 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     "security-rate-limit",
     "devops-docker",
     "devops-github-actions",
+    "repo-agents-md",
+    "repo-github-hygiene",
+    "repo-vscode",
     "core-backend",
     "framework-express",
     "api-docs-scalar",

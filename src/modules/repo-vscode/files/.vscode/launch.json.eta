@@ -1,0 +1,28 @@
+<% const monorepo = it.modules.includes('layout-monorepo') %>
+<% const apiDir = monorepo ? '${workspaceFolder}/apps/api' : '${workspaceFolder}' %>
+<% const configurations = [
+  {
+    // the debugger attaches to the API started by its own dev script (breakpoints in src/)
+    name: 'Debug the API',
+    type: 'node',
+    request: 'launch',
+    runtimeExecutable: it.packageManager,
+    runtimeArgs: ['run', 'dev'],
+    cwd: apiDir,
+    console: 'integratedTerminal',
+    skipFiles: ['<node_internals>/**']
+  },
+  ...(it.modules.includes('framework-nextjs')
+    ? [{
+        name: 'Debug the web app (server)',
+        type: 'node',
+        request: 'launch',
+        runtimeExecutable: it.packageManager,
+        runtimeArgs: ['run', 'dev'],
+        cwd: '${workspaceFolder}/apps/web',
+        console: 'integratedTerminal',
+        skipFiles: ['<node_internals>/**']
+      }]
+    : [])
+] %>
+<%~ JSON.stringify({ version: '0.2.0', configurations }, null, 2) %>

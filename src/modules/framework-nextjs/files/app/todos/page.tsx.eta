@@ -1,0 +1,194 @@
+<% const tailwind = it.modules.includes('ui-tailwind') %>
+<% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
+<% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
+'use client'
+
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+
+import { ApiClientError } from '<%= it.packageNames.shared %>'
+
+<% if (authed) { %>
+import { RequireAuth } from '../../lib/auth/require-auth'
+<% } %>
+import {
+  createTodo,
+  deleteTodo,
+  listTodos,
+  renameTodo,
+  toggleTodo,
+  type Todo,
+  type TodoFilter
+} from '../../lib/todos'
+
+const FILTERS: Array<{ value: TodoFilter; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'done', label: 'Done' }
+]
+
+const messageOf = (failure: unknown): string =>
+  failure instanceof ApiClientError ? failure.message : 'Something went wrong; try again.'
+
+function Todos() {
+  const [filter, setFilter] = useState<TodoFilter>('all')
+  const [todos, setTodos] = useState<Todo[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [title, setTitle] = useState('')
+  const [editing, setEditing] = useState<{ id: string; title: string }>()
+  const [error, setError] = useState<string>()
+
+  const load = useCallback(
+    (cursor?: string) => {
+      listTodos(filter, cursor).then(
+        (page) => {
+          setTodos((current) => (cursor === undefined ? page.items : [...current, ...page.items]))
+          setNextCursor(page.nextCursor)
+        },
+        (failure: unknown) => {
+          setError(messageOf(failure))
+        }
+      )
+    },
+    [filter]
+  )
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  /** Runs a change, then shows the first page again: simple, and always what the API holds. */
+  function change(action: () => Promise<unknown>) {
+    setError(undefined)
+    action().then(
+      () => {
+        load()
+      },
+      (failure: unknown) => {
+        setError(messageOf(failure))
+      }
+    )
+  }
+
+  function add(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const trimmed = title.trim()
+    if (trimmed === '') return
+    change(() => createTodo(trimmed).then(() => setTitle('')))
+  }
+
+  function rename(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (editing === undefined) return
+    const { id, title: newTitle } = editing
+    change(() => renameTodo(id, newTitle.trim()).then(() => setEditing(undefined)))
+  }
+
+  return (
+    <main<%~ cls('mx-auto grid max-w-xl gap-4 p-6') %>>
+      <h1<%~ cls('text-2xl font-semibold') %>>Todos</h1>
+      <form onSubmit={add}<%~ cls('flex gap-2') %>>
+        <input
+          aria-label="New todo"
+          value={title}
+          maxLength={200}
+          onChange={(event) => {
+            setTitle(event.target.value)
+          }}
+          placeholder="What needs doing?"<%~ cls('flex-1 rounded border px-3 py-2') %>
+        />
+        <button type="submit"<%~ cls('rounded bg-neutral-900 px-3 py-2 text-white') %>>
+          Add
+        </button>
+      </form>
+      <div role="group" aria-label="Filter"<%~ cls('flex gap-2') %>>
+        {FILTERS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={filter === option.value}
+            onClick={() => {
+              setFilter(option.value)
+            }}<%~ cls('rounded border px-2 py-1 aria-pressed:bg-neutral-200') %>
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      {error === undefined ? null : (
+        <p role="alert"<%~ cls('text-red-600') %>>
+          {error}
+        </p>
+      )}
+      <ul<%~ cls('grid gap-2') %>>
+        {todos.map((todo) => (
+          <li key={todo.id}<%~ cls('flex items-center gap-2') %>>
+            <input
+              type="checkbox"
+              aria-label={`Done: ${todo.title}`}
+              checked={todo.completed}
+              onChange={() => {
+                change(() => toggleTodo(todo.id))
+              }}
+            />
+            {editing?.id === todo.id ? (
+              <form onSubmit={rename}<%~ cls('flex flex-1 gap-2') %>>
+                <input
+                  aria-label="Title"
+                  value={editing.title}
+                  maxLength={200}
+                  onChange={(event) => {
+                    setEditing({ id: todo.id, title: event.target.value })
+                  }}<%~ cls('flex-1 rounded border px-2 py-1') %>
+                />
+                <button type="submit">Save</button>
+              </form>
+            ) : (
+              <span<%~ cls('flex-1') %> style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>
+                {todo.title}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setEditing({ id: todo.id, title: todo.title })
+              }}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                change(() => deleteTodo(todo.id))
+              }}
+            >
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+      {nextCursor === null ? null : (
+        <button
+          type="button"
+          onClick={() => {
+            load(nextCursor)
+          }}
+        >
+          Load more
+        </button>
+      )}
+    </main>
+  )
+}
+
+/** The Todo template's page (B17.8): list, filter, add, rename, toggle and delete. */
+export default function TodosPage() {
+<% if (authed) { %>
+  return (
+    <RequireAuth>
+      <Todos />
+    </RequireAuth>
+  )
+<% } else { %>
+  return <Todos />
+<% } %>
+}

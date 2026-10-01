@@ -1,0 +1,15 @@
+# Weekly dependency updates, grouped so they arrive as a few reviewable pull requests.
+version: 2
+updates:
+  - package-ecosystem: '<%= it.packageManager === 'bun' ? 'bun' : 'npm' %>'
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ['minor', 'patch']
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly

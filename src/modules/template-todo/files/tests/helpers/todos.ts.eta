@@ -1,0 +1,53 @@
+import { randomUUID } from 'node:crypto'
+
+import type { Todo, TodoRepository } from '../../src/<%= it.domainsDir %>/todos/todo.repository.js'
+import { createTodosService, type TodosService } from '../../src/<%= it.domainsDir %>/todos/todos.service.js'
+
+/** The todos repository in memory, so tests need no database (B17.6). */
+export function memoryTodoRepository(): TodoRepository {
+  const todos = new Map<string, Todo>()
+  let clock = 0
+  // strictly increasing timestamps keep "newest first" stable within one millisecond
+  const tick = (): Date => new Date(Date.UTC(2026, 0, 1) + clock++)
+  const newestFirst = (a: Todo, b: Todo) => b.createdAt.getTime() - a.createdAt.getTime()
+  return {
+    list(query) {
+      const matching = [...todos.values()]
+        .filter((todo) => query.ownerId === undefined || todo.ownerId === query.ownerId)
+        .filter((todo) => query.completed === undefined || todo.completed === query.completed)
+        .filter(
+          (todo) =>
+            query.dueBefore === undefined || (todo.dueAt !== null && todo.dueAt < query.dueBefore)
+        )
+        .sort(newestFirst)
+      const start =
+        query.cursor === undefined ? 0 : matching.findIndex((todo) => todo.id === query.cursor) + 1
+      const items = matching.slice(start, start + query.limit)
+      const more = matching.length > start + query.limit
+      return Promise.resolve({ items, nextCursor: more ? (items.at(-1)?.id ?? null) : null })
+    },
+    get: (id) => Promise.resolve(todos.get(id) ?? null),
+    create(todo) {
+      const at = tick()
+      const created: Todo = { ...todo, id: randomUUID(), completed: false, createdAt: at, updatedAt: at }
+      todos.set(created.id, created)
+      return Promise.resolve(created)
+    },
+    update(id, changes) {
+      const existing = todos.get(id)
+      if (existing === undefined) return Promise.reject(new Error(`No todo ${id}`))
+      const updated: Todo = { ...existing, ...changes, updatedAt: tick() }
+      todos.set(id, updated)
+      return Promise.resolve(updated)
+    },
+    delete(id) {
+      todos.delete(id)
+      return Promise.resolve()
+    }
+  }
+}
+
+/** The todos service on an in-memory repository; `testApp()` uses it by default. */
+export function testTodosService(repository: TodoRepository = memoryTodoRepository()): TodosService {
+  return createTodosService(repository)
+}

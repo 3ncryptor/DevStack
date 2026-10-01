@@ -1,6 +1,7 @@
 import { PACKAGE_MANAGERS, type PackageManagerId } from '../../adapters/package-manager/index'
 import type { Choice, Prompter } from '../../intake/prompter'
 import type { DevstackModule } from '../../types/module'
+import { previewNote } from './folder-previews'
 
 /**
  * The wizard's questions as data, in the A0.2 order (D-34), limited to the modules that exist
@@ -21,11 +22,13 @@ export interface WizardAnswers {
   orm?: string
   auth?: string
   oauthProviders?: string[]
+  template?: string
   packageManager?: PackageManagerId
   architecture?: string
   preCommit?: boolean
   docker?: boolean
   appSetup?: string[]
+  repoExtras?: string[]
   rateLimitAlgorithm?: string
   tests?: string
   apiVersioning?: boolean
@@ -102,11 +105,55 @@ const AUTHS: Choice<string>[] = [
   }
 ]
 
+/** Question 10 (D-39): one domain end to end; Weather comes with M4. */
+const TEMPLATES: Choice<string>[] = [
+  { value: NONE, label: 'None (clean setup)' },
+  {
+    value: 'template-todo',
+    label: 'Todo app',
+    hint: 'CRUD, filters, pagination, per user with auth, a page'
+  }
+]
+
 /** Question 7b (D-38): social sign-in through Better Auth; credentials stay blank in .env. */
 const OAUTH_PROVIDERS: Choice<string>[] = [
   { value: 'github', label: 'GitHub' },
   { value: 'google', label: 'Google' }
 ]
+
+/** Question 18 (D-45): files around the code; all recommended. */
+const REPO_EXTRAS: Choice<string>[] = [
+  { value: 'repo-agents-md', label: 'AGENTS.md + CLAUDE.md', hint: 'context for AI assistants' },
+  { value: 'repo-vscode', label: 'VS Code setup', hint: 'format on save, extensions, debugging' },
+  {
+    value: 'repo-github-hygiene',
+    label: 'GitHub hygiene files',
+    hint: 'Dependabot, PR and issue templates, CODEOWNERS'
+  }
+]
+
+const repoExtrasStep: WizardStep = {
+  key: 'repoExtras',
+  label: 'Repo extras',
+  applies: () => true,
+  ask: async (prompter, answers, environment) => {
+    const choices = availableIn(environment.registry, REPO_EXTRAS)
+    return {
+      ...answers,
+      repoExtras: await prompter.multiselect({
+        message: 'Repo extras',
+        choices,
+        initialValues: answers.repoExtras ?? choices.map((choice) => choice.value),
+        required: false
+      })
+    }
+  },
+  describe: (answers) =>
+    (answers.repoExtras ?? []).length === 0
+      ? 'None'
+      : (answers.repoExtras ?? []).map((id) => labelOf(REPO_EXTRAS, id)).join(', '),
+  modules: (answers) => [...(answers.repoExtras ?? [])]
+}
 
 const oauthProvidersStep: WizardStep = {
   key: 'oauthProviders',
@@ -139,7 +186,7 @@ const ARCHITECTURES: Choice<string>[] = [
   { value: 'arch-feature', label: 'Feature-scoped', hint: 'src/features/<name> per domain' },
   { value: 'arch-clean', label: 'Clean architecture' },
   { value: 'arch-mvc', label: 'MVC' },
-  { value: NONE, label: 'Flat (no extra folders)' }
+  { value: 'arch-flat', label: 'Flat (no extra folders)' }
 ]
 
 /** Question 4b (D-64): folders of every web app. */
@@ -149,7 +196,7 @@ const FRONTEND_ARCHITECTURES: Choice<string>[] = [
     label: 'Feature-based',
     hint: 'features/<name>, components/, hooks/'
   },
-  { value: 'arch-web-layer', label: 'Layer-based', hint: 'components/, services/, utils/' },
+  { value: 'arch-web-layer', label: 'Layer-based', hint: 'components/, hooks/, utils/' },
   { value: 'arch-web-atomic', label: 'Atomic design', hint: 'atoms, molecules, organisms' }
 ]
 
@@ -198,6 +245,7 @@ interface SelectStepDefinition {
     | 'database'
     | 'orm'
     | 'auth'
+    | 'template'
     | 'architecture'
     | 'rateLimitAlgorithm'
     | 'tests'
@@ -208,6 +256,8 @@ interface SelectStepDefinition {
   applies: (answers: WizardAnswers) => boolean
   /** Whether the chosen value is a module id that belongs in the stack. */
   addsModule: boolean
+  /** Show each choice's folder tree before asking (task 3.8). */
+  preview?: boolean
 }
 
 function selectStep(definition: SelectStepDefinition): WizardStep {
@@ -223,6 +273,7 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
     options,
     ask: async (prompter, answers, environment) => {
       const choices = options(answers, environment)
+      if (definition.preview === true) prompter.note(previewNote(choices), 'Folder layouts')
       const value = await prompter.select({
         message: definition.message,
         choices,
@@ -387,6 +438,7 @@ export const STEPS: readonly WizardStep[] = [
     label: 'Frontend architecture',
     message: 'Frontend architecture',
     choices: FRONTEND_ARCHITECTURES,
+    preview: true,
     defaultValue: 'arch-web-feature',
     applies: isFullstack,
     addsModule: true
@@ -420,12 +472,23 @@ export const STEPS: readonly WizardStep[] = [
     addsModule: true
   }),
   oauthProvidersStep,
+  selectStep({
+    key: 'template',
+    label: 'App template',
+    message: 'App template',
+    choices: TEMPLATES,
+    defaultValue: NONE,
+    // Todo needs a database; Express + Prisma for now (M3)
+    applies: (answers) => answers.framework === 'framework-express' && answers.orm === 'orm-prisma',
+    addsModule: true
+  }),
   packageManagerStep,
   selectStep({
     key: 'architecture',
     label: 'Architecture',
     message: 'Backend architecture',
     choices: ARCHITECTURES,
+    preview: true,
     defaultValue: 'arch-feature',
     // NestJS brings its own module layout
     applies: (answers) => answers.framework === 'framework-express',
@@ -488,7 +551,8 @@ export const STEPS: readonly WizardStep[] = [
     moduleId: 'middleware-async-handler',
     defaultValue: false,
     applies: (answers) => answers.framework === 'framework-express'
-  })
+  }),
+  repoExtrasStep
 ]
 
 /** Options the answers set, per module id; steps that do not apply set nothing. */
@@ -549,7 +613,9 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     auth: firstOf(modules, AUTHS) ?? NONE,
     // a module list carries no options: providers start unselected
     oauthProviders: [],
-    architecture: firstOf(modules, ARCHITECTURES) ?? NONE,
+    template: firstOf(modules, TEMPLATES) ?? NONE,
+    repoExtras: REPO_EXTRAS.map((choice) => choice.value).filter((id) => modules.includes(id)),
+    architecture: firstOf(modules, ARCHITECTURES) ?? 'arch-flat',
     preCommit: modules.includes('quality-husky'),
     docker: modules.includes('devops-docker'),
     asyncHandler: modules.includes('middleware-async-handler'),

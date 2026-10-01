@@ -1,3 +1,11 @@
 dist
 node_modules
 *.log
+graphify-out
+# written and updated by graphify (npm run graph)
+.agents
+.claude
+.codex
+.cursor
+AGENTS.md
+CLAUDE.md

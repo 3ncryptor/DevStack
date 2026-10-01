@@ -62,7 +62,8 @@
       "ui-tailwind",
       "quality-eslint",
       "quality-prettier",
-      "quality-husky"
+      "quality-husky",
+      "template-todo"
     ]
   },
   {
@@ -132,7 +133,10 @@
       "devops-github-actions",
       "quality-eslint",
       "quality-prettier",
-      "quality-husky"
+      "quality-husky",
+      "repo-agents-md",
+      "repo-vscode",
+      "repo-github-hygiene"
     ],
     "smoke": true
   },
@@ -188,7 +192,8 @@
       "quality-prettier",
       "quality-husky",
       "auth-jwt",
-      "app-admin"
+      "app-admin",
+      "template-todo"
     ]
   },
   {
@@ -212,7 +217,8 @@
         "options": {
           "github": true
         }
-      }
+      },
+      "template-todo"
     ]
   },
   {

@@ -5,6 +5,8 @@ import type { Condition, DevstackModule } from '../../types/module'
 const AUTH: Condition = { has: 'auth' }
 /** Registration and the account page are for the web app; admins are promoted (D-67). */
 const WEB_AUTH: Condition = { all: [AUTH, { target: 'frontend' }] }
+/** The Todo template's page lives in the web app (B17.8). */
+const WEB_TODO: Condition = { all: [{ has: 'template-todo' }, { target: 'frontend' }] }
 
 const moduleDefinition: DevstackModule = {
   id: 'framework-nextjs',
@@ -27,7 +29,9 @@ const moduleDefinition: DevstackModule = {
     { path: 'lib/auth/require-auth.tsx', when: AUTH },
     { path: 'app/login/page.tsx', when: AUTH },
     { path: 'app/register/page.tsx', when: WEB_AUTH },
-    { path: 'app/account/page.tsx', when: WEB_AUTH }
+    { path: 'app/account/page.tsx', when: WEB_AUTH },
+    { path: 'lib/todos.ts', when: WEB_TODO },
+    { path: 'app/todos/page.tsx', when: WEB_TODO }
   ],
   env: [
     {

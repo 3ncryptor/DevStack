@@ -13,6 +13,7 @@ import { composeModules, composeProjectPackageJson } from '../composer'
 import { MANIFEST_PATH, manifestFor } from '../manifest'
 import { planCommands, type CommandOptions } from './commands'
 import { collectEnv, dotEnv, envExample } from './env'
+import { agentsMd, CLAUDE_MD } from './agents-md'
 import { generatedFile, moduleTemplateFiles, resolvePathTokens } from './files'
 import { has, huskyFiles } from './husky'
 import { conditionContextFor, evaluateCondition, includedAtDepth, moduleDepth } from './conditions'
@@ -281,6 +282,28 @@ function rootFiles(
       }),
       { strategy: 'skip-if-exists' }
     ),
+    // AI assistant context (B17.9, D-45); an existing AGENTS.md or CLAUDE.md is the developer's
+    ...(has(context.modules, 'repo-agents-md')
+      ? [
+          generatedFile(
+            'AGENTS.md',
+            agentsMd({
+              projectName: input.projectName,
+              packageManager: input.packageManager,
+              modules: context.modules,
+              packageJson: rootPackageJson,
+              targetDirs: Object.fromEntries(
+                context.targets
+                  .filter((target) => target.dir !== '')
+                  .map((target) => [target.role, target.dir])
+              ),
+              domainsDir: context.domainsDir
+            }),
+            { strategy: 'skip-if-exists' }
+          ),
+          generatedFile('CLAUDE.md', CLAUDE_MD, { strategy: 'skip-if-exists' })
+        ]
+      : []),
     ...(has(context.modules, 'quality-husky')
       ? huskyFiles(context.modules, input.packageManager, context.monorepo)
       : []),

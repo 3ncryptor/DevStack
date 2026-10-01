@@ -4,7 +4,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'coverage', 'src/modules/**/files/**'] },
+  { ignores: ['dist', 'node_modules', 'coverage', 'graphify-out', 'src/modules/**/files/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {

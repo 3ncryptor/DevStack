@@ -24,7 +24,8 @@
     "e2e": "tsx tests/e2e/harness.ts --tier smoke",
     "e2e:full": "tsx tests/e2e/harness.ts --tier full",
     "prepack": "npm run build",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "graph": "bash scripts/graphify.sh"
   },
   "engines": {
     "node": ">=22.12.0"

@@ -1,0 +1,52 @@
+<% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
+import type { Todo, TodoRepository } from '../../<%= it.domainsDir %>/todos/todo.repository.js'
+import type { Todo as TodoRow } from '../../generated/prisma/client.js'
+import { prisma } from '../client.js'
+
+<% if (authed) { %>
+const toTodo = (row: TodoRow): Todo => row
+<% } else { %>
+// without auth the table has no owner column
+const toTodo = (row: TodoRow): Todo => ({ ...row, ownerId: null })
+<% } %>
+
+/** The todos repository on Prisma (B17.6), newest first with cursor pagination. */
+export const prismaTodoRepository: TodoRepository = {
+  async list(query) {
+    const rows = await prisma.todo.findMany({
+      where: {
+<% if (authed) { %>
+        ownerId: query.ownerId,
+<% } %>
+        completed: query.completed,
+        dueAt: query.dueBefore === undefined ? undefined : { lt: query.dueBefore }
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      // one extra row tells whether there is a next page
+      take: query.limit + 1,
+      ...(query.cursor === undefined ? {} : { cursor: { id: query.cursor }, skip: 1 })
+    })
+    const items = rows.slice(0, query.limit).map(toTodo)
+    return { items, nextCursor: rows.length > query.limit ? (items.at(-1)?.id ?? null) : null }
+  },
+  async get(id) {
+    const row = await prisma.todo.findUnique({ where: { id } })
+    return row === null ? null : toTodo(row)
+  },
+  async create(todo) {
+<% if (authed) { %>
+    if (todo.ownerId === null) throw new Error('A todo needs an owner when auth is on')
+    return toTodo(
+      await prisma.todo.create({ data: { title: todo.title, dueAt: todo.dueAt, ownerId: todo.ownerId } })
+    )
+<% } else { %>
+    return toTodo(await prisma.todo.create({ data: { title: todo.title, dueAt: todo.dueAt } }))
+<% } %>
+  },
+  async update(id, changes) {
+    return toTodo(await prisma.todo.update({ where: { id }, data: changes }))
+  },
+  async delete(id) {
+    await prisma.todo.delete({ where: { id } })
+  }
+}

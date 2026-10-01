@@ -1,0 +1,142 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
+<% const awaitTest = vitest ? '' : 'await ' %>
+<% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
+<% const jwt = it.modules.includes('auth-jwt') %>
+<% const authed = jwt || it.modules.includes('auth-better-auth') %>
+import assert from 'node:assert/strict'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+
+import type { Express } from 'express'
+import request<% if (authed) { %>, { type Response }<% } %> from 'supertest'
+
+import { testApp } from './helpers/app.js'
+
+const TODOS = '<%= base %>/todos'
+
+interface TodoBody {
+  id: string
+  title: string
+  completed: boolean
+}
+
+const dataOf = <T>(response: { body: unknown }): T => (response.body as { data: T }).data
+
+<% if (authed) { %>
+/** The session cookies a response sets, as one Cookie header to send back. */
+function cookies(response: Response): string {
+  const set = (response.headers['set-cookie'] as unknown as string[] | undefined) ?? []
+  return set.map((cookie) => cookie.split(';')[0]).join('; ')
+}
+
+/** Signs a new user up and returns their session cookie. */
+async function signUp(app: Express, email: string): Promise<string> {
+  const response = await request(app)
+<% if (jwt) { %>
+    .post('<%= base %>/auth/register')
+<% } else { %>
+    .post('<%= base %>/auth/sign-up/email')
+    .set('origin', 'http://localhost:3000')
+<% } %>
+    .send({ email, password: 'correct horse battery staple', name: 'Test' })
+  assert.ok(response.status < 300, `sign-up failed: ${response.status}`)
+  return cookies(response)
+}
+
+/** A client for one user: every request carries their session. */
+async function clientFor(app: Express, email: string) {
+  const session = await signUp(app, email)
+  return {
+    get: (path: string) => request(app).get(path).set('cookie', session),
+    post: (path: string, body?: object) => request(app).post(path).set('cookie', session).send(body),
+    patch: (path: string, body: object) => request(app).patch(path).set('cookie', session).send(body),
+    delete: (path: string) => request(app).delete(path).set('cookie', session)
+  }
+}
+
+const client = (app: Express) => clientFor(app, 'ada@example.com')
+<% } else { %>
+/** A client for the shared todos (no auth). */
+function client(app: Express) {
+  return Promise.resolve({
+    get: (path: string) => request(app).get(path),
+    post: (path: string, body?: object) => request(app).post(path).send(body),
+    patch: (path: string, body: object) => request(app).patch(path).send(body),
+    delete: (path: string) => request(app).delete(path)
+  })
+}
+<% } %>
+
+<%= awaitTest %>test('creates, reads, renames, toggles and deletes a todo', async () => {
+  const api = await client(testApp())
+
+  const created = await api.post(TODOS, { title: 'Write tests' })
+  const { id } = dataOf<TodoBody>(created)
+  const renamed = await api.patch(`${TODOS}/${id}`, { title: 'Write more tests' })
+  const toggled = await api.post(`${TODOS}/${id}/toggle`)
+  const deleted = await api.delete(`${TODOS}/${id}`)
+  const gone = await api.get(`${TODOS}/${id}`)
+
+  assert.equal(created.status, 201)
+  assert.equal(dataOf<TodoBody>(renamed).title, 'Write more tests')
+  assert.equal(dataOf<TodoBody>(toggled).completed, true)
+  assert.equal(deleted.status, 200)
+  assert.equal(gone.status, 404)
+})
+
+<%= awaitTest %>test('lists newest first, filters by completed and pages with a cursor', async () => {
+  const api = await client(testApp())
+  for (const title of ['first', 'second', 'third']) await api.post(TODOS, { title })
+  const { id } = dataOf<TodoBody[]>(await api.get(`${TODOS}?limit=1`))[0] ?? { id: '' }
+  await api.post(`${TODOS}/${id}/toggle`)
+
+  const firstPage = await api.get(`${TODOS}?limit=2`)
+  const { nextCursor } = (firstPage.body as { meta: { nextCursor: string } }).meta
+  const secondPage = await api.get(`${TODOS}?limit=2&cursor=${nextCursor}`)
+  const done = await api.get(`${TODOS}?completed=true`)
+
+  assert.deepEqual(dataOf<TodoBody[]>(firstPage).map((todo) => todo.title), ['third', 'second'])
+  assert.deepEqual(dataOf<TodoBody[]>(secondPage).map((todo) => todo.title), ['first'])
+  assert.equal((secondPage.body as { meta: { nextCursor: null } }).meta.nextCursor, null)
+  assert.deepEqual(dataOf<TodoBody[]>(done).map((todo) => todo.title), ['third'])
+})
+
+<%= awaitTest %>test('rejects invalid input with 400 and unknown ids with 404', async () => {
+  const api = await client(testApp())
+
+  const blank = await api.post(TODOS, { title: '   ' })
+  const badId = await api.get(`${TODOS}/not-a-uuid`)
+  const unknown = await api.get(`${TODOS}/00000000-0000-4000-8000-000000000000`)
+  const empty = await api.patch(`${TODOS}/00000000-0000-4000-8000-000000000000`, {})
+
+  assert.equal(blank.status, 400)
+  assert.equal(badId.status, 400)
+  assert.equal(unknown.status, 404)
+  assert.equal(empty.status, 400)
+})
+<% if (authed) { %>
+
+<%= awaitTest %>test('todos need a session', async () => {
+  const response = await request(testApp()).get(TODOS)
+
+  assert.equal(response.status, 401)
+})
+
+<%= awaitTest %>test("a user cannot see, change or delete another user's todo", async () => {
+  const app = testApp()
+  const ada = await clientFor(app, 'ada@example.com')
+  const bob = await clientFor(app, 'bob@example.com')
+  const { id } = dataOf<TodoBody>(await ada.post(TODOS, { title: "Ada's todo" }))
+
+  const read = await bob.get(`${TODOS}/${id}`)
+  const changed = await bob.patch(`${TODOS}/${id}`, { title: 'mine now' })
+  const deleted = await bob.delete(`${TODOS}/${id}`)
+  const listed = await bob.get(TODOS)
+  const stillThere = await ada.get(`${TODOS}/${id}`)
+
+  assert.equal(read.status, 404)
+  assert.equal(changed.status, 404)
+  assert.equal(deleted.status, 404)
+  assert.deepEqual(dataOf<TodoBody[]>(listed), [])
+  assert.equal(dataOf<TodoBody>(stillThere).title, "Ada's todo")
+})
+<% } %>

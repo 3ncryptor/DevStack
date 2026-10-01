@@ -12,6 +12,7 @@ import dockerBasic from './devops-docker/index'
 import dockerWeb from './devops-docker-web/index'
 import githubActions from './devops-github-actions/index'
 import folderClean from './arch-clean/index'
+import folderFlat from './arch-flat/index'
 import folderFeature from './arch-feature/index'
 import folderMvc from './arch-mvc/index'
 import formatterPrettier from './quality-prettier/index'
@@ -28,9 +29,13 @@ import middlewareMorgan from './middleware-request-logger/index'
 import ormPrisma from './orm-prisma/index'
 import qualityHusky from './quality-husky/index'
 import rateLimit from './security-rate-limit/index'
+import repoAgentsMd from './repo-agents-md/index'
+import repoGithubHygiene from './repo-github-hygiene/index'
+import repoVscode from './repo-vscode/index'
 import securityHelmet from './security-helmet/index'
 import securityOriginChecks from './security-origin-checks/index'
 import sharedApi from './shared-api/index'
+import templateTodo from './template-todo/index'
 import testingVitest from './testing-vitest/index'
 import testingVitestWeb from './testing-vitest-web/index'
 import uiTailwind from './ui-tailwind/index'
@@ -57,9 +62,11 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   ormPrisma,
   authJwt,
   authBetterAuth,
+  templateTodo,
   folderFeature,
   folderClean,
   folderMvc,
+  folderFlat,
   linterEslint,
   formatterPrettier,
   qualityHusky,
@@ -74,5 +81,8 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   apiDocsScalar,
   dockerBasic,
   dockerWeb,
-  githubActions
+  githubActions,
+  repoAgentsMd,
+  repoVscode,
+  repoGithubHygiene
 ]

@@ -1,0 +1,10 @@
+<% const extensions = [
+  'dbaeumer.vscode-eslint',
+  'esbenp.prettier-vscode',
+  ...(it.modules.includes('orm-prisma') ? ['prisma.prisma'] : []),
+  ...(it.modules.includes('ui-tailwind') ? ['bradlc.vscode-tailwindcss'] : []),
+  ...(it.modules.includes('testing-vitest') ? ['vitest.explorer'] : []),
+  ...(it.modules.includes('devops-docker') ? ['ms-azuretools.vscode-docker'] : []),
+  ...(it.modules.includes('devops-github-actions') ? ['github.vscode-github-actions'] : [])
+] %>
+<%~ JSON.stringify({ recommendations: extensions }, null, 2) %>

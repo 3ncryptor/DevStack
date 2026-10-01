@@ -1,0 +1,66 @@
+<% const jwt = it.modules.includes('auth-jwt') %>
+<% const betterAuth = it.modules.includes('auth-better-auth') %>
+<% const authed = jwt || betterAuth %>
+// Sample data for development (B17.8): <%= it.packageManager %> run db:seed. Safe to run again.
+// config/env.js comes first: importing it loads .env, so DATABASE_URL is set
+import { loadEnvOrExit } from '../config/env.js'
+<% if (betterAuth) { %>
+import { prismaAdapter } from 'better-auth/adapters/prisma'
+
+import { authSettings, createAuth } from '../<%= it.domainsDir %>/auth/auth.js'
+<% } %>
+<% if (jwt) { %>
+import { hashPassword } from '../<%= it.domainsDir %>/auth/password.js'
+<% } %>
+import { disconnectDatabase, prisma } from '../db/client.js'
+
+const SAMPLE_TODOS = ['Read the generated README', 'Add your first feature', 'Deploy the app']
+<% if (authed) { %>
+const DEMO_EMAIL = 'demo@example.com'
+<% } %>
+
+<% if (authed) { %>
+const env = loadEnvOrExit()
+<% } else { %>
+// validates DATABASE_URL and the rest before touching the database
+loadEnvOrExit()
+<% } %>
+
+try {
+<% if (authed) { %>
+  const password = env.SEED_DEMO_PASSWORD
+  if (password === undefined || password === '') {
+    console.error('Set SEED_DEMO_PASSWORD in .env: it is the password of the demo user.')
+    process.exit(1)
+  }
+  let user = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } })
+<% if (jwt) { %>
+  user ??= await prisma.user.create({
+    data: { email: DEMO_EMAIL, name: 'Demo', passwordHash: await hashPassword(password) }
+  })
+<% } else { %>
+  if (user === null) {
+    // through Better Auth, so the password is hashed and stored the way sign-in expects
+    const auth = createAuth(prismaAdapter(prisma, { provider: 'postgresql' }), authSettings(env))
+    await auth.api.signUpEmail({ body: { email: DEMO_EMAIL, password, name: 'Demo' } })
+    user = await prisma.user.findUniqueOrThrow({ where: { email: DEMO_EMAIL } })
+  }
+<% } %>
+  const ownerId = user.id
+  if ((await prisma.todo.count({ where: { ownerId } })) === 0) {
+    await prisma.todo.createMany({
+      data: SAMPLE_TODOS.map((title, index) => ({ title, completed: index === 0, ownerId }))
+    })
+  }
+  console.log(`Seeded. Log in as ${DEMO_EMAIL} with SEED_DEMO_PASSWORD from .env.`)
+<% } else { %>
+  if ((await prisma.todo.count()) === 0) {
+    await prisma.todo.createMany({
+      data: SAMPLE_TODOS.map((title, index) => ({ title, completed: index === 0 }))
+    })
+  }
+  console.log(`Seeded ${SAMPLE_TODOS.length} todos.`)
+<% } %>
+} finally {
+  await disconnectDatabase()
+}
