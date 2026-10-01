@@ -11,6 +11,7 @@ import path from 'node:path'
 import { parseEnv } from 'node:util'
 
 import { bootAndProbe } from './lib/boot'
+import { bootFullstack } from './lib/web'
 import { parseMatrix, type Combination, type ReadyExpectation } from './lib/checks'
 import { killAllGroups, run } from './lib/process'
 
@@ -159,6 +160,28 @@ async function checkCombination(
   } else if (built) {
     const startedAt = Date.now()
     const appDir = appDirOf(projectDir)
+    const webDir = path.join(projectDir, 'apps', 'web')
+    if (existsSync(path.join(webDir, 'package.json'))) {
+      const startedAt = Date.now()
+      const boot = await bootFullstack({
+        apiDir: appDir,
+        apiCommand: await startCommand(appDir),
+        webDir,
+        webCommand: await startCommand(webDir),
+        env: await bootEnv(appDir),
+        timeoutMs: BOOT_TIMEOUT_MS,
+        hasDatabase: existsSync(path.join(appDir, 'src', 'db', 'client.ts')),
+        databaseUp: process.env.E2E_DATABASE_URL !== undefined
+      })
+      const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
+      steps.push(
+        toStep(
+          'boot web + status page',
+          { ok: boot.ok, durationMs: Date.now() - startedAt },
+          detail
+        )
+      )
+    }
     const [command, ...args] = await startCommand(appDir)
     const boot = await bootAndProbe(appDir, command, args, {
       timeoutMs: BOOT_TIMEOUT_MS,
@@ -193,7 +216,17 @@ async function startCommand(projectDir: string): Promise<string[]> {
   if (start === undefined || !/^[\w./@=:-]+(\s+[\w./@=:-]+)*$/.test(start)) {
     throw new Error(`start script must be a plain command the harness can run directly: "${start}"`)
   }
-  return start.split(/\s+/)
+  const [binary = '', ...args] = start.split(/\s+/)
+  return [localBinary(projectDir, binary), ...args]
+}
+
+/** `next` and friends live in node_modules/.bin of the app, or of the workspace root. */
+function localBinary(dir: string, binary: string): string {
+  for (const candidate of [dir, path.resolve(dir, '..', '..')]) {
+    const local = path.join(candidate, 'node_modules', '.bin', binary)
+    if (existsSync(local)) return local
+  }
+  return binary
 }
 
 /**

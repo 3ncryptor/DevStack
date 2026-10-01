@@ -6,6 +6,7 @@ import folderMvc from './arch-mvc/index'
 import formatterPrettier from './quality-prettier/index'
 import frameworkExpress from './framework-express/index'
 import frameworkNest from './framework-nest/index'
+import frameworkNextjs from './framework-nextjs/index'
 import languageNode from './language-node/index'
 import layoutMonorepo from './layout-monorepo/index'
 import linterEslint from './quality-eslint/index'
@@ -18,6 +19,8 @@ import qualityHusky from './quality-husky/index'
 import rateLimit from './security-rate-limit/index'
 import securityHelmet from './security-helmet/index'
 import securityOriginChecks from './security-origin-checks/index'
+import sharedApi from './shared-api/index'
+import uiTailwind from './ui-tailwind/index'
 
 /**
  * The built-in module registry. Explicit imports (instead of scanning the directory at
@@ -29,6 +32,9 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   coreBackend,
   frameworkExpress,
   frameworkNest,
+  frameworkNextjs,
+  uiTailwind,
+  sharedApi,
   ormPrisma,
   folderClean,
   folderMvc,

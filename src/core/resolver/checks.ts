@@ -95,16 +95,17 @@ export function checkConflicts(context: CheckContext): Diagnostic[] {
   return diagnostics
 }
 
+/** One module per category and target (D-04): an API framework and a web framework coexist. */
 export function checkSingleSelect(context: CheckContext): Diagnostic[] {
-  const byCategory = new Map<ModuleCategory, string[]>()
+  const byCategory = new Map<string, { category: ModuleCategory; ids: string[] }>()
   for (const moduleDefinition of context.selected.values()) {
     if (!SINGLE_SELECT_CATEGORIES.has(moduleDefinition.category)) continue
-    byCategory.set(moduleDefinition.category, [
-      ...(byCategory.get(moduleDefinition.category) ?? []),
-      moduleDefinition.id
-    ])
+    const key = `${moduleDefinition.category}:${moduleDefinition.target ?? 'backend'}`
+    const group = byCategory.get(key) ?? { category: moduleDefinition.category, ids: [] }
+    byCategory.set(key, { ...group, ids: [...group.ids, moduleDefinition.id] })
   }
-  return [...byCategory.entries()]
+  return [...byCategory.values()]
+    .map(({ category, ids }): [ModuleCategory, string[]] => [category, ids])
     .filter(([, chosen]) => chosen.length > 1)
     .map(([category, chosen]) => {
       const sorted = [...chosen].sort()

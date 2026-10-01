@@ -1,0 +1,7 @@
+import { createApiClient } from '<%= it.packageNames.shared %>'
+
+/**
+ * Typed calls to the API: `const { data } = await api.get<Todo[]>('/todos')`. In development the
+ * browser goes through the /api proxy; in production set NEXT_PUBLIC_API_URL (split origin, D-29).
+ */
+export const api = createApiClient({ baseUrl: process.env.NEXT_PUBLIC_API_URL ?? '/api' })

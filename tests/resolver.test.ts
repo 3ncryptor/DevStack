@@ -124,6 +124,19 @@ describe('resolveStack rules', () => {
     ])
   })
 
+  it('allows one framework per target (D-04), e.g. an API and a web app', () => {
+    const registry = registryOf([
+      testModule({ id: 'framework-api', category: 'framework' }),
+      testModule({ id: 'framework-web', category: 'framework', target: 'frontend' }),
+      testModule({ id: 'framework-api2', category: 'framework' })
+    ])
+
+    expect(resolveStack(['framework-api', 'framework-web'], registry).diagnostics).toEqual([])
+    expect(codes(resolveStack(['framework-api', 'framework-api2'], registry).diagnostics)).toEqual([
+      'single-select'
+    ])
+  })
+
   it('leaves conditional fragments to the planner, which evaluates their condition', () => {
     const registry = registryOf([
       testModule({

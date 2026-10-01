@@ -14,6 +14,8 @@ export interface PackageJson {
   packageManager?: string
   /** npm, yarn and bun workspaces (pnpm reads pnpm-workspace.yaml). */
   workspaces?: string[]
+  /** Entry points, e.g. a workspace package that ships TypeScript source. */
+  exports?: Record<string, string>
   /** DevStack settings, e.g. the monorepo ports (D-30). */
   devstack?: { ports: Record<string, number> }
 }

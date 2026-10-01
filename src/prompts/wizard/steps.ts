@@ -13,6 +13,8 @@ type Registry = ReadonlyMap<string, DevstackModule>
 export interface WizardAnswers {
   appType?: string
   framework?: string
+  frontend?: string
+  styling?: string
   database?: string
   orm?: string
   packageManager?: PackageManagerId
@@ -54,7 +56,17 @@ export const ALWAYS_INCLUDED_LABEL = 'TypeScript, ESLint, Prettier'
 
 const NONE = 'none'
 
-const APP_TYPES: Choice<string>[] = [{ value: 'backend', label: 'Backend' }]
+const FULLSTACK = 'fullstack'
+
+const APP_TYPES: Choice<string>[] = [
+  { value: 'backend', label: 'Backend' },
+  { value: FULLSTACK, label: 'Fullstack', hint: 'API + Next.js web app in a monorepo' }
+]
+const FRONTENDS: Choice<string>[] = [{ value: 'framework-nextjs', label: 'Next.js' }]
+const STYLINGS: Choice<string>[] = [
+  { value: 'ui-tailwind', label: 'Tailwind CSS' },
+  { value: 'none', label: 'Plain CSS' }
+]
 const FRAMEWORKS: Choice<string>[] = [
   { value: 'framework-express', label: 'Express' },
   { value: 'framework-nest', label: 'NestJS' }
@@ -92,7 +104,7 @@ const isModule = (value: string | undefined): value is string =>
   value !== undefined && value !== NONE
 
 interface SelectStepDefinition {
-  key: 'appType' | 'framework' | 'database' | 'orm' | 'architecture'
+  key: 'appType' | 'framework' | 'frontend' | 'styling' | 'database' | 'orm' | 'architecture'
   label: string
   message: string
   choices: Choice<string>[]
@@ -160,7 +172,10 @@ function confirmStep({
   }
 }
 
-const isBackend = (answers: WizardAnswers): boolean => answers.appType === 'backend'
+/** Every app type today has an API; fullstack adds the web app. */
+const isBackend = (answers: WizardAnswers): boolean =>
+  answers.appType === 'backend' || answers.appType === FULLSTACK
+const isFullstack = (answers: WizardAnswers): boolean => answers.appType === FULLSTACK
 
 const packageManagerStep: WizardStep = {
   key: 'packageManager',
@@ -226,6 +241,24 @@ export const STEPS: readonly WizardStep[] = [
     addsModule: true
   }),
   selectStep({
+    key: 'frontend',
+    label: 'Frontend',
+    message: 'Frontend framework',
+    choices: FRONTENDS,
+    defaultValue: 'framework-nextjs',
+    applies: isFullstack,
+    addsModule: true
+  }),
+  selectStep({
+    key: 'styling',
+    label: 'Styling',
+    message: 'Styling',
+    choices: STYLINGS,
+    defaultValue: 'ui-tailwind',
+    applies: isFullstack,
+    addsModule: true
+  }),
+  selectStep({
     key: 'database',
     label: 'Database',
     message: 'Database',
@@ -266,7 +299,9 @@ export const STEPS: readonly WizardStep[] = [
     label: 'Docker',
     message: 'Add a Dockerfile and docker compose?',
     moduleId: 'devops-docker',
-    defaultValue: true
+    defaultValue: true,
+    // per-app images for the monorepo come with Docker v2 (task 3.7)
+    applies: (answers) => !isFullstack(answers)
   }),
   appSetupStep,
   confirmStep({
@@ -286,7 +321,9 @@ export function modulesFromAnswers(answers: WizardAnswers, registry: Registry): 
   const chosen = STEPS.filter((step) => step.applies(answers, environment)).flatMap((step) =>
     step.modules(answers)
   )
-  return [...new Set([...ALWAYS_INCLUDED, ...chosen])]
+  // a fullstack app lives in a monorepo: apps/api, apps/web, packages/shared (B8)
+  const layout = isFullstack(answers) ? ['layout-monorepo'] : []
+  return [...new Set([...ALWAYS_INCLUDED, ...layout, ...chosen])]
 }
 
 const firstOf = (modules: readonly string[], choices: Choice<string>[]): string | undefined =>
@@ -295,9 +332,12 @@ const firstOf = (modules: readonly string[], choices: Choice<string>[]): string 
 /** Pre-fills every answer from a module list, e.g. a preset (A0.2 #0). */
 export function answersFromModules(modules: readonly string[]): WizardAnswers {
   const orm = firstOf(modules, ORMS)
+  const frontend = firstOf(modules, FRONTENDS)
   return {
-    appType: 'backend',
+    appType: frontend === undefined ? 'backend' : FULLSTACK,
     framework: firstOf(modules, FRAMEWORKS),
+    frontend,
+    styling: frontend === undefined ? undefined : (firstOf(modules, STYLINGS) ?? NONE),
     database: orm === undefined ? NONE : 'postgres',
     orm,
     architecture: firstOf(modules, ARCHITECTURES) ?? NONE,

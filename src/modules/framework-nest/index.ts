@@ -17,7 +17,7 @@ const moduleDefinition: DevstackModule = {
     'rxjs'
   ],
   // SWC keeps decorator metadata in dev, which Nest's dependency injection needs (D-51)
-  devDependencies: ['@swc-node/register', '@swc/core'],
+  devDependencies: ['@swc-node/register', '@swc/core', '@types/express'],
   exposesSlots: ['app.imports', 'app.middleware'],
   env: [
     {

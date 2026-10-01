@@ -57,15 +57,31 @@ export function planTargets(projectName: string, modules: readonly DevstackModul
     .filter((target) => target.role === 'root' || target.modules.length > 0)
 }
 
-/** A target's env with its monorepo port, so two apps never fight over one. */
+/**
+ * A target's env with monorepo defaults: each app its own port (D-30), and the API's CORS
+ * allowlist set to the web app's origin when there is one (D-29: never `*`).
+ */
 export function envForTarget(
   target: Target,
   env: readonly PlannedEnvVar[],
-  monorepo: boolean
+  targets: readonly Target[]
 ): PlannedEnvVar[] {
-  const port = monorepo ? MONOREPO_PORTS[target.role] : undefined
-  if (port === undefined) return [...env]
-  return env.map((variable) =>
-    variable.name === 'PORT' ? { ...variable, example: String(port) } : variable
-  )
+  if (target.dir === '') return [...env]
+  const webPort = MONOREPO_PORTS.frontend
+  const hasWeb = targets.some((candidate) => candidate.role === 'frontend')
+  const overrides: Record<string, string | undefined> = {
+    PORT: MONOREPO_PORTS[target.role]?.toString(),
+    ALLOWED_ORIGINS:
+      target.role === 'backend' && hasWeb && webPort !== undefined
+        ? `http://localhost:${webPort}`
+        : undefined
+  }
+  return env.map((variable) => {
+    const example = overrides[variable.name]
+    return example === undefined ? variable : { ...variable, example }
+  })
 }
+
+/** How a workspace package depends on another, per package manager. */
+export const workspaceRange = (packageManager: string): string =>
+  packageManager === 'pnpm' || packageManager === 'bun' ? 'workspace:*' : '*'

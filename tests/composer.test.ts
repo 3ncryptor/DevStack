@@ -28,6 +28,8 @@ describe('composer', () => {
 
     expect(moduleNames).toEqual(['language-node', 'core-backend', 'framework-nest'])
     expect(result.packageJson.dependencies?.['@nestjs/core']).toBeDefined()
+    // the request pipeline is Express (platform-express), and the generated code types it
+    expect(result.packageJson.devDependencies?.['@types/express']).toBeDefined()
   })
 
   it('supports middleware modules with nest', () => {

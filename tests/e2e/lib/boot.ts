@@ -40,6 +40,14 @@ function delay<T>(ms: number, value: T): { promise: Promise<T>; cancel: () => vo
 }
 
 /** Polls until /health answers 2xx, the app exits, or the deadline passes. */
+export async function pollUntilHealthy(
+  url: string,
+  deadline: number,
+  hasExited: () => boolean
+): Promise<Response | undefined> {
+  return pollHealth(url, deadline, hasExited)
+}
+
 async function pollHealth(
   url: string,
   deadline: number,
@@ -145,7 +153,7 @@ export async function bootAndProbe(
   return { ok: problems.length === 0, problems, output }
 }
 
-async function stopGroup(
+export async function stopGroup(
   pid: number | undefined,
   exited: Promise<ExitStatus>
 ): Promise<ExitStatus> {

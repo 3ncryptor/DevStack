@@ -14,6 +14,8 @@ export interface TemplateContext {
   pm: DockerCommands
   /** Language adapter values, e.g. `it.language.dockerBaseImage`. */
   language: LanguageAdapter
+  /** Workspace package names by target, e.g. `it.packageNames.shared` (monorepo). */
+  packageNames: Readonly<Record<string, string>>
   /** Selected module ids, e.g. for `it.modules.includes('orm-prisma')`. */
   modules: readonly string[]
   /** Env vars of the modules at this depth, e.g. for the generated `config/env.ts`. */

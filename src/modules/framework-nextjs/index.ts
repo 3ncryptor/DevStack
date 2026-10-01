@@ -1,0 +1,44 @@
+import { moduleFilesPath } from '../../paths'
+import type { DevstackModule } from '../../types/module'
+
+const moduleDefinition: DevstackModule = {
+  id: 'framework-nextjs',
+  title: 'Next.js',
+  category: 'framework',
+  language: 'node',
+  target: 'frontend',
+  provides: ['web-framework'],
+  description:
+    'Next.js 16 (App Router) web app with a status page and a development proxy to the API',
+  // fullstack for now (apps/web next to apps/api); a frontend-only app type comes later
+  requires: ['layout:monorepo', 'shared-api'],
+  dependencies: ['next', 'react', 'react-dom', 'zod'],
+  devDependencies: ['@types/node', '@types/react', '@types/react-dom', 'typescript'],
+  files: [{ path: 'app/globals.css', when: { not: { has: 'ui-tailwind' } } }],
+  env: [
+    {
+      name: 'API_URL',
+      description: 'Where the web server reaches the API: status page and development proxy',
+      example: 'http://localhost:3001',
+      required: false,
+      schema: "z.url().default('http://localhost:3001')"
+    },
+    {
+      name: 'NEXT_PUBLIC_API_URL',
+      description: 'Where the browser calls the API in production (split origin); unset uses /api',
+      required: false
+    }
+  ],
+  filesPath: moduleFilesPath('framework-nextjs'),
+  packageJson: {
+    scripts: {
+      dev: 'next dev --port 3000',
+      build: 'next build',
+      start: 'next start',
+      // next typegen writes next-env.d.ts and the route types tsc needs
+      typecheck: 'next typegen && tsc --noEmit'
+    }
+  }
+}
+
+export default moduleDefinition

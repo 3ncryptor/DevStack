@@ -1,0 +1,32 @@
+<% const tailwind = it.modules.includes('ui-tailwind') %>
+import { getStatus } from '../lib/status'
+
+// read the API on every request, never at build time
+export const dynamic = 'force-dynamic'
+
+const mark = (ok: boolean): string => (ok ? '✓ connected' : '✗ unreachable')
+
+/** Status page (B17.1): is the API up, and is each of its dependencies ready. */
+export default async function Home() {
+  const status = await getStatus()
+  const line = [
+    `API ${mark(status.api)}`,
+    ...Object.entries(status.checks).map(([name, value]) => `${name.toUpperCase()} ${mark(value === 'ok')}`)
+  ].join(' · ')
+
+  return (
+<% if (tailwind) { %>
+    <main className="grid min-h-screen place-content-center gap-2 text-center">
+      <h1 className="text-2xl font-semibold"><%= it.projectName %></h1>
+      <p data-testid="status" className="text-neutral-600">
+        {line}
+      </p>
+    </main>
+<% } else { %>
+    <main>
+      <h1><%= it.projectName %></h1>
+      <p data-testid="status">{line}</p>
+    </main>
+<% } %>
+  )
+}

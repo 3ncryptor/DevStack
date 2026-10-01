@@ -91,7 +91,12 @@ describe.each(BUILTIN_MODULES.map((moduleDefinition) => [moduleDefinition.id, mo
       const planned = new Set((await planFor(minimalStack(id), 'wired')).files.map((f) => f.path))
 
       if (outputs.length > 0) {
-        expect(outputs.some((output) => planned.has(output))).toBe(true)
+        // in a monorepo the module's files sit under its target directory, e.g. apps/web/
+        const lands = (output: string): boolean =>
+          [...planned].some(
+            (plannedPath) => plannedPath === output || plannedPath.endsWith(`/${output}`)
+          )
+        expect(outputs.some(lands)).toBe(true)
       }
     })
   }

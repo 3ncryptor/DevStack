@@ -55,6 +55,7 @@ describe('guided wizard (A0.2 order)', () => {
   it('asks the applicable questions in order and builds the stack from the answers', async () => {
     const prompter = new ScriptedPrompter([
       'custom',
+      'backend',
       'framework-express',
       'postgres',
       'pnpm',
@@ -70,6 +71,7 @@ describe('guided wizard (A0.2 order)', () => {
 
     expect(prompter.asked).toEqual([
       'Start from a preset?',
+      'App type',
       'Backend framework',
       'Database',
       'Package manager',
@@ -94,9 +96,10 @@ describe('guided wizard (A0.2 order)', () => {
     expect(result.packageManager).toBe('pnpm')
   })
 
-  it('picks a step with a single compatible option without asking (app type, ORM)', async () => {
+  it('picks a step with a single compatible option without asking (ORM)', async () => {
     const prompter = new ScriptedPrompter([
       'custom',
+      'backend',
       'framework-express',
       'postgres',
       'npm',
@@ -110,7 +113,6 @@ describe('guided wizard (A0.2 order)', () => {
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    expect(prompter.asked).not.toContain('App type')
     expect(prompter.asked).not.toContain('ORM')
     expect(result.modules).toContain('orm-prisma')
     expect(prompter.notes.join('\n')).toContain('ORM              Prisma')
@@ -119,6 +121,7 @@ describe('guided wizard (A0.2 order)', () => {
   it('skips the architecture question for NestJS, which has its own module layout', async () => {
     const prompter = new ScriptedPrompter([
       'custom',
+      'backend',
       'framework-nest',
       'none',
       'npm',
@@ -138,6 +141,7 @@ describe('guided wizard (A0.2 order)', () => {
   it('does not ask for the package manager when --pm or a config fixed it', async () => {
     const prompter = new ScriptedPrompter([
       'custom',
+      'backend',
       'framework-nest',
       'none',
       false,
@@ -160,6 +164,7 @@ describe('guided wizard (A0.2 order)', () => {
     const choices: string[] = []
     const prompter = new ScriptedPrompter([
       'custom',
+      'backend',
       'framework-nest',
       'none',
       'npm',
@@ -208,8 +213,51 @@ describe('guided wizard (A0.2 order)', () => {
   })
 })
 
+describe('fullstack app type', () => {
+  it('asks for the frontend styling, skips Docker, and builds a monorepo', async () => {
+    const prompter = new ScriptedPrompter([
+      'custom',
+      'fullstack',
+      'framework-express',
+      'ui-tailwind',
+      'postgres',
+      'npm',
+      'arch-clean',
+      true,
+      [],
+      false,
+      'generate'
+    ])
+
+    const result = await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(prompter.asked).toContain('Styling')
+    expect(prompter.asked).not.toContain('Frontend framework')
+    expect(prompter.asked).not.toContain('Add a Dockerfile and docker compose?')
+    expect(result.modules).toEqual(
+      expect.arrayContaining([
+        'layout-monorepo',
+        'framework-nextjs',
+        'ui-tailwind',
+        'framework-express'
+      ])
+    )
+    expect(result.modules).not.toContain('devops-docker')
+  })
+
+  it('pre-fills the fullstack answers from its modules', () => {
+    const answers = answersFromModules(['framework-express', 'framework-nextjs', 'layout-monorepo'])
+
+    expect(answers).toMatchObject({
+      appType: 'fullstack',
+      frontend: 'framework-nextjs',
+      styling: 'none'
+    })
+  })
+})
+
 describe('review screen', () => {
-  const nestAnswers = ['custom', 'framework-nest', 'none', 'npm', false, false, []]
+  const nestAnswers = ['custom', 'backend', 'framework-nest', 'none', 'npm', false, false, []]
 
   it('shows every answer, the always-included tooling and the file count', async () => {
     const prompter = new ScriptedPrompter([...nestAnswers, 'generate'])
@@ -305,7 +353,7 @@ describe('review screen', () => {
 })
 
 describe('review problems', () => {
-  const nestAnswers = ['custom', 'framework-nest', 'none', 'npm', false, false, []]
+  const nestAnswers = ['custom', 'backend', 'framework-nest', 'none', 'npm', false, false, []]
 
   it('blocks Generate while a problem is reported, until an edit clears it', async () => {
     const offered: string[][] = []
@@ -320,6 +368,7 @@ describe('review problems', () => {
     }
     const prompter = new ScriptedPrompter([
       'custom',
+      'backend',
       'framework-nest',
       'none',
       'bun',
@@ -433,36 +482,31 @@ describe('answers ↔ modules', () => {
         (all, item) => [...all, ...all.map((subset) => [...subset, item])],
         [[]]
       )
-    const failures: string[] = []
-    for (const framework of ['framework-express', 'framework-nest']) {
-      for (const database of ['postgres', 'none'] as const) {
-        for (const architecture of ['arch-clean', 'arch-mvc', 'none']) {
-          for (const asyncHandler of [true, false]) {
-            for (const preCommit of [true, false]) {
-              for (const docker of [true, false]) {
-                for (const appSetup of subsets(APP_SETUP_CHOICES.map((choice) => choice.value))) {
-                  const answers: WizardAnswers = {
-                    appType: 'backend',
-                    framework,
-                    database,
-                    orm: 'orm-prisma',
-                    architecture,
-                    preCommit,
-                    docker,
-                    appSetup,
-                    asyncHandler
-                  }
-                  const modules = modulesFromAnswers(answers, registry)
-                  if (resolveStack(modules, registry).diagnostics.length > 0) {
-                    failures.push(JSON.stringify(answers))
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    /** Every combination of the given values, one answers object each. */
+    const product = (dimensions: Record<string, readonly unknown[]>): WizardAnswers[] =>
+      Object.entries(dimensions).reduce<WizardAnswers[]>(
+        (combinations, [key, values]) =>
+          combinations.flatMap((answers) => values.map((value) => ({ ...answers, [key]: value }))),
+        [{ orm: 'orm-prisma', frontend: 'framework-nextjs' }]
+      )
+    const combinations = product({
+      appType: ['backend', 'fullstack'],
+      styling: ['ui-tailwind', 'none'],
+      framework: ['framework-express', 'framework-nest'],
+      database: ['postgres', 'none'],
+      architecture: ['arch-clean', 'arch-mvc', 'none'],
+      asyncHandler: [true, false],
+      preCommit: [true, false],
+      docker: [true, false],
+      appSetup: subsets(APP_SETUP_CHOICES.map((choice) => choice.value))
+    })
+
+    const failures = combinations
+      .filter(
+        (answers) =>
+          resolveStack(modulesFromAnswers(answers, registry), registry).diagnostics.length > 0
+      )
+      .map((answers) => JSON.stringify(answers))
 
     expect(failures).toEqual([])
   })

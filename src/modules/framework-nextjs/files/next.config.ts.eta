@@ -1,0 +1,15 @@
+import type { NextConfig } from 'next'
+
+const apiUrl = process.env.API_URL ?? 'http://localhost:3001'
+
+const nextConfig: NextConfig = {
+  // the shared package ships TypeScript source
+  transpilePackages: ['<%= it.packageNames.shared %>'],
+  // Development proxy (B17.4): the browser only talks to this origin, so CORS never arises.
+  // Rewrites are read at build time; in production the browser uses NEXT_PUBLIC_API_URL.
+  rewrites() {
+    return Promise.resolve([{ source: '/api/:path*', destination: `${apiUrl}/:path*` }])
+  }
+}
+
+export default nextConfig

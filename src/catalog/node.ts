@@ -32,6 +32,16 @@ export const NODE_CATALOG = {
   '@swc-node/register': { version: '^1.12.1' },
   '@swc/core': { version: '^1.16.12', allowBuilds: ['@swc/core'] },
 
+  // web (Next.js 16 pairs with React 19.2, as create-next-app 16.3.8 pins)
+  next: { version: '^16.3.8' },
+  react: { version: '^19.2.8' },
+  'react-dom': { version: '^19.2.8' },
+  '@types/react': { version: '^19.2.0' },
+  '@types/react-dom': { version: '^19.2.0' },
+  tailwindcss: { version: '^4.3.3' },
+  '@tailwindcss/postcss': { version: '^4.3.3' },
+  postcss: { version: '^8.5.28' },
+
   // data
   prisma: { version: '^7.10.0', allowBuilds: ['prisma', '@prisma/engines'] },
   '@prisma/client': { version: '^7.10.0', allowBuilds: ['@prisma/client'] },

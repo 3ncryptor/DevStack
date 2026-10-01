@@ -26,7 +26,8 @@ import {
   isMonorepo,
   MONOREPO_PORTS,
   planTargets,
-  type Target
+  type Target,
+  workspaceRange
 } from './targets'
 import type { TemplateContext } from './templates'
 
@@ -109,7 +110,18 @@ function targetPackageJson(input: PlanInput, target: Target, context: PlanContex
     context.moduleOptions,
     context.depth
   )
-  if (!context.monorepo || target.role !== 'root') return composed
+  if (!context.monorepo) return composed
+  const shared = context.targets.find((candidate) => candidate.role === 'shared')
+  if (target.role === 'frontend' && shared !== undefined) {
+    return {
+      ...composed,
+      dependencies: {
+        ...composed.dependencies,
+        [shared.packageName]: workspaceRange(input.packageManager)
+      }
+    }
+  }
+  if (target.role !== 'root') return composed
   const version = input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager]
   return {
     ...composed,
@@ -123,6 +135,7 @@ function targetPackageJson(input: PlanInput, target: Target, context: PlanContex
 }
 
 interface PlanContext {
+  targets: readonly Target[]
   modules: readonly DevstackModule[]
   moduleOptions: ResolvedModuleOptions
   depth: Depth
@@ -145,7 +158,7 @@ async function targetOutput(
   const env = envForTarget(
     target,
     collectEnv(modulesAtDepth(target.modules, context.depth)),
-    context.monorepo
+    context.targets
   )
   const packageJson = targetPackageJson(input, target, context)
   const templateContext: Omit<TemplateContext, 'options'> = {
@@ -154,6 +167,9 @@ async function targetOutput(
     pm: packageManagerAdapter(input.packageManager).docker,
     language: NODE_LANGUAGE,
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
+    packageNames: Object.fromEntries(
+      context.targets.map((candidate) => [candidate.role, candidate.packageName])
+    ),
     env,
     slots: context.slots
   }
@@ -248,7 +264,9 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
   const modules = composition.orderedModules
   const moduleOptions = resolveModuleOptions(modules, input.moduleOptions ?? {})
   const depth = plannedDepth(input)
+  const targets = planTargets(input.projectName, modules)
   const context: PlanContext = {
+    targets,
     modules,
     moduleOptions,
     depth,
@@ -257,7 +275,6 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
       ruleIncluded(modules, moduleDefinition, fragment, moduleOptions, depth)
     )
   }
-  const targets = planTargets(input.projectName, modules)
   const outputs = await Promise.all(targets.map((target) => targetOutput(input, target, context)))
   const env = outputs.flatMap((output) => output.env)
   const rootPackageJson = outputs[0]?.packageJson ?? composition.packageJson

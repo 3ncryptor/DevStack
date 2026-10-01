@@ -39,6 +39,32 @@
     ]
   },
   {
+    "id": "fullstack",
+    "modules": [
+      "layout-monorepo",
+      "framework-express",
+      "orm-prisma",
+      "security-helmet",
+      "middleware-cors",
+      "framework-nextjs",
+      "ui-tailwind",
+      "quality-eslint",
+      "quality-prettier",
+      "quality-husky"
+    ]
+  },
+  {
+    "id": "fullstack-plain-css",
+    "modules": [
+      "layout-monorepo",
+      "framework-nest",
+      "security-helmet",
+      "framework-nextjs",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
     "id": "node-prisma",
     "modules": ["language-node", "orm-prisma", "quality-eslint", "quality-prettier"],
     "boot": false

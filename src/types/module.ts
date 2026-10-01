@@ -229,7 +229,8 @@ export const moduleDefinitionSchema = z.object({
       description: z.string().optional(),
       type: z.enum(['module', 'commonjs']).optional(),
       scripts: z.record(z.string(), z.string()).optional(),
-      engines: z.record(z.string(), z.string()).optional()
+      engines: z.record(z.string(), z.string()).optional(),
+      exports: z.record(z.string(), z.string()).optional()
     })
     .optional()
 })

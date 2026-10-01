@@ -40,6 +40,7 @@ describe('init flow', () => {
     const output = captureStdout()
     const prompter = new ScriptedPrompter([
       'custom',
+      'backend',
       'framework-nest',
       'none',
       'npm',
