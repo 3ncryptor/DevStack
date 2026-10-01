@@ -36,6 +36,17 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
   - graceful shutdown: `SIGTERM`/`SIGINT` stop accepting connections, finish in-flight requests,
     close the database, and exit 0;
   - a Supertest test that passes on day one (`node:test`).
+- **Fullstack in a monorepo** (pnpm, npm, yarn or bun workspaces with Turborepo): the API in
+  `apps/api`, a Next.js 16 web app in `apps/web`, an optional admin app in `apps/admin`, and
+  `packages/shared` with the response types and a typed API client. In development the web apps
+  call the API through a `/api` proxy, so there is no CORS to configure; the API allows both web
+  origins anyway. The home page shows "API ✓ connected · DB ✓ connected".
+- **Folders for the architecture you pick:** feature-scoped, clean or MVC for the API;
+  feature-based, layer-based or atomic design for the web apps, with `.gitkeep` in each folder.
+- **Rate limiting your way:** fixed window, sliding window, token bucket or leaky bucket, with
+  `RateLimit-*` headers and the standard error body on 429.
+- **API versioning:** application routes under `/v1` if you want it; `/health` and `/ready`
+  stay unversioned.
 - **Security middleware you pick, imported explicitly:** Helmet, CORS, origin checks, rate
   limiting, request logging and compression. There is no runtime discovery, so a missing
   middleware is a compile error, never a silent no-op. Open CORS logs a warning at startup.

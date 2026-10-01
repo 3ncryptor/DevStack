@@ -2,11 +2,16 @@ import { Module, type DynamicModule } from '@nestjs/common'
 
 import type { AppDeps } from './app.js'
 import { HealthModule } from './health/health.module.js'
+import { InfoController } from './info.controller.js'
 
 @Module({})
 export class AppModule {
   /** Dependencies come from the entry point (or a test), not from module-level imports. */
   static register(deps: AppDeps): DynamicModule {
-    return { module: AppModule, imports: [HealthModule.register(deps.readinessChecks)] }
+    return {
+      module: AppModule,
+      imports: [HealthModule.register(deps.readinessChecks)],
+      controllers: [InfoController]
+    }
   }
 }

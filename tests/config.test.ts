@@ -87,7 +87,9 @@ describe('.devstack/stack.json manifest', () => {
       name: 'replay-app',
       packageManager: 'pnpm',
       modules: plan.modules.map((id) =>
-        id === 'security-rate-limit' ? { id, options: { windowMs: 900000, limit: 100 } } : id
+        id === 'security-rate-limit'
+          ? { id, options: { algorithm: 'fixed-window', windowMs: 900000, limit: 100 } }
+          : id
       ),
       depth: 'wired',
       generatedBy: { name: CLI_PACKAGE.name, version: CLI_PACKAGE.version }

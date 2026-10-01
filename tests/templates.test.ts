@@ -13,6 +13,7 @@ const context: TemplateContext = {
   pm: packageManagerAdapter('pnpm').docker,
   language: NODE_LANGUAGE,
   modules: [],
+  target: 'root',
   packageNames: {},
   env: [],
   options: {},

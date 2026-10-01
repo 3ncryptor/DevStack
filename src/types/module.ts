@@ -101,7 +101,7 @@ export type LanguageId = 'node'
  * the project root (D-03); in a monorepo backend → apps/api, frontend → apps/web,
  * shared → packages/shared, and root stays at the root (tooling, workspace files).
  */
-export const MODULE_TARGETS = ['root', 'backend', 'frontend', 'shared'] as const
+export const MODULE_TARGETS = ['root', 'backend', 'frontend', 'admin', 'shared'] as const
 export type ModuleTarget = (typeof MODULE_TARGETS)[number]
 
 /** Module contract v2 (buildPlan B4). */

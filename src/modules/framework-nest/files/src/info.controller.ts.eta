@@ -1,0 +1,11 @@
+<% const versioned = it.modules.includes('api-versioning') %>
+import { Controller, Get } from '@nestjs/common'
+
+/** GET / (or /v1): what this API is; the envelope interceptor wraps the answer. */
+@Controller()
+export class InfoController {
+  @Get()
+  info(): { name: string<% if (versioned) { %>; version: string<% } %> } {
+    return { name: '<%= it.projectName %>'<% if (versioned) { %>, version: 'v1'<% } %> }
+  }
+}

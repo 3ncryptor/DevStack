@@ -1,7 +1,9 @@
+<% const versioned = it.modules.includes('api-versioning') %>
 import express, { type Express } from 'express'
 
 <%~ it.slots['app.imports'] %>
 
+import { ApiSuccess } from './lib/api-response.js'
 import type { Logger } from './lib/logger.js'
 import type { ReadinessCheck } from './lib/readiness.js'
 import { errorHandler } from './middlewares/error-handler.js'
@@ -27,7 +29,14 @@ export function createApp(deps: AppDeps): Express {
   app.use(express.json())
 
   app.use(createHealthRouter(deps.readinessChecks))
+
+  // application routes (slot `app.routes`)<% if (versioned) { %>, under /v1 (D-64)<% } %>
+  const api = express.Router()
+  api.get('/', (_request, response) => {
+    response.json(new ApiSuccess({ name: '<%= it.projectName %>'<% if (versioned) { %>, version: 'v1'<% } %> }))
+  })
   <%~ it.slots['app.routes'] %>
+  app.use('<%= versioned ? '/v1' : '/' %>', api)
 
   app.use(notFound)
   app.use(errorHandler(deps.logger))

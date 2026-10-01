@@ -1,3 +1,4 @@
+<% const versioned = it.modules.includes('api-versioning') %>
 import { NestFactory, Reflector } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 
@@ -29,6 +30,10 @@ export async function createApp(deps: AppDeps): Promise<NestExpressApplication> 
   app.use(requestId(deps.logger))
   <%~ it.slots['app.middleware'] %>
 
+<% if (versioned) { %>
+  // application routes under /v1 (D-64); probes keep their unversioned paths
+  app.setGlobalPrefix('v1', { exclude: ['health', 'ready'] })
+<% } %>
   app.useGlobalFilters(new ErrorFilter(deps.logger))
   app.useGlobalInterceptors(new EnvelopeInterceptor(app.get(Reflector)))
   return app

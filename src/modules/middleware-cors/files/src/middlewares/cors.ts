@@ -21,13 +21,10 @@ const corsOptions: CorsOptions =
   allowedOrigins.length === 0
     ? {}
     : {
+        // Another origin gets no CORS headers, so the browser blocks the cross-origin read. This
+        // is not a server error; refusing the request itself is the job of origin checks.
         origin(origin, callback) {
-          if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true)
-            return
-          }
-
-          callback(new Error('Origin is not allowed by CORS'))
+          callback(null, !origin || allowedOrigins.includes(origin))
         },
         credentials: true
       }

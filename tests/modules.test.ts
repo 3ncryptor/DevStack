@@ -116,7 +116,8 @@ describe('module contract lint (task 1.7)', () => {
       const specifiers = [...source.matchAll(/^\s*import[^'"]*['"]([^'"]+)['"]/gm)].map(
         (match) => match[1]
       )
-      const dynamic = /\bimport\(|\brequire\(|\bprocess\./.test(source)
+      // process.<property> in code; "process." ending a sentence in a comment is fine
+      const dynamic = /\bimport\(|\brequire\(|\bprocess\.[a-z]/.test(source)
 
       expect(
         specifiers.filter((specifier) => !ALLOWED_MODULE_IMPORTS.has(specifier ?? ''))

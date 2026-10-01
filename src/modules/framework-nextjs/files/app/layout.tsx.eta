@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: '<%= it.projectName %>',
+  title: '<%= it.target === 'admin' ? `${it.projectName} admin` : it.projectName %>',
   description: 'Generated with create-devstack-app'
 }
 

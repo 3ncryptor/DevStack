@@ -1,4 +1,5 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
+<% const title = it.target === 'admin' ? `${it.projectName} admin` : it.projectName %>
 import { getStatus } from '../lib/status'
 
 // read the API on every request, never at build time
@@ -17,14 +18,14 @@ export default async function Home() {
   return (
 <% if (tailwind) { %>
     <main className="grid min-h-screen place-content-center gap-2 text-center">
-      <h1 className="text-2xl font-semibold"><%= it.projectName %></h1>
+      <h1 className="text-2xl font-semibold"><%= title %></h1>
       <p data-testid="status" className="text-neutral-600">
         {line}
       </p>
     </main>
 <% } else { %>
     <main>
-      <h1><%= it.projectName %></h1>
+      <h1><%= title %></h1>
       <p data-testid="status">{line}</p>
     </main>
 <% } %>

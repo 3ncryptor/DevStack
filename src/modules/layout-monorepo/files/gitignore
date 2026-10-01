@@ -7,3 +7,5 @@ coverage
 .env.*
 !.env.example
 **/src/generated
+next-env.d.ts
+*.tsbuildinfo

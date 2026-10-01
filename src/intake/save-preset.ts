@@ -23,7 +23,11 @@ export async function saveStackPreset(
       version: STACK_CONFIG_VERSION,
       name: draft.projectName,
       packageManager: draft.packageManager,
-      modules: draft.modules,
+      // modules with options are written as { id, options }, so a replay keeps them
+      modules: draft.modules.map((id) => {
+        const options = draft.moduleOptions?.[id]
+        return options === undefined ? id : { id, options }
+      }),
       depth: draft.depth
     },
     fileName

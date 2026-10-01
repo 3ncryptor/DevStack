@@ -64,6 +64,7 @@ describe('guided wizard (A0.2 order)', () => {
       false,
       ['middleware-cors', 'security-helmet'],
       false,
+      false,
       'generate'
     ])
 
@@ -79,6 +80,7 @@ describe('guided wizard (A0.2 order)', () => {
       'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
       'Add a Dockerfile and docker compose?',
       'App setup (app.ts)',
+      'Version the API under /v1? (health routes stay unversioned)',
       'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
       'What next?'
     ])
@@ -108,6 +110,7 @@ describe('guided wizard (A0.2 order)', () => {
       false,
       [],
       false,
+      false,
       'generate'
     ])
 
@@ -128,6 +131,7 @@ describe('guided wizard (A0.2 order)', () => {
       false,
       false,
       [],
+      false,
       'generate'
     ])
 
@@ -147,6 +151,7 @@ describe('guided wizard (A0.2 order)', () => {
       false,
       false,
       [],
+      false,
       'generate'
     ])
 
@@ -171,6 +176,7 @@ describe('guided wizard (A0.2 order)', () => {
       false,
       false,
       [],
+      false,
       'generate'
     ])
     const select = prompter.select.bind(prompter)
@@ -213,6 +219,32 @@ describe('guided wizard (A0.2 order)', () => {
   })
 })
 
+describe('rate limiting and versioning answers (D-64)', () => {
+  it('asks for the algorithm only when rate limiting is chosen, and returns it as an option', async () => {
+    const prompter = new ScriptedPrompter([
+      'custom',
+      'backend',
+      'framework-nest',
+      'none',
+      'npm',
+      false,
+      false,
+      ['security-rate-limit'],
+      'leaky-bucket',
+      true,
+      'generate'
+    ])
+
+    const result = await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(prompter.asked).toContain('Rate-limit algorithm')
+    expect(result.moduleOptions).toEqual({ 'security-rate-limit': { algorithm: 'leaky-bucket' } })
+    expect(result.modules).toEqual(
+      expect.arrayContaining(['security-rate-limit', 'api-versioning'])
+    )
+  })
+})
+
 describe('fullstack app type', () => {
   it('asks for the frontend styling, skips Docker, and builds a monorepo', async () => {
     const prompter = new ScriptedPrompter([
@@ -220,11 +252,14 @@ describe('fullstack app type', () => {
       'fullstack',
       'framework-express',
       'ui-tailwind',
+      false,
+      'arch-web-feature',
       'postgres',
       'npm',
       'arch-clean',
       true,
       [],
+      false,
       false,
       'generate'
     ])
@@ -257,7 +292,17 @@ describe('fullstack app type', () => {
 })
 
 describe('review screen', () => {
-  const nestAnswers = ['custom', 'backend', 'framework-nest', 'none', 'npm', false, false, []]
+  const nestAnswers = [
+    'custom',
+    'backend',
+    'framework-nest',
+    'none',
+    'npm',
+    false,
+    false,
+    [],
+    false
+  ]
 
   it('shows every answer, the always-included tooling and the file count', async () => {
     const prompter = new ScriptedPrompter([...nestAnswers, 'generate'])
@@ -326,7 +371,8 @@ describe('review screen', () => {
           projectName: 'wizard-app',
           modules: expect.arrayContaining(['framework-nest']) as string[],
           packageManager: 'npm',
-          depth: 'wired'
+          depth: 'wired',
+          moduleOptions: {}
         }
       }
     ])
@@ -353,7 +399,17 @@ describe('review screen', () => {
 })
 
 describe('review problems', () => {
-  const nestAnswers = ['custom', 'backend', 'framework-nest', 'none', 'npm', false, false, []]
+  const nestAnswers = [
+    'custom',
+    'backend',
+    'framework-nest',
+    'none',
+    'npm',
+    false,
+    false,
+    [],
+    false
+  ]
 
   it('blocks Generate while a problem is reported, until an edit clears it', async () => {
     const offered: string[][] = []
@@ -375,6 +431,7 @@ describe('review problems', () => {
       false,
       false,
       [],
+      false,
       'edit',
       'packageManager',
       'npm',

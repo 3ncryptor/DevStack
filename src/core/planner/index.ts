@@ -26,7 +26,9 @@ import {
   isMonorepo,
   MONOREPO_PORTS,
   planTargets,
+  portOf,
   type Target,
+  WEB_ROLES,
   workspaceRange
 } from './targets'
 import type { TemplateContext } from './templates'
@@ -91,6 +93,18 @@ function withScriptRules(
   return { ...packageJson, scripts: { ...packageJson.scripts, ...Object.fromEntries(extra) } }
 }
 
+/** Scripts may say `{{port}}`, e.g. `next dev --port {{port}}`: each app fills in its own (D-30). */
+function withPorts(packageJson: PackageJson, port: number): PackageJson {
+  if (packageJson.scripts === undefined) return packageJson
+  const scripts = Object.fromEntries(
+    Object.entries(packageJson.scripts).map(([name, run]) => [
+      name,
+      run.replaceAll('{{port}}', String(port))
+    ])
+  )
+  return { ...packageJson, scripts }
+}
+
 /** Fallback when the installed version is unknown (dry runs); a real run passes the probed one. */
 const FALLBACK_PM_VERSIONS: Readonly<Record<PackageManager, string>> = {
   npm: '11.6.2',
@@ -103,16 +117,19 @@ const WORKSPACE_GLOBS = ['apps/*', 'packages/*']
 
 /** A target's package.json: its modules' fragments and dependencies, plus workspace fields at the root. */
 function targetPackageJson(input: PlanInput, target: Target, context: PlanContext): PackageJson {
-  const composed = withScriptRules(
-    composeProjectPackageJson(target.packageName, target.modules),
-    context.modules,
-    target.modules,
-    context.moduleOptions,
-    context.depth
+  const composed = withPorts(
+    withScriptRules(
+      composeProjectPackageJson(target.packageName, target.modules),
+      context.modules,
+      target.modules,
+      context.moduleOptions,
+      context.depth
+    ),
+    portOf(target.role, context.monorepo)
   )
   if (!context.monorepo) return composed
   const shared = context.targets.find((candidate) => candidate.role === 'shared')
-  if (target.role === 'frontend' && shared !== undefined) {
+  if (WEB_ROLES.includes(target.role) && shared !== undefined) {
     return {
       ...composed,
       dependencies: {
@@ -167,6 +184,7 @@ async function targetOutput(
     pm: packageManagerAdapter(input.packageManager).docker,
     language: NODE_LANGUAGE,
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
+    target: target.role,
     packageNames: Object.fromEntries(
       context.targets.map((candidate) => [candidate.role, candidate.packageName])
     ),

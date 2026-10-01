@@ -43,7 +43,8 @@ describe('composer', () => {
 
     expect(result.packageJson.dependencies?.cors).toBeDefined()
     expect(result.packageJson.dependencies?.helmet).toBeDefined()
-    expect(result.packageJson.dependencies?.['express-rate-limit']).toBeDefined()
+    // rate limiting is generated code now (D-64), not a dependency
+    expect(result.packageJson.dependencies?.['express-rate-limit']).toBeUndefined()
   })
 
   it('adds husky scripts only when quality-husky is selected', () => {

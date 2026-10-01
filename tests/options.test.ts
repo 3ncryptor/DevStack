@@ -31,15 +31,15 @@ describe('module options (task 1.6)', () => {
   it('renders the defaults when no options are given', async () => {
     const source = rateLimiter(await plan())
 
-    expect(source).toContain('windowMs: 900000')
-    expect(source).toContain('limit: 100')
+    expect(source).toContain('const WINDOW_MS = 900000')
+    expect(source).toContain('const LIMIT = 100')
   })
 
   it('renders options from the stack and keeps defaults for the rest', async () => {
     const source = rateLimiter(await plan({ 'security-rate-limit': { limit: 500 } }))
 
-    expect(source).toContain('limit: 500')
-    expect(source).toContain('windowMs: 900000')
+    expect(source).toContain('const LIMIT = 500')
+    expect(source).toContain('const WINDOW_MS = 900000')
   })
 
   it.each([
@@ -62,7 +62,11 @@ describe('module options (task 1.6)', () => {
 
     const replayed = await plan(options, ids)
 
-    expect(options['security-rate-limit']).toEqual({ windowMs: 900000, limit: 500 })
+    expect(options['security-rate-limit']).toEqual({
+      algorithm: 'fixed-window',
+      windowMs: 900000,
+      limit: 500
+    })
     expect(replayed.files).toEqual(original.files)
   })
 })

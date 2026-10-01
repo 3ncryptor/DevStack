@@ -140,6 +140,7 @@ describe('framework slots (D-07)', () => {
       'compressionMiddleware',
       'express',
       'createHealthRouter',
+      'api',
       'notFound',
       'errorHandler'
     ])
@@ -160,8 +161,8 @@ describe('framework slots (D-07)', () => {
 
     expect(entry).toContain('handleShutdownSignals({')
     expect(entry).toContain('disposers,')
-    expect(shutdown).toContain("process.on('SIGTERM', shutdown)")
-    expect(shutdown).toContain("process.on('SIGINT', shutdown)")
+    expect(shutdown).toContain("process.on('SIGTERM', () => {")
+    expect(shutdown).toContain("process.on('SIGINT', () => {")
   })
 
   it('mounts the same middleware in a Nest app', async () => {

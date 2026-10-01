@@ -8,6 +8,7 @@ import { runReview, type StackDraft, type WizardServices } from './review'
 import {
   ALWAYS_INCLUDED_LABEL,
   answersFromModules,
+  moduleOptionsFromAnswers,
   modulesFromAnswers,
   STEPS,
   type StepEnvironment,
@@ -27,6 +28,8 @@ export interface WizardContext extends StepEnvironment {
 export interface StackSelection {
   modules: string[]
   packageManager: PackageManagerId
+  /** Options the answers set, e.g. `{ 'security-rate-limit': { algorithm: 'token-bucket' } }`. */
+  moduleOptions: Record<string, Record<string, unknown>>
 }
 
 const CUSTOM = 'custom'
@@ -122,7 +125,8 @@ export async function runWizard(
     projectName: context.projectName,
     modules: modulesFromAnswers(state, context.registry),
     packageManager: packageManagerOf(state, context),
-    depth: context.depth
+    depth: context.depth,
+    moduleOptions: moduleOptionsFromAnswers(state, context.registry)
   })
 
   const reviewed = await runReview(
@@ -141,7 +145,11 @@ export async function runWizard(
     services
   )
   const { modules, packageManager } = draft(reviewed)
-  return { modules, packageManager }
+  return {
+    modules,
+    packageManager,
+    moduleOptions: moduleOptionsFromAnswers(reviewed, context.registry)
+  }
 }
 
 /** `--advanced`: pick modules directly, then the same review, which can apply resolver fixes. */
@@ -173,5 +181,5 @@ export async function runAdvancedWizard(
     },
     services
   )
-  return { modules, packageManager }
+  return { modules, packageManager, moduleOptions: {} }
 }

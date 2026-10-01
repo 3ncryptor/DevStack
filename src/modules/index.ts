@@ -1,7 +1,13 @@
 import type { DevstackModule } from '../types/module'
+import apiVersioning from './api-versioning/index'
+import appAdmin from './app-admin/index'
+import archWebAtomic from './arch-web-atomic/index'
+import archWebFeature from './arch-web-feature/index'
+import archWebLayer from './arch-web-layer/index'
 import coreBackend from './core-backend/index'
 import dockerBasic from './devops-docker/index'
 import folderClean from './arch-clean/index'
+import folderFeature from './arch-feature/index'
 import folderMvc from './arch-mvc/index'
 import formatterPrettier from './quality-prettier/index'
 import frameworkExpress from './framework-express/index'
@@ -34,8 +40,13 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   frameworkNest,
   frameworkNextjs,
   uiTailwind,
+  archWebFeature,
+  archWebLayer,
+  archWebAtomic,
+  appAdmin,
   sharedApi,
   ormPrisma,
+  folderFeature,
   folderClean,
   folderMvc,
   linterEslint,
@@ -48,5 +59,6 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   middlewareMorgan,
   middlewareCompression,
   middlewareAsyncHandler,
+  apiVersioning,
   dockerBasic
 ]

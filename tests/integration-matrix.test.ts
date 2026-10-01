@@ -10,7 +10,7 @@ import { resolveStack } from '../src/core/resolver/index'
 import { BUILTIN_MODULES } from '../src/modules/index'
 import { PACKAGE_ROOT } from '../src/paths'
 import type { Condition } from '../src/types/module'
-import { parseMatrix } from './e2e/lib/checks'
+import { moduleIdOf, parseMatrix } from './e2e/lib/checks'
 
 /** Every leaf condition (`has`, `framework`, `depth`, ...) inside a condition tree. */
 function atoms(condition: Condition): Condition[] {
@@ -30,7 +30,7 @@ const combinations = matrix.map((combination) => {
   const requested =
     combination.preset !== undefined
       ? [...(getPreset(combination.preset)?.modules ?? [])]
-      : (combination.modules ?? [])
+      : (combination.modules ?? []).map(moduleIdOf)
   const modules = resolveStack(requested, registry).modules
   const context: ConditionContext = {
     present: new Set(

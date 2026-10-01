@@ -32,7 +32,8 @@ const moduleDefinition: DevstackModule = {
   filesPath: moduleFilesPath('framework-nextjs'),
   packageJson: {
     scripts: {
-      dev: 'next dev --port 3000',
+      // each web app fills in its own port: web 3000, admin 3002 (D-30, D-64)
+      dev: 'next dev --port {{port}}',
       build: 'next build',
       start: 'next start',
       // next typegen writes next-env.d.ts and the route types tsc needs

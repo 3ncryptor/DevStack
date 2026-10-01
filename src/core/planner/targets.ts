@@ -10,14 +10,23 @@ export const MONOREPO_DIRS: Readonly<Record<ModuleTarget, string>> = {
   root: '',
   backend: 'apps/api',
   frontend: 'apps/web',
+  admin: 'apps/admin',
   shared: 'packages/shared'
 }
+
+/** Web apps: the main one, and the admin app built from the same frontend modules (D-64). */
+export const WEB_ROLES: readonly ModuleTarget[] = ['frontend', 'admin']
 
 /** Ports for a monorepo, defined once (D-30): web 3000, api 3001. */
 export const MONOREPO_PORTS: Readonly<Partial<Record<ModuleTarget, number>>> = {
   backend: 3001,
-  frontend: 3000
+  frontend: 3000,
+  admin: 3002
 }
+
+/** Port of a target, for scripts and env defaults; the single layout serves on 3000. */
+export const portOf = (role: ModuleTarget, monorepo: boolean): number =>
+  (monorepo ? MONOREPO_PORTS[role] : undefined) ?? 3000
 
 export interface Target {
   role: ModuleTarget
@@ -52,9 +61,20 @@ export function planTargets(projectName: string, modules: readonly DevstackModul
       role,
       dir: MONOREPO_DIRS[role],
       packageName: role === 'root' ? projectName : `@${scope}/${MONOREPO_DIRS[role].split('/')[1]}`,
-      modules: modules.filter((moduleDefinition) => targetOf(moduleDefinition) === role)
+      modules: modules.filter(
+        (moduleDefinition) =>
+          targetOf(moduleDefinition) === role ||
+          // the admin app reuses every frontend module: Next.js, styling, folders
+          (role === 'admin' && targetOf(moduleDefinition) === 'frontend')
+      )
     }))
-    .filter((target) => target.role === 'root' || target.modules.length > 0)
+    .filter(
+      (target) =>
+        target.role === 'root' ||
+        (target.role === 'admin'
+          ? target.modules.some((moduleDefinition) => targetOf(moduleDefinition) === 'admin')
+          : target.modules.length > 0)
+    )
 }
 
 /**
@@ -67,14 +87,13 @@ export function envForTarget(
   targets: readonly Target[]
 ): PlannedEnvVar[] {
   if (target.dir === '') return [...env]
-  const webPort = MONOREPO_PORTS.frontend
-  const hasWeb = targets.some((candidate) => candidate.role === 'frontend')
+  const webOrigins = targets
+    .filter((candidate) => WEB_ROLES.includes(candidate.role))
+    .map((candidate) => `http://localhost:${portOf(candidate.role, true)}`)
   const overrides: Record<string, string | undefined> = {
     PORT: MONOREPO_PORTS[target.role]?.toString(),
     ALLOWED_ORIGINS:
-      target.role === 'backend' && hasWeb && webPort !== undefined
-        ? `http://localhost:${webPort}`
-        : undefined
+      target.role === 'backend' && webOrigins.length > 0 ? webOrigins.join(',') : undefined
   }
   return env.map((variable) => {
     const example = overrides[variable.name]

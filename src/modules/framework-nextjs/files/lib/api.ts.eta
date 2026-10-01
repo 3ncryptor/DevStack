@@ -1,7 +1,11 @@
+<% const versioned = it.modules.includes('api-versioning') %>
 import { createApiClient } from '<%= it.packageNames.shared %>'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api'
+const API_VERSION = '<%= versioned ? '/v1' : '' %>'
 
 /**
  * Typed calls to the API: `const { data } = await api.get<Todo[]>('/todos')`. In development the
  * browser goes through the /api proxy; in production set NEXT_PUBLIC_API_URL (split origin, D-29).
  */
-export const api = createApiClient({ baseUrl: process.env.NEXT_PUBLIC_API_URL ?? '/api' })
+export const api = createApiClient({ baseUrl: `${API_BASE}${API_VERSION}` })

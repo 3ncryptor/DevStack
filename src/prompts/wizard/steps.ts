@@ -15,6 +15,8 @@ export interface WizardAnswers {
   framework?: string
   frontend?: string
   styling?: string
+  admin?: boolean
+  frontendArchitecture?: string
   database?: string
   orm?: string
   packageManager?: PackageManagerId
@@ -22,6 +24,8 @@ export interface WizardAnswers {
   preCommit?: boolean
   docker?: boolean
   appSetup?: string[]
+  rateLimitAlgorithm?: string
+  apiVersioning?: boolean
   asyncHandler?: boolean
 }
 
@@ -48,6 +52,8 @@ export interface WizardStep {
   ) => Promise<WizardAnswers>
   describe: (answers: WizardAnswers, environment: StepEnvironment) => string
   modules: (answers: WizardAnswers) => string[]
+  /** Module options this answer sets, e.g. the rate-limit algorithm. */
+  moduleOptions?: (answers: WizardAnswers) => Record<string, Record<string, unknown>>
 }
 
 /** Always configured, never asked (D-35). */
@@ -77,9 +83,29 @@ const DATABASES: Choice<string>[] = [
 ]
 const ORMS: Choice<string>[] = [{ value: 'orm-prisma', label: 'Prisma' }]
 const ARCHITECTURES: Choice<string>[] = [
+  { value: 'arch-feature', label: 'Feature-scoped', hint: 'src/features/<name> per domain' },
   { value: 'arch-clean', label: 'Clean architecture' },
   { value: 'arch-mvc', label: 'MVC' },
   { value: NONE, label: 'Flat (no extra folders)' }
+]
+
+/** Question 4b (D-64): folders of every web app. */
+const FRONTEND_ARCHITECTURES: Choice<string>[] = [
+  {
+    value: 'arch-web-feature',
+    label: 'Feature-based',
+    hint: 'features/<name>, components/, hooks/'
+  },
+  { value: 'arch-web-layer', label: 'Layer-based', hint: 'components/, services/, utils/' },
+  { value: 'arch-web-atomic', label: 'Atomic design', hint: 'atoms, molecules, organisms' }
+]
+
+/** Question 16a (D-64): how rate limiting counts. */
+const RATE_LIMIT_ALGORITHMS: Choice<string>[] = [
+  { value: 'fixed-window', label: 'Fixed window', hint: 'N per window; simplest' },
+  { value: 'sliding-window', label: 'Sliding window', hint: 'no bursts at window edges' },
+  { value: 'token-bucket', label: 'Token bucket', hint: 'allows short bursts' },
+  { value: 'leaky-bucket', label: 'Leaky bucket', hint: 'constant rate' }
 ]
 
 /** Question 16: what app.ts sets up. Security is pre-checked (D-36). */
@@ -104,7 +130,16 @@ const isModule = (value: string | undefined): value is string =>
   value !== undefined && value !== NONE
 
 interface SelectStepDefinition {
-  key: 'appType' | 'framework' | 'frontend' | 'styling' | 'database' | 'orm' | 'architecture'
+  key:
+    | 'appType'
+    | 'framework'
+    | 'frontend'
+    | 'styling'
+    | 'frontendArchitecture'
+    | 'database'
+    | 'orm'
+    | 'architecture'
+    | 'rateLimitAlgorithm'
   label: string
   message: string
   choices: Choice<string>[]
@@ -143,7 +178,7 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
 }
 
 interface ConfirmStepDefinition {
-  key: 'preCommit' | 'docker' | 'asyncHandler'
+  key: 'preCommit' | 'docker' | 'asyncHandler' | 'admin' | 'apiVersioning'
   label: string
   message: string
   moduleId: string
@@ -221,6 +256,26 @@ const appSetupStep: WizardStep = {
   modules: (answers) => [...(answers.appSetup ?? [])]
 }
 
+/** 16a: asked only when rate limiting is in the app setup; sets the module's option. */
+function rateLimitAlgorithmStep(): WizardStep {
+  const step = selectStep({
+    key: 'rateLimitAlgorithm',
+    label: 'Rate-limit algorithm',
+    message: 'Rate-limit algorithm',
+    choices: RATE_LIMIT_ALGORITHMS,
+    defaultValue: 'fixed-window',
+    applies: (answers) => (answers.appSetup ?? []).includes('security-rate-limit'),
+    addsModule: false
+  })
+  return {
+    ...step,
+    moduleOptions: (answers): Record<string, Record<string, unknown>> =>
+      answers.rateLimitAlgorithm === undefined
+        ? {}
+        : { 'security-rate-limit': { algorithm: answers.rateLimitAlgorithm } }
+  }
+}
+
 export const STEPS: readonly WizardStep[] = [
   selectStep({
     key: 'appType',
@@ -258,6 +313,23 @@ export const STEPS: readonly WizardStep[] = [
     applies: isFullstack,
     addsModule: true
   }),
+  confirmStep({
+    key: 'admin',
+    label: 'Admin frontend',
+    message: 'Add an admin frontend? (apps/admin on port 3002, same API)',
+    moduleId: 'app-admin',
+    defaultValue: false,
+    applies: isFullstack
+  }),
+  selectStep({
+    key: 'frontendArchitecture',
+    label: 'Frontend architecture',
+    message: 'Frontend architecture',
+    choices: FRONTEND_ARCHITECTURES,
+    defaultValue: 'arch-web-feature',
+    applies: isFullstack,
+    addsModule: true
+  }),
   selectStep({
     key: 'database',
     label: 'Database',
@@ -282,7 +354,7 @@ export const STEPS: readonly WizardStep[] = [
     label: 'Architecture',
     message: 'Backend architecture',
     choices: ARCHITECTURES,
-    defaultValue: 'arch-clean',
+    defaultValue: 'arch-feature',
     // NestJS brings its own module layout
     applies: (answers) => answers.framework === 'framework-express',
     addsModule: true
@@ -304,6 +376,15 @@ export const STEPS: readonly WizardStep[] = [
     applies: (answers) => !isFullstack(answers)
   }),
   appSetupStep,
+  rateLimitAlgorithmStep(),
+  confirmStep({
+    key: 'apiVersioning',
+    label: 'API versioning',
+    message: 'Version the API under /v1? (health routes stay unversioned)',
+    moduleId: 'api-versioning',
+    defaultValue: true,
+    applies: (answers) => isModule(answers.framework)
+  }),
   confirmStep({
     key: 'asyncHandler',
     label: 'asyncHandler',
@@ -314,6 +395,20 @@ export const STEPS: readonly WizardStep[] = [
     applies: (answers) => answers.framework === 'framework-express'
   })
 ]
+
+/** Options the answers set, per module id; steps that do not apply set nothing. */
+export function moduleOptionsFromAnswers(
+  answers: WizardAnswers,
+  registry: Registry
+): Record<string, Record<string, unknown>> {
+  const environment: StepEnvironment = { registry, defaultPackageManager: 'npm' }
+  return Object.assign(
+    {},
+    ...STEPS.filter((step) => step.applies(answers, environment)).map(
+      (step) => step.moduleOptions?.(answers) ?? {}
+    )
+  ) as Record<string, Record<string, unknown>>
+}
 
 /** The stack the answers describe; steps that do not apply add nothing. */
 export function modulesFromAnswers(answers: WizardAnswers, registry: Registry): string[] {
@@ -338,6 +433,11 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     framework: firstOf(modules, FRAMEWORKS),
     frontend,
     styling: frontend === undefined ? undefined : (firstOf(modules, STYLINGS) ?? NONE),
+    admin: modules.includes('app-admin'),
+    frontendArchitecture: firstOf(modules, FRONTEND_ARCHITECTURES),
+    apiVersioning: modules.includes('api-versioning'),
+    // a module list carries no options: a preset with rate limiting starts from the default
+    rateLimitAlgorithm: modules.includes('security-rate-limit') ? 'fixed-window' : undefined,
     database: orm === undefined ? NONE : 'postgres',
     orm,
     architecture: firstOf(modules, ARCHITECTURES) ?? NONE,

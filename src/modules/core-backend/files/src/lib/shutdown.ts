@@ -36,19 +36,22 @@ async function dispose(disposers: readonly Disposer[], logger: Logger): Promise<
 /**
  * SIGTERM/SIGINT: stop accepting connections, drain, run disposers, exit 0. Exits 1 if any step
  * fails or the whole sequence takes longer than the timeout (B17.2, D-55).
+ *
+ * An unhandled rejection or uncaught exception is logged and runs the same sequence, then exits
+ * 1: the process state can no longer be trusted, but the database still gets closed (D-64).
  */
 export function handleShutdownSignals(options: ShutdownOptions): void {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
   let shuttingDown = false
 
-  const shutdown = (signal: NodeJS.Signals): void => {
+  const shutdown = (reason: string, failed: boolean): void => {
     if (shuttingDown) {
       // a second Ctrl-C means "now"
-      options.logger.warn({ signal }, 'second signal, exiting without waiting')
+      options.logger.warn({ reason }, 'shutdown requested again, exiting without waiting')
       process.exit(1)
     }
     shuttingDown = true
-    options.logger.info({ signal }, 'shutting down')
+    options.logger.info({ reason }, 'shutting down')
     // not unref'd: a disposer that hangs with nothing else pending must still hit the timeout
     setTimeout(() => {
       options.logger.error({ timeoutMs }, 'shutdown did not finish in time')
@@ -59,7 +62,7 @@ export function handleShutdownSignals(options: ShutdownOptions): void {
       .close()
       .then(() => dispose(options.disposers, options.logger))
       .then(
-        (ok) => process.exit(ok ? 0 : 1),
+        (ok) => process.exit(ok && !failed ? 0 : 1),
         (error: unknown) => {
           options.logger.error({ err: error }, 'error while closing the server')
           process.exit(1)
@@ -67,6 +70,18 @@ export function handleShutdownSignals(options: ShutdownOptions): void {
       )
   }
 
-  process.on('SIGTERM', shutdown)
-  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', () => {
+    shutdown('SIGTERM', false)
+  })
+  process.on('SIGINT', () => {
+    shutdown('SIGINT', false)
+  })
+  process.on('unhandledRejection', (reason: unknown) => {
+    options.logger.fatal({ err: reason }, 'unhandled promise rejection')
+    shutdown('unhandledRejection', true)
+  })
+  process.on('uncaughtException', (error: Error) => {
+    options.logger.fatal({ err: error }, 'uncaught exception')
+    shutdown('uncaughtException', true)
+  })
 }

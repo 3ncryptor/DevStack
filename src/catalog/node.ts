@@ -60,7 +60,6 @@ export const NODE_CATALOG = {
   cors: { version: '^2.8.6' },
   '@types/cors': { version: '^2.8.19' },
   helmet: { version: '^8.3.0' },
-  'express-rate-limit': { version: '^8.7.0' },
   morgan: { version: '^1.12.1' },
   '@types/morgan': { version: '^1.9.10' },
   compression: { version: '^1.8.2' },

@@ -29,6 +29,12 @@ export class ForbiddenError extends ApiError {
   }
 }
 
+export class TooManyRequestsError extends ApiError {
+  constructor(message = 'Too many requests, try again later') {
+    super(429, 'TOO_MANY_REQUESTS', message)
+  }
+}
+
 export class NotFoundError extends ApiError {
   constructor(message = 'Not found') {
     super(404, 'NOT_FOUND', message)

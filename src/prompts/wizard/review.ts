@@ -12,6 +12,8 @@ export interface StackDraft {
   modules: string[]
   packageManager: PackageManagerId
   depth: Depth
+  /** Options the answers set, per module id (e.g. the rate-limit algorithm). */
+  moduleOptions?: Record<string, Record<string, unknown>>
 }
 
 export interface StackPreview {

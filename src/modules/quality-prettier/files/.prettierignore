@@ -2,6 +2,10 @@ node_modules
 dist
 coverage
 **/src/generated
+# written by Next.js and Turborepo during builds
+**/.next
+**/.turbo
+**/next-env.d.ts
 # lockfiles are written by the package manager, not by people
 package-lock.json
 pnpm-lock.yaml

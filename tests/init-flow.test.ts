@@ -47,6 +47,7 @@ describe('init flow', () => {
       false,
       false,
       ['security-helmet'],
+      false,
       'generate'
     ])
 

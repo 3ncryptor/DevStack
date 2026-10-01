@@ -57,11 +57,24 @@ export function envelopeProblems(status: number, body: unknown, requestId: strin
   return problems
 }
 
+/** A module id, or `{ id, options }` like a stack config entry. */
+export type ModuleEntry = string | { id: string; options: Record<string, unknown> }
+
+export const moduleIdOf = (entry: ModuleEntry): string =>
+  typeof entry === 'string' ? entry : entry.id
+
+const isModuleEntry = (value: unknown): value is ModuleEntry =>
+  typeof value === 'string' ||
+  (typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { id?: unknown }).id === 'string' &&
+    typeof (value as { options?: unknown }).options === 'object')
+
 export interface Combination {
   id: string
   /** Exactly one of preset / modules. */
   preset?: string
-  modules?: string[]
+  modules?: ModuleEntry[]
   /** Passed as --depth; default wired. */
   depth?: 'bare' | 'wired'
   /** false when the project has no server to boot (bare depth, no framework). */
@@ -79,8 +92,7 @@ export function parseMatrix(raw: unknown): Combination[] {
   return raw.map((entry: unknown, index) => {
     const candidate = entry as Partial<Combination> | null
     const hasPreset = typeof candidate?.preset === 'string'
-    const hasModules =
-      Array.isArray(candidate?.modules) && candidate.modules.every((id) => typeof id === 'string')
+    const hasModules = Array.isArray(candidate?.modules) && candidate.modules.every(isModuleEntry)
     if (typeof candidate?.id !== 'string' || hasPreset === hasModules) {
       throw new Error(
         `e2e matrix entry ${index} needs a string "id" and either "preset" or "modules"`

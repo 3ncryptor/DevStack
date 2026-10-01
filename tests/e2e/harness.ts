@@ -163,11 +163,22 @@ async function checkCombination(
     const webDir = path.join(projectDir, 'apps', 'web')
     if (existsSync(path.join(webDir, 'package.json'))) {
       const startedAt = Date.now()
+      const webApps = await Promise.all(
+        ['web', 'admin']
+          .map((name) => ({ name, dir: path.join(projectDir, 'apps', name) }))
+          .filter((app) => existsSync(path.join(app.dir, 'package.json')))
+          .map(async (app) => ({ ...app, command: await startCommand(app.dir) }))
+      )
+      const manifest = (await readJson(path.join(projectDir, '.devstack', 'stack.json'))) as {
+        modules: Array<string | { id: string }>
+      }
       const boot = await bootFullstack({
         apiDir: appDir,
         apiCommand: await startCommand(appDir),
-        webDir,
-        webCommand: await startCommand(webDir),
+        webApps,
+        versioned: manifest.modules.some(
+          (entry) => (typeof entry === 'string' ? entry : entry.id) === 'api-versioning'
+        ),
         env: await bootEnv(appDir),
         timeoutMs: BOOT_TIMEOUT_MS,
         hasDatabase: existsSync(path.join(appDir, 'src', 'db', 'client.ts')),
@@ -287,6 +298,13 @@ async function runGateScripts(projectDir: string, pm: PackageManager): Promise<S
     if (manifest.scripts?.[script] === undefined) continue
     const result = await run(pm, ['run', script], { cwd: projectDir, timeoutMs: STEP_TIMEOUT_MS })
     results.push(toStep(script, result, result.output))
+  }
+  // builds write files of their own (next-env.d.ts, route types); the gates must still pass
+  if (results.find((result) => result.step === 'build')?.ok === true) {
+    for (const script of ['lint', 'format'] as const) {
+      const result = await run(pm, ['run', script], { cwd: projectDir, timeoutMs: STEP_TIMEOUT_MS })
+      results.push(toStep(`${script} (after build)`, result, result.output))
+    }
   }
   return results
 }

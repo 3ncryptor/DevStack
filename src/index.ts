@@ -90,6 +90,8 @@ async function resolveProjectTarget(
 
 interface StackChoice {
   modules: string[]
+  /** Options set by the wizard's answers; a config file carries its own. */
+  moduleOptions?: Record<string, Record<string, unknown>>
   /** Set when the wizard asked; otherwise the detected package manager is used. */
   packageManager?: PackageManagerId
 }
@@ -155,6 +157,7 @@ async function previewDraft(
       projectName: draft.projectName,
       projectDir,
       selectedModuleNames: draft.modules,
+      moduleOptions: draft.moduleOptions,
       depth: draft.depth,
       registry,
       packageManager: draft.packageManager,
@@ -303,7 +306,10 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     projectName: target.projectName,
     projectDir: target.projectDir,
     selectedModuleNames: choice.modules,
-    moduleOptions: config === undefined ? {} : splitModuleEntries(config.modules).options,
+    moduleOptions:
+      config === undefined
+        ? (choice.moduleOptions ?? {})
+        : splitModuleEntries(config.modules).options,
     depth,
     registry,
     packageManager,
