@@ -13,7 +13,7 @@ import { composeModules, composeProjectPackageJson } from '../composer'
 import { MANIFEST_PATH, manifestFor } from '../manifest'
 import { planCommands, type CommandOptions } from './commands'
 import { collectEnv, dotEnv, envExample } from './env'
-import { generatedFile, moduleTemplateFiles } from './files'
+import { generatedFile, moduleTemplateFiles, resolvePathTokens } from './files'
 import { has, huskyFiles } from './husky'
 import { conditionContextFor, evaluateCondition, includedAtDepth, moduleDepth } from './conditions'
 import { formatPlannedFiles } from './format'
@@ -47,6 +47,8 @@ export interface PlanInput {
   /** `bare` (config and tooling) or `wired` (default, adds integration code). */
   depth?: Depth
   options: CommandOptions
+  /** Source of generated local secrets (B17.7); random unless a test pins it. */
+  secret?: () => string
 }
 
 const plannedDepth = (input: PlanInput): Depth => input.depth ?? 'wired'
@@ -158,6 +160,8 @@ interface PlanContext {
   moduleOptions: ResolvedModuleOptions
   depth: Depth
   monorepo: boolean
+  /** `features` with feature-scoped architecture, else `modules` (B17.6). */
+  domainsDir: string
   slots: Record<string, string>
 }
 
@@ -185,6 +189,7 @@ async function targetOutput(
     pm: packageManagerAdapter(input.packageManager).docker,
     language: NODE_LANGUAGE,
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
+    domainsDir: context.domainsDir,
     target: target.role,
     port: portOf(target.role, context.monorepo),
     scripts: Object.keys(packageJson.scripts ?? {}),
@@ -206,7 +211,7 @@ async function targetOutput(
       : [
           generatedFile('.env.example', envExample(env)),
           // local values only; an existing .env holds the developer's own settings
-          generatedFile('.env', dotEnv(env), { strategy: 'skip-if-exists' })
+          generatedFile('.env', dotEnv(env, input.secret), { strategy: 'skip-if-exists' })
         ])
   ]
   for (const moduleDefinition of target.modules) {
@@ -291,14 +296,22 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
   const moduleOptions = resolveModuleOptions(modules, input.moduleOptions ?? {})
   const depth = plannedDepth(input)
   const targets = planTargets(input.projectName, modules)
+  const domainsDir = modules.some((moduleDefinition) => moduleDefinition.id === 'arch-feature')
+    ? 'features'
+    : 'modules'
+  const slots = renderSlots(modules, (moduleDefinition, fragment) =>
+    ruleIncluded(modules, moduleDefinition, fragment, moduleOptions, depth)
+  )
   const context: PlanContext = {
     targets,
     modules,
     moduleOptions,
     depth,
     monorepo: isMonorepo(modules),
-    slots: renderSlots(modules, (moduleDefinition, fragment) =>
-      ruleIncluded(modules, moduleDefinition, fragment, moduleOptions, depth)
+    domainsDir,
+    // slot code imports domain files, so it spells their folder with the same path token
+    slots: Object.fromEntries(
+      Object.entries(slots).map(([slot, code]) => [slot, resolvePathTokens(code, { domainsDir })])
     )
   }
   const outputs = await Promise.all(targets.map((target) => targetOutput(input, target, context)))

@@ -105,24 +105,39 @@ describe.each(BUILTIN_MODULES.map((moduleDefinition) => [moduleDefinition.id, mo
 /** What a module definition may import: data and types, nothing that touches the machine. */
 const ALLOWED_MODULE_IMPORTS = new Set(['../../paths', '../../types/module', 'zod'])
 
+/**
+ * Problems in one module source file: an import outside the allowed set, or dynamic loading. A
+ * sibling data file (`./openapi`) is allowed when it follows the same rule.
+ */
+async function importProblems(dir: string, file: string): Promise<string[]> {
+  const source = await readFile(path.join(dir, file), 'utf8')
+  const specifiers = [...source.matchAll(/^\s*import[^'"]*['"]([^'"]+)['"]/gm)].map(
+    (match) => match[1] ?? ''
+  )
+  // process.<property> in code; "process." ending a sentence in a comment is fine
+  const dynamic = /\bimport\(|\brequire\(|\bprocess\.[a-z]/.test(source)
+  const siblings = specifiers.filter((specifier) => /^\.\/[\w-]+$/.test(specifier))
+  const nested = await Promise.all(
+    siblings.map((sibling) => importProblems(dir, `${sibling.slice(2)}.ts`))
+  )
+  return [
+    ...specifiers
+      .filter(
+        (specifier) => !ALLOWED_MODULE_IMPORTS.has(specifier) && !siblings.includes(specifier)
+      )
+      .map((specifier) => `${file} imports ${specifier}`),
+    ...(dynamic ? [`${file} loads code dynamically or reads process`] : []),
+    ...nested.flat()
+  ]
+}
+
 describe('module contract lint (task 1.7)', () => {
   it.each(BUILTIN_MODULES.map((moduleDefinition) => moduleDefinition.id))(
     '%s/index.ts imports only data and types (no fs, child processes or network)',
     async (id) => {
-      const source = await readFile(
-        path.join(PACKAGE_ROOT, 'src', 'modules', id, 'index.ts'),
-        'utf8'
-      )
-      const specifiers = [...source.matchAll(/^\s*import[^'"]*['"]([^'"]+)['"]/gm)].map(
-        (match) => match[1]
-      )
-      // process.<property> in code; "process." ending a sentence in a comment is fine
-      const dynamic = /\bimport\(|\brequire\(|\bprocess\.[a-z]/.test(source)
-
       expect(
-        specifiers.filter((specifier) => !ALLOWED_MODULE_IMPORTS.has(specifier ?? ''))
+        await importProblems(path.join(PACKAGE_ROOT, 'src', 'modules', id), 'index.ts')
       ).toEqual([])
-      expect(dynamic).toBe(false)
     }
   )
 })

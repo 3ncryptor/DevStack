@@ -210,24 +210,25 @@ setInterval(() => {
 }, PRUNE_INTERVAL_MS).unref()
 
 /**
- * Limits each client by IP (<%= algorithm %>, <%= limit %> per <%= windowMs %> ms). Behind a
- * proxy, set `app.set('trust proxy', 1)` so request.ip is the client and not the proxy.
- * Over the limit: 429 with the error envelope, `RateLimit-*` and `Retry-After` headers.
+ * Limits each client by IP with `limiter`. Behind a proxy, set `app.set('trust proxy', 1)` so
+ * request.ip is the client and not the proxy. Over the limit: 429 with the error envelope,
+ * `RateLimit-*` and `Retry-After` headers.
  */
-export const apiRateLimiter: RequestHandler = (
-  request: Request,
-  response: Response,
-  next: NextFunction
-): void => {
-  const decision = limiter.consume(request.ip ?? 'unknown')
-  response.setHeader('RateLimit-Limit', decision.limit)
-  response.setHeader('RateLimit-Remaining', decision.remaining)
-  response.setHeader('RateLimit-Reset', Math.ceil(decision.resetMs / 1000))
-  if (decision.allowed) {
-    next()
-    return
+export function rateLimit(limiter: Limiter): RequestHandler {
+  return (request: Request, response: Response, next: NextFunction): void => {
+    const decision = limiter.consume(request.ip ?? 'unknown')
+    response.setHeader('RateLimit-Limit', decision.limit)
+    response.setHeader('RateLimit-Remaining', decision.remaining)
+    response.setHeader('RateLimit-Reset', Math.ceil(decision.resetMs / 1000))
+    if (decision.allowed) {
+      next()
+      return
+    }
+    response.setHeader('Retry-After', Math.ceil(decision.retryAfterMs / 1000))
+    const { status, body } = toErrorResponse(new TooManyRequestsError(), request.id)
+    response.status(status).json(body)
   }
-  response.setHeader('Retry-After', Math.ceil(decision.retryAfterMs / 1000))
-  const { status, body } = toErrorResponse(new TooManyRequestsError(), request.id)
-  response.status(status).json(body)
 }
+
+/** Every request (<%= algorithm %>, <%= limit %> per <%= windowMs %> ms). */
+export const apiRateLimiter = rateLimit(limiter)

@@ -12,6 +12,7 @@ const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   layout: ['layout-'],
   framework: ['framework-'],
   orm: ['orm-'],
+  auth: ['auth-'],
   architecture: ['arch-'],
   quality: ['quality-'],
   middleware: ['middleware-'],

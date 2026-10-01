@@ -55,7 +55,6 @@ async function readTemplate(
   return { path: outputPath, content: renderTemplate(source, context, relativePath) }
 }
 
-/** Reads a module's template directory into planned files. */
 /** Where a template lands in the project: dotfile restored, `.eta` suffix removed. */
 export function templateOutputPath(relativePath: string): string {
   const withoutSuffix = relativePath.endsWith(TEMPLATE_SUFFIX)
@@ -64,6 +63,15 @@ export function templateOutputPath(relativePath: string): string {
   return toProjectRelativePath(withoutSuffix)
 }
 
+/** Path tokens a template path may contain (B6), replaced from the template context. */
+export function resolvePathTokens(
+  projectPath: string,
+  context: Pick<TemplateContext, 'domainsDir'>
+): string {
+  return projectPath.replaceAll('__domains__', context.domainsDir)
+}
+
+/** Reads a module's template directory into planned files. */
 export async function moduleTemplateFiles(
   moduleDefinition: DevstackModule,
   sharedContext: Omit<TemplateContext, 'options'>,
@@ -79,12 +87,16 @@ export async function moduleTemplateFiles(
     include(templateOutputPath(relativePath))
   )
   return Promise.all(
-    relativePaths.map(async (relativePath) => ({
-      ...(await readTemplate(root, relativePath, context)),
-      mode: FILE_MODE,
-      strategy: 'create' as const,
-      source: moduleDefinition.id
-    }))
+    relativePaths.map(async (relativePath) => {
+      const template = await readTemplate(root, relativePath, context)
+      return {
+        ...template,
+        path: resolvePathTokens(template.path, context),
+        mode: FILE_MODE,
+        strategy: 'create' as const,
+        source: moduleDefinition.id
+      }
+    })
   )
 }
 

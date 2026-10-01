@@ -19,6 +19,7 @@ const context: TemplateContext = {
   packageManagerVersion: '10.0.0',
   versions: {},
   packageNames: {},
+  domainsDir: 'modules',
   env: [],
   options: {},
   slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' }

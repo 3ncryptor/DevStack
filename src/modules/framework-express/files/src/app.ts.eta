@@ -14,6 +14,7 @@ import { createHealthRouter } from './routes/health.js'
 export interface AppDeps {
   logger: Logger
   readinessChecks: readonly ReadinessCheck[]
+  <%~ it.slots['app.deps'] %>
 }
 
 /** Builds the app without listening, so tests use it directly (B17.2). */

@@ -1,0 +1,77 @@
+import { randomUUID } from 'node:crypto'
+
+import type { AuthConfig } from '../../src/<%= it.domainsDir %>/auth/auth.config.js'
+import type {
+  AuthRepositories,
+  RefreshTokenRecord,
+  UserRecord
+} from '../../src/<%= it.domainsDir %>/auth/auth.repository.js'
+import { createAuthService, type AuthService } from '../../src/<%= it.domainsDir %>/auth/auth.service.js'
+import { ConflictError } from '../../src/lib/errors.js'
+
+export const TEST_AUTH_CONFIG: AuthConfig = {
+  jwtSecret: 'test-only-secret-at-least-32-characters-long',
+  accessTokenTtlMinutes: 15,
+  refreshTokenTtlDays: 7,
+  production: false,
+  allowedOrigins: []
+}
+
+/** The auth repositories in memory, so tests need no database (B17.6). */
+export function memoryAuthRepositories(): AuthRepositories {
+  const users = new Map<string, UserRecord>()
+  const tokens = new Map<string, RefreshTokenRecord & { tokenHash: string }>()
+  const byEmail = (email: string) => [...users.values()].find((user) => user.email === email)
+  return {
+    users: {
+      findByEmail: (email) => Promise.resolve(byEmail(email) ?? null),
+      findById: (id) => Promise.resolve(users.get(id) ?? null),
+      create(user) {
+        if (byEmail(user.email) !== undefined) {
+          return Promise.reject(new ConflictError('An account with this email already exists'))
+        }
+        const record: UserRecord = { ...user, id: randomUUID(), role: 'USER', createdAt: new Date() }
+        users.set(record.id, record)
+        return Promise.resolve(record)
+      },
+      setRole(email, role) {
+        const user = byEmail(email)
+        if (user === undefined) return Promise.resolve(null)
+        const updated = { ...user, role }
+        users.set(user.id, updated)
+        return Promise.resolve(updated)
+      }
+    },
+    refreshTokens: {
+      create(token) {
+        const id = randomUUID()
+        tokens.set(id, { ...token, id, revokedAt: null })
+        return Promise.resolve()
+      },
+      findByHash: (tokenHash) =>
+        Promise.resolve([...tokens.values()].find((token) => token.tokenHash === tokenHash) ?? null),
+      revoke(id, now) {
+        const token = tokens.get(id)
+        if (token === undefined || token.revokedAt !== null) return Promise.resolve(false)
+        tokens.set(id, { ...token, revokedAt: now })
+        return Promise.resolve(true)
+      },
+      revokeAllForUser(userId, now) {
+        for (const token of tokens.values()) {
+          if (token.userId === userId && token.revokedAt === null) {
+            tokens.set(token.id, { ...token, revokedAt: now })
+          }
+        }
+        return Promise.resolve()
+      }
+    }
+  }
+}
+
+/** An auth service on in-memory repositories; `testApp()` uses it by default. */
+export function testAuthService(
+  config: Partial<AuthConfig> = {},
+  repositories: AuthRepositories = memoryAuthRepositories()
+): AuthService {
+  return createAuthService({ ...repositories, config: { ...TEST_AUTH_CONFIG, ...config } })
+}

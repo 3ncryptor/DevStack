@@ -60,6 +60,7 @@ const moduleDefinition: DevstackModule = {
       schema: 'z.url()'
     }
   ],
+  exposesSlots: ['prisma.models'],
   commands: [{ phase: 'postInstall', run: ['prisma', 'generate'] }]
 }
 

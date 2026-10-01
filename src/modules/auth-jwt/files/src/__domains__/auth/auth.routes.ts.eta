@@ -1,0 +1,129 @@
+import { Router, type Request, type RequestHandler, type Response } from 'express'
+import type { z } from 'zod'
+
+import { ApiSuccess } from '../../lib/api-response.js'
+import { ApiError, UnauthorizedError } from '../../lib/errors.js'
+import { createLimiter, rateLimit } from '../../middlewares/rate-limit.js'
+import { validate } from '../../middlewares/validate.js'
+import {
+  clearSessionCookies,
+  readCookie,
+  REFRESH_COOKIE,
+  setSessionCookies
+} from './auth.cookies.js'
+import { loginSchema, registerSchema } from './auth.schemas.js'
+import type { AuthService, LoginInput, RegisterInput, Session } from './auth.service.js'
+import { assertTrustedOrigin, requireAuth } from './require-auth.js'
+
+// login and register are brute-force targets: far fewer attempts than the API-wide limit
+const CREDENTIAL_ATTEMPTS = 10
+const CREDENTIAL_WINDOW_MS = 15 * 60_000
+
+type Handler = (request: Request, response: Response) => Promise<void>
+
+/** Express 5 forwards rejected promises too; this keeps the handlers lint-clean. */
+const handle =
+  (handler: Handler): RequestHandler =>
+  (request, response, next) => {
+    handler(request, response).catch(next)
+  }
+
+/**
+ * The tokens live only in httpOnly cookies, so a script on the page can never read one (D-66);
+ * the body says who is logged in and until when the access token is valid.
+ */
+function sessionBody(session: Session) {
+  return {
+    user: session.user,
+    accessTokenExpiresAt: session.accessToken.expiresAt.toISOString()
+  }
+}
+
+/** Login CSRF: credentials may only be posted from a trusted origin, like any cookie write. */
+const trustedOrigin =
+  (auth: AuthService): RequestHandler =>
+  (request, _response, next) => {
+    try {
+      assertTrustedOrigin(request, auth.config)
+      next()
+    } catch (error: unknown) {
+      next(error)
+    }
+  }
+
+/** The credential routes' guards: origin check, strict rate limit, then validation. */
+function credentialGuards(
+  auth: AuthService,
+  limit: RequestHandler,
+  schema: z.ZodType
+): RequestHandler[] {
+  return [trustedOrigin(auth), limit, validate({ body: schema })]
+}
+
+/** POST /auth/register, /auth/login, /auth/refresh, /auth/logout and GET /auth/me (B17.5). */
+export function createAuthRouter(auth: AuthService): Router {
+  const router = Router()
+  const credentialLimit = rateLimit(createLimiter(CREDENTIAL_ATTEMPTS, CREDENTIAL_WINDOW_MS))
+
+  const respondWithSession = (response: Response, status: number, session: Session): void => {
+    setSessionCookies(response, auth.config, session)
+    response.status(status).json(new ApiSuccess(sessionBody(session)))
+  }
+
+  router.post(
+    '/register',
+    ...credentialGuards(auth, credentialLimit, registerSchema),
+    handle(async (request, response) => {
+      respondWithSession(response, 201, await auth.register(request.body as RegisterInput))
+    })
+  )
+
+  router.post(
+    '/login',
+    ...credentialGuards(auth, credentialLimit, loginSchema),
+    handle(async (request, response) => {
+      respondWithSession(response, 200, await auth.login(request.body as LoginInput))
+    })
+  )
+
+  router.post(
+    '/refresh',
+    handle(async (request, response) => {
+      assertTrustedOrigin(request, auth.config)
+      const token = readCookie(request, REFRESH_COOKIE)
+      if (token === undefined) throw new UnauthorizedError('No session to refresh')
+      try {
+        respondWithSession(response, 200, await auth.refresh(token))
+      } catch (error: unknown) {
+        // a dead refresh token is useless to the browser: drop both cookies with the 401; a
+        // server error keeps them, so the session survives a database blip
+        if (error instanceof ApiError && error.status === 401) {
+          clearSessionCookies(response, auth.config)
+        }
+        throw error
+      }
+    })
+  )
+
+  router.post(
+    '/logout',
+    handle(async (request, response) => {
+      assertTrustedOrigin(request, auth.config)
+      await auth.logout(readCookie(request, REFRESH_COOKIE))
+      clearSessionCookies(response, auth.config)
+      response.json(new ApiSuccess(null))
+    })
+  )
+
+  router.get(
+    '/me',
+    requireAuth(auth),
+    handle(async (request, response) => {
+      // requireAuth sets request.user
+      const userId = request.user?.userId ?? ''
+      response.json(new ApiSuccess({ user: await auth.currentUser(userId) }))
+    })
+  )
+
+  return router
+}

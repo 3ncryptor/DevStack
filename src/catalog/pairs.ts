@@ -10,5 +10,6 @@ export const TYPE_PAIRS: ReadonlyArray<readonly [runtime: CatalogName, types: Ca
   ['cors', '@types/cors'],
   ['morgan', '@types/morgan'],
   ['compression', '@types/compression'],
-  ['pg', '@types/pg']
+  ['pg', '@types/pg'],
+  ['cookie-parser', '@types/cookie-parser']
 ]

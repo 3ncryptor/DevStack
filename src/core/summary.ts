@@ -37,14 +37,25 @@ function envLines(plan: GenerationPlan): string[] {
   return plan.env.map((variable) => {
     const flags = [
       variable.required ? 'required' : 'optional',
-      ...(variable.secret ? ['secret'] : [])
+      ...(variable.secret ? ['secret'] : []),
+      ...(variable.generated ? ['random local value in .env'] : [])
     ]
     return `${variable.name.padEnd(width)}  ${flags.join(', ')}: ${variable.description}`
   })
 }
 
 function warningLines(plan: GenerationPlan, result: ApplyResult): string[] {
-  const warnings = [...new Set(plan.env.flatMap((variable) => variable.warnings))]
+  const warnings = [
+    ...new Set([
+      ...plan.env.flatMap((variable) => variable.warnings),
+      ...plan.env
+        .filter((variable) => variable.generated)
+        .map(
+          (variable) =>
+            `${variable.name} in .env is a random value for local development; set your own in production.`
+        )
+    ])
+  ]
   if (result.kept.length > 0) {
     warnings.push(
       `Kept your existing ${result.kept.join(', ')}; generated versions were not written.`

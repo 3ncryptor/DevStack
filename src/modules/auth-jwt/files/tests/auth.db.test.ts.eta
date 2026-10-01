@@ -1,0 +1,43 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
+// importing config/env.js loads .env first, so DATABASE_URL is set for the Prisma client
+import '../src/config/env.js'
+
+import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
+<% if (vitest) { %>import { afterAll, test } from 'vitest'<% } else { %>import { after, test } from 'node:test'<% } %>
+
+import { createAuthService } from '../src/<%= it.domainsDir %>/auth/auth.service.js'
+import { disconnectDatabase, prisma } from '../src/db/client.js'
+import { prismaAuthRepositories } from '../src/db/repositories/auth.repository.prisma.js'
+import { TEST_AUTH_CONFIG } from './helpers/auth.js'
+
+/** The flow against the real database (B17.5), once it is up and migrated. */
+const ready = await prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`.then(
+  () => true,
+  () => false
+)
+const SKIPPED = 'database not reachable or not migrated: run db:up, then db:migrate'
+const email = `db-test-${randomUUID()}@example.com`
+
+<% if (vitest) { %>afterAll<% } else { %>after<% } %>(async () => {
+  if (ready) await prisma.user.deleteMany({ where: { email } })
+  await disconnectDatabase()
+})
+
+<% if (vitest) { %>
+test.skipIf(!ready)(`register, login, refresh and logout on Postgres${ready ? '' : ` (${SKIPPED})`}`, async () => {
+<% } else { %>
+await test('register, login, refresh and logout on Postgres', { skip: ready ? false : SKIPPED }, async () => {
+<% } %>
+  const auth = createAuthService({ ...prismaAuthRepositories, config: TEST_AUTH_CONFIG })
+
+  const registered = await auth.register({ email, password: 'correct horse battery staple' })
+  const loggedIn = await auth.login({ email, password: 'correct horse battery staple' })
+  const refreshed = await auth.refresh(loggedIn.refreshToken.token)
+  await auth.logout(refreshed.refreshToken.token)
+
+  assert.equal(registered.user.email, email)
+  assert.equal(loggedIn.user.id, registered.user.id)
+  await assert.rejects(auth.refresh(loggedIn.refreshToken.token), { status: 401 })
+  await assert.rejects(auth.refresh(refreshed.refreshToken.token), { status: 401 })
+})

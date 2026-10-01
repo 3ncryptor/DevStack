@@ -1,0 +1,25 @@
+<% const usage = `${it.packageManager} run auth:make-admin ${it.packageManager === 'npm' ? '-- ' : ''}<email>` %>
+// Promotes a registered user to ADMIN (D-67): <%= usage %>
+// config/env.js comes first: importing it loads .env, so DATABASE_URL is set
+import '../config/env.js'
+import { prismaAuthRepositories } from '../db/repositories/auth.repository.prisma.js'
+import { disconnectDatabase } from '../db/client.js'
+
+const email = process.argv[2]?.trim().toLowerCase()
+if (email === undefined || email === '') {
+  console.error('Usage: <%= usage %>')
+  process.exit(1)
+}
+
+try {
+  const user = await prismaAuthRepositories.users.setRole(email, 'ADMIN')
+  if (user === null) {
+    console.error(`No user with the email ${email}; register first, then run this again.`)
+    process.exitCode = 1
+  } else {
+    // the new role is in the user's next access token, at their next refresh or login
+    console.log(`${user.email} is now an admin.`)
+  }
+} finally {
+  await disconnectDatabase()
+}

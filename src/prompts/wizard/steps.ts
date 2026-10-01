@@ -19,6 +19,7 @@ export interface WizardAnswers {
   frontendArchitecture?: string
   database?: string
   orm?: string
+  auth?: string
   packageManager?: PackageManagerId
   architecture?: string
   preCommit?: boolean
@@ -85,6 +86,15 @@ const DATABASES: Choice<string>[] = [
   { value: NONE, label: 'None' }
 ]
 const ORMS: Choice<string>[] = [{ value: 'orm-prisma', label: 'Prisma' }]
+/** Question 7: auth needs a database; Better Auth and sessions follow (M3, M4). */
+const AUTHS: Choice<string>[] = [
+  { value: NONE, label: 'None' },
+  {
+    value: 'auth-jwt',
+    label: 'Email + password (JWT)',
+    hint: 'httpOnly cookies, rotating refresh tokens, admin role'
+  }
+]
 const ARCHITECTURES: Choice<string>[] = [
   { value: 'arch-feature', label: 'Feature-scoped', hint: 'src/features/<name> per domain' },
   { value: 'arch-clean', label: 'Clean architecture' },
@@ -147,6 +157,7 @@ interface SelectStepDefinition {
     | 'frontendArchitecture'
     | 'database'
     | 'orm'
+    | 'auth'
     | 'architecture'
     | 'rateLimitAlgorithm'
     | 'tests'
@@ -358,6 +369,16 @@ export const STEPS: readonly WizardStep[] = [
     applies: (answers) => isModule(answers.database),
     addsModule: true
   }),
+  selectStep({
+    key: 'auth',
+    label: 'Auth',
+    message: 'Authentication',
+    choices: AUTHS,
+    defaultValue: NONE,
+    // the auth module is Express + Prisma for now (M3)
+    applies: (answers) => answers.framework === 'framework-express' && answers.orm === 'orm-prisma',
+    addsModule: true
+  }),
   packageManagerStep,
   selectStep({
     key: 'architecture',
@@ -484,6 +505,7 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     rateLimitAlgorithm: modules.includes('security-rate-limit') ? 'fixed-window' : undefined,
     database: orm === undefined ? NONE : 'postgres',
     orm,
+    auth: firstOf(modules, AUTHS) ?? NONE,
     architecture: firstOf(modules, ARCHITECTURES) ?? NONE,
     preCommit: modules.includes('quality-husky'),
     docker: modules.includes('devops-docker'),

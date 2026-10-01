@@ -1,0 +1,61 @@
+import type {
+  AuthRepositories,
+  RefreshTokenRepository,
+  UserRepository
+} from '../../<%= it.domainsDir %>/auth/auth.repository.js'
+import { ConflictError } from '../../lib/errors.js'
+import { Prisma } from '../../generated/prisma/client.js'
+import { prisma } from '../client.js'
+
+// Prisma's error code for a unique constraint violation
+const UNIQUE_VIOLATION = 'P2002'
+
+const users: UserRepository = {
+  findByEmail: (email) => prisma.user.findUnique({ where: { email } }),
+  findById: (id) => prisma.user.findUnique({ where: { id } }),
+  async create(user) {
+    try {
+      return await prisma.user.create({ data: user })
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === UNIQUE_VIOLATION
+      ) {
+        throw new ConflictError('An account with this email already exists')
+      }
+      throw error
+    }
+  },
+  async setRole(email, role) {
+    const { count } = await prisma.user.updateMany({ where: { email }, data: { role } })
+    return count === 0 ? null : prisma.user.findUnique({ where: { email } })
+  }
+}
+
+const refreshTokens: RefreshTokenRepository = {
+  async create(token) {
+    await prisma.refreshToken.create({ data: token })
+  },
+  findByHash: (tokenHash) =>
+    prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      select: { id: true, userId: true, expiresAt: true, revokedAt: true }
+    }),
+  async revoke(id, now) {
+    // conditional update: only one of two concurrent refreshes with the same token wins
+    const { count } = await prisma.refreshToken.updateMany({
+      where: { id, revokedAt: null },
+      data: { revokedAt: now }
+    })
+    return count === 1
+  },
+  async revokeAllForUser(userId, now) {
+    await prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: now }
+    })
+  }
+}
+
+/** The auth repositories on Prisma (B17.6); src/index.ts wires them into the auth service. */
+export const prismaAuthRepositories: AuthRepositories = { users, refreshTokens }

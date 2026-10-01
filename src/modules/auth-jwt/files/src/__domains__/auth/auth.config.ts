@@ -1,0 +1,24 @@
+import type { Env } from '../../config/env.js'
+
+export interface AuthConfig {
+  jwtSecret: string
+  accessTokenTtlMinutes: number
+  refreshTokenTtlDays: number
+  /** Production: cookies are `Secure; SameSite=None` for a split-origin web app (D-29). */
+  production: boolean
+  /** Origins trusted to send cookie-authenticated writes (CSRF); empty: see `isTrustedOrigin`. */
+  allowedOrigins: readonly string[]
+}
+
+export function authConfig(env: Env): AuthConfig {
+  return {
+    jwtSecret: env.JWT_SECRET,
+    accessTokenTtlMinutes: env.JWT_ACCESS_TTL_MINUTES,
+    refreshTokenTtlDays: env.REFRESH_TOKEN_TTL_DAYS,
+    production: env.NODE_ENV === 'production',
+    allowedOrigins: (env.ALLOWED_ORIGINS ?? '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0)
+  }
+}

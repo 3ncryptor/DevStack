@@ -14,6 +14,11 @@ export interface EnvDeclaration {
   /** Shown in the summary when the variable is left empty (permissive defaults, D-B10). */
   warnIfUnset?: string
   /**
+   * `secret`: the local `.env` gets a random value generated at plan time (B17.7), for secrets
+   * used purely locally such as `JWT_SECRET`. `.env.example` stays blank.
+   */
+  generate?: 'secret'
+  /**
    * Zod expression validating the value in the generated `config/env.ts`, e.g.
    * `z.coerce.number().int().positive().default(3000)`. Default: a non-empty string, optional
    * unless `required`.
@@ -195,6 +200,7 @@ export const moduleDefinitionSchema = z.object({
         required: z.boolean(),
         secret: z.boolean().optional(),
         warnIfUnset: z.string().optional(),
+        generate: z.literal('secret').optional(),
         schema: z.string().min(1).optional()
       })
     )

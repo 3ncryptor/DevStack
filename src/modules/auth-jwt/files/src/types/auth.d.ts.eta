@@ -1,0 +1,12 @@
+import type { AccessClaims } from '../<%= it.domainsDir %>/auth/tokens.js'
+
+// Set by requireAuth (src/<%= it.domainsDir %>/auth/require-auth.ts) on every request it lets through.
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AccessClaims
+    }
+  }
+}
+
+export {}

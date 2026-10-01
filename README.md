@@ -53,6 +53,13 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
 - **Prisma 7 + PostgreSQL** (optional): driver adapter, `prisma.config.mjs`, a client generated
   into `src/generated` after install, wired into `/ready` and shutdown, and `db:*` scripts
   (`db:up` starts the compose database when Docker is selected).
+- **Email + password auth** (optional, Express + Prisma): register, login, refresh, logout and
+  `GET /auth/me`; argon2id password hashes; a 15-minute JWT access token and a rotating 7-day
+  refresh token, both in httpOnly cookies (a reused refresh token ends every session); writes
+  carrying cookies must come from `ALLOWED_ORIGINS`; `requireAuth` and `requireRole('ADMIN')`
+  for your routes, and `auth:make-admin <email>` to promote a user. `JWT_SECRET` gets a random
+  value in your local `.env` only. Tests run on in-memory repositories, plus one against
+  Postgres once it is migrated.
 - **Tooling that passes on day one:** ESLint 10 (flat config), Prettier, Husky + lint-staged +
   commitlint. Every generated file is formatted with the project's own Prettier config.
 - **Docker** (optional): a multi-stage, non-root Dockerfile for your package manager with a

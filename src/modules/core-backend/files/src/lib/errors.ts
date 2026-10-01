@@ -29,6 +29,12 @@ export class ForbiddenError extends ApiError {
   }
 }
 
+export class ConflictError extends ApiError {
+  constructor(message = 'Already exists') {
+    super(409, 'CONFLICT', message)
+  }
+}
+
 export class TooManyRequestsError extends ApiError {
   constructor(message = 'Too many requests, try again later') {
     super(429, 'TOO_MANY_REQUESTS', message)

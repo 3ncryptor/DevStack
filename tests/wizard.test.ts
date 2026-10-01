@@ -40,6 +40,7 @@ const Q = {
   frontendArchitecture: 'Frontend architecture',
   database: 'Database',
   orm: 'ORM',
+  auth: 'Authentication',
   packageManager: 'Package manager',
   architecture: 'Backend architecture',
   preCommit: 'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
@@ -114,6 +115,7 @@ describe('guided wizard (A0.2 order)', () => {
       Q.appType,
       Q.framework,
       Q.database,
+      Q.auth,
       Q.packageManager,
       Q.architecture,
       Q.preCommit,
@@ -144,7 +146,31 @@ describe('guided wizard (A0.2 order)', () => {
       ])
     )
     expect(result.modules).not.toContain('middleware-async-handler')
+    expect(result.modules).not.toContain('auth-jwt')
     expect(result.moduleOptions).toEqual({ 'security-rate-limit': { algorithm: 'fixed-window' } })
+  })
+
+  it('adds auth-jwt when email + password auth is chosen (D-66)', async () => {
+    const prompter = new AnswerPrompter([[Q.auth, 'auth-jwt']])
+
+    const result = await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(result.modules).toContain('auth-jwt')
+  })
+
+  it('does not offer auth without Express and Prisma (M3 scope)', async () => {
+    const prompter = new AnswerPrompter(NEST)
+
+    await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(prompter.asked).not.toContain(Q.auth)
+  })
+
+  it('pre-fills the auth answer from a module list', () => {
+    expect(answersFromModules(['framework-express', 'orm-prisma', 'auth-jwt']).auth).toBe(
+      'auth-jwt'
+    )
+    expect(answersFromModules(['framework-express', 'orm-prisma']).auth).toBe('none')
   })
 
   it('picks a step with a single compatible option without asking (ORM)', async () => {

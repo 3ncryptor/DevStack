@@ -10,6 +10,8 @@ const moduleDefinition: DevstackModule = {
   // Nest uses @nestjs/swagger for its document; that variant comes later (task 4.4)
   requires: ['framework-express'],
   dependencies: ['@scalar/express-api-reference'],
+  // other modules document their routes here (e.g. auth-jwt)
+  exposesSlots: ['openapi.paths', 'openapi.schemas'],
   slots: [
     {
       slot: 'app.imports',

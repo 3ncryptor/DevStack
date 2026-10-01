@@ -42,6 +42,8 @@ export interface PlannedEnvVar {
   example?: string
   required: boolean
   secret: boolean
+  /** The local `.env` gets a random value (B17.7). */
+  generated: boolean
   /** Zod expression for the generated `config/env.ts`. */
   schema: string
   /** Modules that declare it, in module order. */

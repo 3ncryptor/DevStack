@@ -2,7 +2,6 @@
   {
     "id": "backend-preset",
     "preset": "backend",
-    "smoke": true,
     "finish": true
   },
   {
@@ -141,6 +140,55 @@
     "id": "fullstack-preset",
     "preset": "fullstack-next-express",
     "compose": true
+  },
+  {
+    "id": "backend-jwt",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "middleware-cors",
+      "security-origin-checks",
+      "security-helmet",
+      "security-rate-limit",
+      "middleware-request-logger",
+      "middleware-compression",
+      "orm-prisma",
+      "quality-eslint",
+      "quality-prettier",
+      "quality-husky",
+      "arch-clean",
+      "auth-jwt"
+    ],
+    "smoke": true,
+    "finish": true
+  },
+  {
+    "id": "fullstack-jwt",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "arch-feature",
+      "orm-prisma",
+      "security-helmet",
+      "middleware-cors",
+      "security-rate-limit",
+      "middleware-request-logger",
+      "api-versioning",
+      "api-docs-scalar",
+      "framework-nextjs",
+      "ui-tailwind",
+      "arch-web-feature",
+      "testing-vitest",
+      "testing-vitest-web",
+      "devops-docker",
+      "devops-docker-web",
+      "devops-github-actions",
+      "quality-eslint",
+      "quality-prettier",
+      "quality-husky",
+      "auth-jwt"
+    ]
   },
   {
     "id": "node-prisma",

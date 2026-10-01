@@ -1,0 +1,223 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
+<% const awaitTest = vitest ? '' : 'await ' %>
+<% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
+import assert from 'node:assert/strict'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+
+import express from 'express'
+import { SignJWT } from 'jose'
+import request, { type Response } from 'supertest'
+
+import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
+import { testApp } from './helpers/app.js'
+import { memoryAuthRepositories, TEST_AUTH_CONFIG, testAuthService } from './helpers/auth.js'
+
+const AUTH = '<%= base %>/auth'
+const ada = { email: 'Ada@Example.com', password: 'correct horse battery staple' }
+
+interface SessionBody {
+  data: Record<string, unknown> & { user: Record<string, unknown> }
+}
+
+/** `name=value` of a cookie the response sets, ready to send back. */
+function cookie(response: Response, name: string): string {
+  const cookies = (response.headers['set-cookie'] as unknown as string[] | undefined) ?? []
+  const found = cookies.find((candidate) => candidate.startsWith(`${name}=`))
+  assert.ok(found, `expected the response to set ${name}`)
+  return found.split(';')[0] ?? ''
+}
+
+<%= awaitTest %>test('register creates the user and sets httpOnly session cookies', async () => {
+  const response = await request(testApp()).post(`${AUTH}/register`).send(ada)
+
+  assert.equal(response.status, 201)
+  const { user } = (response.body as SessionBody).data
+  assert.equal(user.email, 'ada@example.com')
+  assert.equal(user.role, 'USER')
+  assert.equal('passwordHash' in user, false)
+  // tokens stay in httpOnly cookies, out of reach of page scripts
+  assert.equal(JSON.stringify(response.body).includes(cookie(response, 'access_token').split('=')[1] ?? '?'), false)
+  const cookies = (response.headers['set-cookie'] as unknown as string[]).join('\n')
+  assert.match(cookies, /access_token=[^;]+;.*HttpOnly/)
+  assert.match(cookies, /refresh_token=[^;]+;.*HttpOnly/)
+})
+
+<%= awaitTest %>test('register refuses an email that is taken', async () => {
+  const app = testApp()
+  await request(app).post(`${AUTH}/register`).send(ada)
+
+  const response = await request(app).post(`${AUTH}/register`).send(ada)
+
+  assert.equal(response.status, 409)
+  assert.equal((response.body as { error: { code: string } }).error.code, 'CONFLICT')
+})
+
+<%= awaitTest %>test('register reports invalid input with 400', async () => {
+  const response = await request(testApp())
+    .post(`${AUTH}/register`)
+    .send({ email: 'not-an-email', password: 'short' })
+
+  assert.equal(response.status, 400)
+  assert.equal((response.body as { error: { code: string } }).error.code, 'VALIDATION_ERROR')
+})
+
+<%= awaitTest %>test('login answers a wrong password and an unknown email the same way', async () => {
+  const app = testApp()
+  await request(app).post(`${AUTH}/register`).send(ada)
+
+  const wrongPassword = await request(app)
+    .post(`${AUTH}/login`)
+    .send({ ...ada, password: 'not the password' })
+  const unknownEmail = await request(app)
+    .post(`${AUTH}/login`)
+    .send({ ...ada, email: 'nobody@example.com' })
+
+  assert.equal(wrongPassword.status, 401)
+  assert.equal(unknownEmail.status, 401)
+  assert.equal(
+    (wrongPassword.body as { error: { message: string } }).error.message,
+    (unknownEmail.body as { error: { message: string } }).error.message
+  )
+})
+
+<%= awaitTest %>test('GET /auth/me needs a session, from the cookie or a Bearer token', async () => {
+  const app = testApp()
+  const registered = await request(app).post(`${AUTH}/register`).send(ada)
+  // a native client reads the token from Set-Cookie and may send it as a Bearer header
+  const accessToken = cookie(registered, 'access_token').split('=')[1] ?? ''
+
+  const anonymous = await request(app).get(`${AUTH}/me`)
+  const withCookie = await request(app)
+    .get(`${AUTH}/me`)
+    .set('cookie', cookie(registered, 'access_token'))
+  const withBearer = await request(app).get(`${AUTH}/me`).set('authorization', `Bearer ${accessToken}`)
+  const tampered = await request(app).get(`${AUTH}/me`).set('authorization', `Bearer ${accessToken}x`)
+
+  assert.equal(anonymous.status, 401)
+  assert.equal(withCookie.status, 200)
+  assert.equal(withBearer.status, 200)
+  assert.equal(tampered.status, 401)
+})
+
+<%= awaitTest %>test('refresh rotates the token; reusing an old one ends every session', async () => {
+  const app = testApp()
+  const registered = await request(app).post(`${AUTH}/register`).send(ada)
+  const first = cookie(registered, 'refresh_token')
+
+  const rotated = await request(app).post(`${AUTH}/refresh`).set('cookie', first)
+  const second = cookie(rotated, 'refresh_token')
+  const replayed = await request(app).post(`${AUTH}/refresh`).set('cookie', first)
+  const afterReplay = await request(app).post(`${AUTH}/refresh`).set('cookie', second)
+
+  assert.equal(rotated.status, 200)
+  assert.notEqual(second, first)
+  assert.equal(replayed.status, 401)
+  assert.equal(afterReplay.status, 401)
+})
+
+<%= awaitTest %>test('logout revokes the refresh token and clears the cookies', async () => {
+  const app = testApp()
+  const registered = await request(app).post(`${AUTH}/register`).send(ada)
+  const refresh = cookie(registered, 'refresh_token')
+
+  const loggedOut = await request(app).post(`${AUTH}/logout`).set('cookie', refresh)
+  const refreshed = await request(app).post(`${AUTH}/refresh`).set('cookie', refresh)
+
+  assert.equal(loggedOut.status, 200)
+  assert.equal(cookie(loggedOut, 'refresh_token'), 'refresh_token=')
+  assert.equal(refreshed.status, 401)
+})
+
+<%= awaitTest %>test('cookie-authenticated writes from an untrusted origin are refused', async () => {
+  const app = testApp({ auth: testAuthService({ allowedOrigins: ['http://localhost:3000'] }) })
+  const registered = await request(app).post(`${AUTH}/register`).send(ada)
+  const refresh = cookie(registered, 'refresh_token')
+
+  const forged = await request(app)
+    .post(`${AUTH}/logout`)
+    .set('cookie', refresh)
+    .set('origin', 'https://evil.example')
+  const trusted = await request(app)
+    .post(`${AUTH}/logout`)
+    .set('cookie', refresh)
+    .set('origin', 'http://localhost:3000')
+
+  assert.equal(forged.status, 403)
+  assert.equal(trusted.status, 200)
+})
+
+<%= awaitTest %>test('requireRole lets only admins through', async () => {
+  const repositories = memoryAuthRepositories()
+  const auth = testAuthService({}, repositories)
+  const user = await auth.register({ email: 'user@example.com', password: ada.password })
+  await auth.register({ email: 'admin@example.com', password: ada.password })
+  await repositories.users.setRole('admin@example.com', 'ADMIN')
+  const admin = await auth.login({ email: 'admin@example.com', password: ada.password })
+  const app = express().get('/admin', requireAuth(auth), requireRole('ADMIN'), (_request, response) => {
+    response.json({ ok: true })
+  })
+
+  const asUser = await request(app)
+    .get('/admin')
+    .set('authorization', `Bearer ${user.accessToken.token}`)
+  const asAdmin = await request(app)
+    .get('/admin')
+    .set('authorization', `Bearer ${admin.accessToken.token}`)
+
+  assert.equal(asUser.status, 403)
+  assert.equal(asAdmin.status, 200)
+})
+
+<%= awaitTest %>test('forged, unsigned and expired access tokens are refused', async () => {
+  const app = testApp()
+  const registered = await request(app).post(`${AUTH}/register`).send(ada)
+  const { id } = (registered.body as SessionBody).data.user as { id: string }
+  const signed = (secret: string, expiresIn: string) =>
+    new SignJWT({ role: 'ADMIN' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setSubject(id)
+      .setExpirationTime(expiresIn)
+      .sign(new TextEncoder().encode(secret))
+  const unsigned = [
+    Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url'),
+    Buffer.from(JSON.stringify({ sub: id, role: 'ADMIN' })).toString('base64url'),
+    ''
+  ].join('.')
+
+  for (const token of [
+    await signed('another-secret-that-is-at-least-43-characters-long', '15m'),
+    await signed(TEST_AUTH_CONFIG.jwtSecret, '-1m'),
+    unsigned
+  ]) {
+    const response = await request(app).get(`${AUTH}/me`).set('authorization', `Bearer ${token}`)
+    assert.equal(response.status, 401)
+  }
+})
+
+<%= awaitTest %>test('production cookies are Secure and SameSite=None (split origin)', async () => {
+  const app = testApp({
+    auth: testAuthService({ production: true, allowedOrigins: ['https://app.example.com'] })
+  })
+
+  const response = await request(app).post(`${AUTH}/register`).send(ada)
+
+  const cookies = (response.headers['set-cookie'] as unknown as string[]).join('\n')
+  assert.match(cookies, /access_token=[^;]+;.*Secure/)
+  assert.match(cookies, /refresh_token=[^;]+;.*SameSite=None/)
+})
+
+<%= awaitTest %>test('cross-site credential posts are refused, with or without Origin', async () => {
+  const app = testApp({ auth: testAuthService({ allowedOrigins: ['http://localhost:3000'] }) })
+
+  const withOrigin = await request(app)
+    .post(`${AUTH}/login`)
+    .set('origin', 'https://evil.example')
+    .send(ada)
+  const withoutOrigin = await request(app)
+    .post(`${AUTH}/login`)
+    .set('sec-fetch-site', 'cross-site')
+    .send(ada)
+
+  assert.equal(withOrigin.status, 403)
+  assert.equal(withoutOrigin.status, 403)
+})

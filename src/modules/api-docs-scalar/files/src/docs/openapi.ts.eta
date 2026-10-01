@@ -43,7 +43,8 @@ export const openApiDocument = {
           }
         }
       }
-    }
+    },
+    <%~ it.slots['openapi.paths'] %>
   },
   components: {
     schemas: {
@@ -88,7 +89,8 @@ export const openApiDocument = {
           }
         },
         required: ['success', 'error']
-      }
+      },
+      <%~ it.slots['openapi.schemas'] %>
     }
   }
 } as const

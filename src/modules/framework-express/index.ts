@@ -10,7 +10,16 @@ const moduleDefinition: DevstackModule = {
   description: 'Express HTTP server setup',
   requires: ['language-node', 'core-backend'],
   dependencies: ['express'],
-  exposesSlots: ['app.imports', 'app.middleware', 'app.routes'],
+  exposesSlots: [
+    'app.imports',
+    'app.middleware',
+    'app.routes',
+    'app.deps',
+    'index.imports',
+    'index.deps',
+    'test.imports',
+    'test.deps'
+  ],
   env: [
     {
       name: 'PORT',

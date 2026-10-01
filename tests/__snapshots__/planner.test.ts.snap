@@ -161,7 +161,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/index.ts",
-      "sha256": "7c136dfa5ae4ee4d",
+      "sha256": "d0159b00f4b04855",
       "strategy": "create",
     },
     {
@@ -185,7 +185,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/lib/errors.ts",
-      "sha256": "3bc0a7151f8703b8",
+      "sha256": "959145a6a6478969",
       "strategy": "create",
     },
     {
@@ -251,7 +251,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/middlewares/rate-limit.ts",
-      "sha256": "3b8bbb245979ce02",
+      "sha256": "76e7528247bfdf5b",
       "strategy": "create",
     },
     {
@@ -293,7 +293,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "tests/health.test.ts",
-      "sha256": "34e5fbbf39f5c6b1",
+      "sha256": "de56c3fe751d1e2c",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tests/helpers/app.ts",
+      "sha256": "858fe9e79041dbcc",
       "strategy": "create",
     },
     {
@@ -501,7 +507,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/src/index.ts",
-      "sha256": "7c136dfa5ae4ee4d",
+      "sha256": "d0159b00f4b04855",
       "strategy": "create",
     },
     {
@@ -513,7 +519,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/src/lib/errors.ts",
-      "sha256": "3bc0a7151f8703b8",
+      "sha256": "959145a6a6478969",
       "strategy": "create",
     },
     {
@@ -567,7 +573,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/src/middlewares/rate-limit.ts",
-      "sha256": "3b8bbb245979ce02",
+      "sha256": "76e7528247bfdf5b",
       "strategy": "create",
     },
     {
@@ -627,13 +633,19 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/tests/docs.test.ts",
-      "sha256": "8e383183d19a6205",
+      "sha256": "b32488613886e9e6",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "apps/api/tests/health.test.ts",
-      "sha256": "c8a427410f7c4774",
+      "sha256": "10cccbc87bb5c976",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "apps/api/tests/helpers/app.ts",
+      "sha256": "858fe9e79041dbcc",
       "strategy": "create",
     },
     {

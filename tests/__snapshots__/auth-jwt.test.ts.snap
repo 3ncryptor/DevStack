@@ -1,0 +1,195 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`auth-jwt (B17.5, D-65) > matches the recorded plan for the fullstack preset with auth 1`] = `
+[
+  {
+    "path": "apps/api/.env",
+    "sha256": "a49bfa1bc2957316",
+  },
+  {
+    "path": "apps/api/.env.example",
+    "sha256": "05aced74905bb7f1",
+  },
+  {
+    "path": "apps/api/prisma/schema.prisma",
+    "sha256": "e18cb25eb21728c2",
+  },
+  {
+    "path": "apps/api/src/app.ts",
+    "sha256": "20ff9992ee715a0b",
+  },
+  {
+    "path": "apps/api/src/db/repositories/auth.repository.prisma.ts",
+    "sha256": "b1586eb67d3f8f40",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.config.ts",
+    "sha256": "d535b64c5dc16190",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.cookies.ts",
+    "sha256": "66a29d3c1352ddf8",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.repository.ts",
+    "sha256": "e354c5f4ca9e57b1",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.routes.ts",
+    "sha256": "6c8b8b9ce0cbe900",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.schemas.ts",
+    "sha256": "47bb112bd55d3b67",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.service.ts",
+    "sha256": "39df0ee8597196f1",
+  },
+  {
+    "path": "apps/api/src/features/auth/password.ts",
+    "sha256": "5adfcd1d0830ec99",
+  },
+  {
+    "path": "apps/api/src/features/auth/require-auth.ts",
+    "sha256": "5d48f8d52e867ec9",
+  },
+  {
+    "path": "apps/api/src/features/auth/tokens.ts",
+    "sha256": "5cf8802da857b974",
+  },
+  {
+    "path": "apps/api/src/index.ts",
+    "sha256": "3ee62353c5f4291c",
+  },
+  {
+    "path": "apps/api/src/types/auth.d.ts",
+    "sha256": "9a16e338042357aa",
+  },
+  {
+    "path": "apps/api/tests/auth.db.test.ts",
+    "sha256": "b38c302f07e8757b",
+  },
+  {
+    "path": "apps/api/tests/auth.test.ts",
+    "sha256": "fc5af32334b29539",
+  },
+  {
+    "path": "apps/api/tests/helpers/app.ts",
+    "sha256": "432a79643aec98f7",
+  },
+  {
+    "path": "apps/api/tests/helpers/auth.ts",
+    "sha256": "26f47bb9bbd71efb",
+  },
+  {
+    "path": "apps/web/.env",
+    "sha256": "5a7de190c5388d3c",
+  },
+  {
+    "path": "apps/web/.env.example",
+    "sha256": "a5793d50386a6947",
+  },
+  {
+    "path": "packages/shared/src/index.ts",
+    "sha256": "26e92f135524d798",
+  },
+]
+`;
+
+exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack preset with auth 1`] = `
+[
+  {
+    "path": "apps/api/.env",
+    "sha256": "a49bfa1bc2957316",
+  },
+  {
+    "path": "apps/api/.env.example",
+    "sha256": "ed97fa18f1367226",
+  },
+  {
+    "path": "apps/api/prisma/schema.prisma",
+    "sha256": "d74df4b306df5c64",
+  },
+  {
+    "path": "apps/api/src/app.ts",
+    "sha256": "20ff9992ee715a0b",
+  },
+  {
+    "path": "apps/api/src/db/repositories/auth.repository.prisma.ts",
+    "sha256": "b1586eb67d3f8f40",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.config.ts",
+    "sha256": "d535b64c5dc16190",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.cookies.ts",
+    "sha256": "66a29d3c1352ddf8",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.repository.ts",
+    "sha256": "e354c5f4ca9e57b1",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.routes.ts",
+    "sha256": "17faf35739e56a1a",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.schemas.ts",
+    "sha256": "47bb112bd55d3b67",
+  },
+  {
+    "path": "apps/api/src/features/auth/auth.service.ts",
+    "sha256": "6db774f2d09d7447",
+  },
+  {
+    "path": "apps/api/src/features/auth/password.ts",
+    "sha256": "601d618a4be6da50",
+  },
+  {
+    "path": "apps/api/src/features/auth/require-auth.ts",
+    "sha256": "9f2cdd7910885270",
+  },
+  {
+    "path": "apps/api/src/features/auth/tokens.ts",
+    "sha256": "26ab8db818eae341",
+  },
+  {
+    "path": "apps/api/src/index.ts",
+    "sha256": "3ee62353c5f4291c",
+  },
+  {
+    "path": "apps/api/src/types/auth.d.ts",
+    "sha256": "9a16e338042357aa",
+  },
+  {
+    "path": "apps/api/tests/auth.db.test.ts",
+    "sha256": "b38c302f07e8757b",
+  },
+  {
+    "path": "apps/api/tests/auth.test.ts",
+    "sha256": "509c4b6d51d85f16",
+  },
+  {
+    "path": "apps/api/tests/helpers/app.ts",
+    "sha256": "432a79643aec98f7",
+  },
+  {
+    "path": "apps/api/tests/helpers/auth.ts",
+    "sha256": "26f47bb9bbd71efb",
+  },
+  {
+    "path": "apps/web/.env",
+    "sha256": "5a7de190c5388d3c",
+  },
+  {
+    "path": "apps/web/.env.example",
+    "sha256": "a5793d50386a6947",
+  },
+  {
+    "path": "packages/shared/src/index.ts",
+    "sha256": "26e92f135524d798",
+  },
+]
+`;

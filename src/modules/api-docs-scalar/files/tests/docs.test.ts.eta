@@ -4,10 +4,9 @@ import assert from 'node:assert/strict'
 
 import request from 'supertest'
 
-import { createApp } from '../src/app.js'
-import { createLogger } from '../src/lib/logger.js'
+import { testApp } from './helpers/app.js'
 
-const app = createApp({ logger: createLogger('silent'), readinessChecks: [] })
+const app = testApp()
 
 <%= vitest ? '' : 'await ' %>test('GET /openapi.json serves the OpenAPI document', async () => {
   const response = await request(app).get('/openapi.json')

@@ -1268,13 +1268,13 @@ with each template; nightly sampling job live.
 
 ## Phase 4 — Auth, observability, API docs (target: v0.6.0)
 
-| #   | Task                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Effort |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 4.1 | `auth-jwt` (provides `auth`, enhancedBy ORMs), `auth-session` (requires `cache-redis`), wired per B17.5: shared auth core, `User` model and repository adapter per ORM, routes and `requireAuth` per framework, argon2 as a shared catalog dep (D-06), end-to-end auth tests.                                                                                                                                                                                                                                                                                               | L      |
-| 4.2 | `auth-better-auth` with GitHub and Google social providers (D-38) — validates the service-wrapper pattern and `env` UX; OAuth flow tested against a mocked provider.                                                                                                                                                                                                                                                                                                                                                                                                        | M      |
-| 4.3 | Observability: `obs-pino` options (pretty in dev, JSON in prod, redaction of auth headers), request logging; health/ready already in the baseline.                                                                                                                                                                                                                                                                                                                                                                                                                          | S      |
-| 4.4 | `api-docs-scalar` (OpenAPI, framework-aware), Nest Swagger variant; auth and template routes documented when present. _(Express part landed 2026-10-01 (M2 slice): `api-docs-scalar` serves an OpenAPI 3.1 document at `/openapi.json` (health, ready, the info route, envelope schemas) and the Scalar reference at `/docs`, mounted before Helmet because the reference loads its script from a CDN; off in production unless `API_DOCS=true`; generated tests cover both routes. The Nest (`@nestjs/swagger`) variant and documenting auth and template routes remain.)_ | M      |
-| 4.5 | Frontend auth at `wired` (D-43): login/register/logout pages, OAuth buttons, protected-route helper, `apiClient` credentials, for both frontends; per-user Todo with ownership tests.                                                                                                                                                                                                                                                                                                                                                                                       | M      |
+| #   | Task                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Effort |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 4.1 | `auth-jwt` (provides `auth`, enhancedBy ORMs), `auth-session` (requires `cache-redis`), wired per B17.5: shared auth core, `User` model and repository adapter per ORM, routes and `requireAuth` per framework, argon2 as a shared catalog dep (D-06), end-to-end auth tests. _(Express + Prisma slice landed 2026-10-02 (M3, D-66 to D-68): `auth-jwt` with register, login, refresh, logout and `/auth/me`, `requireAuth` and `requireRole`, rotating refresh tokens, origin-checked cookie writes, `auth:make-admin`, OpenAPI entries, generated tests on in-memory repositories plus a Postgres test that runs once the database is migrated. Verified: the fullstack preset with auth passes every gate and boots; register → me → refresh → logout works through the Next.js proxy against Postgres. Other ORMs and frameworks and `auth-session` stay in M4.)_ | L      |
+| 4.2 | `auth-better-auth` with GitHub and Google social providers (D-38) — validates the service-wrapper pattern and `env` UX; OAuth flow tested against a mocked provider.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | M      |
+| 4.3 | Observability: `obs-pino` options (pretty in dev, JSON in prod, redaction of auth headers), request logging; health/ready already in the baseline.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | S      |
+| 4.4 | `api-docs-scalar` (OpenAPI, framework-aware), Nest Swagger variant; auth and template routes documented when present. _(Express part landed 2026-10-01 (M2 slice): `api-docs-scalar` serves an OpenAPI 3.1 document at `/openapi.json` (health, ready, the info route, envelope schemas) and the Scalar reference at `/docs`, mounted before Helmet because the reference loads its script from a CDN; off in production unless `API_DOCS=true`; generated tests cover both routes. The Nest (`@nestjs/swagger`) variant and documenting auth and template routes remain.)_                                                                                                                                                                                                                                                                                           | M      |
+| 4.5 | Frontend auth at `wired` (D-43): login/register/logout pages, OAuth buttons, protected-route helper, `apiClient` credentials, for both frontends; per-user Todo with ownership tests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | M      |
 
 Exit gate: any two `auth` providers together are rejected with a fix
 suggestion; `.env.example` complete for each auth choice; every auth module
@@ -1617,7 +1617,8 @@ details? } }` (`ApiError` and its subclasses, renamed from `AppError`). Express 
 - **D-65 (2026-10-01)** — Test tiers, so a push stays cheap (owner request: the full suite had
   grown to about 30 minutes). Unit tests (`npm test`, about 5 s) run on every change. The e2e
   harness has a **smoke** tier (`npm run e2e`): the four matrix entries marked `smoke`
-  (`fullstack-docker`, `nest-prisma`, `backend-preset`, `backend-bare`) on pnpm, run in
+  (`fullstack-docker`, `nest-prisma`, `backend-jwt` (since D-68; was `backend-preset`),
+  `backend-bare`) on pnpm, run in
   parallel, about 1 minute on an idle machine; a unit test keeps it at four or fewer and covering
   both frameworks, both depths, the monorepo, the web app and Docker. The **full** tier
   (`npm run e2e:full`) runs every entry on all four package managers, entries in parallel
@@ -1626,6 +1627,49 @@ details? } }` (`ApiError` and its subclasses, renamed from `AppError`). Express 
   6.5 minutes for npm, pnpm and bun. Once CI exists: smoke on every pull request, full nightly
   and before a release. The integration-matrix rule still applies to the full matrix. Refines
   B13.
+- **D-66 (2026-10-02)** — JWT session model (owner choice, M3). `auth-jwt` issues a
+  **15-minute HS256 access token** (`jose`; only HS256 accepted) and a **7-day opaque refresh
+  token** (32 random bytes), both **only in httpOnly cookies** (`SameSite=Lax` in development,
+  `Secure; SameSite=None` in production for split origin, D-29; path `/` because the browser sees
+  the API under the proxy prefix in development). Response bodies carry the user and the access
+  token's expiry, never a token, so a script on the page cannot read one; a native client may
+  read `Set-Cookie` and send the access token as a `Bearer` header. Refresh tokens are stored as
+  SHA-256 hashes, **rotated on every refresh** with an atomic conditional revoke, and a revoked
+  token presented again **revokes every session of the user** (reuse detection; two tabs
+  refreshing at the same instant can log the user out, accepted; the web client refreshes
+  single-flight). **CSRF:** every cookie write, and login and register (login CSRF), must carry
+  an `Origin` from `ALLOWED_ORIGINS`; with no allowlist, development trusts any origin (the
+  proxy) and production only the API's own origin, so a split-origin deployment must set it (the
+  summary warns). A request without `Origin` is a non-browser client unless `Sec-Fetch-Site`
+  says `cross-site`. The API does not refuse to start without an allowlist, because boot
+  verification runs the API in production mode with the local `.env`. Passwords: argon2id
+  library defaults (D-06), 8 to 128 characters; an unknown email is verified against a
+  throwaway hash computed at startup, so failed logins take equal time and share one message.
+  Register answers 409 for a taken email (accepted enumeration trade-off). `auth-jwt` requires
+  `security-rate-limit`: login and register get 10 attempts per 15 minutes per IP. `JWT_SECRET`
+  (43 characters or more: 32 bytes of base64) is generated into `.env` at plan time (B17.7; env
+  declarations gain `generate: 'secret'`, injectable for reproducible plans) and never into
+  `.env.example`. Follow-ups from the security review: `trust proxy` as a configured hop count
+  and IPv6 /64 keys for the limiter, a per-email login limit, a short refresh grace window for
+  concurrent tabs, pruning expired refresh tokens, and redacting Prisma error messages in 5xx
+  logs. Amends B17.5.
+- **D-67 (2026-10-02)** — Roles for the admin app (owner choice). `User.role` is `USER` or
+  `ADMIN`; `requireRole('ADMIN')` reads the role from the access token, so a change applies at
+  the next refresh (at most the token lifetime). The first admin is promoted with
+  `auth:make-admin <email>` after registering; there is no self-service admin signup. The admin
+  web app admits only `ADMIN` (task 4.5).
+- **D-68 (2026-10-02)** — M3 scope and engine changes. (1) **Per-user Todo waits for the Todo
+  template** (owner choice): M3 is `auth-jwt`, frontend auth pages and Better Auth; ownership
+  rules and tests land with task 3.11. (2) The auth domain lives in `src/<domains>/auth/` where
+  `<domains>` is `features` with feature-scoped architecture and `modules` otherwise: template
+  paths and slot code spell it `__domains__` (the B6 path token, now implemented), templates read
+  `it.domainsDir`. (3) Composition points for injected dependencies: slots `app.deps` (AppDeps
+  fields), `index.imports`/`index.deps` (the composition root) and `test.imports`/`test.deps`
+  (a generated `tests/helpers/app.ts` with `testApp()` that every generated API test uses, with
+  in-memory doubles), plus `prisma.models` and `openapi.paths`/`openapi.schemas`. (4) Auth is
+  chosen in the wizard (question 7, Express + Prisma only for now), presets and config files;
+  the `--auth` flag arrives with the other per-module stack flags (B11). (5) The e2e smoke slot of
+  `backend-preset` goes to `backend-jwt` (its superset); `fullstack-jwt` is full tier only.
 
 # §8. Open questions
 

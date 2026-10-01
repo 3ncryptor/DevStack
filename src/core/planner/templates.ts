@@ -26,6 +26,11 @@ export interface TemplateContext {
   versions: Readonly<Record<string, string>>
   /** Workspace package names by target, e.g. `it.packageNames.shared` (monorepo). */
   packageNames: Readonly<Record<string, string>>
+  /**
+   * Folder under `src/` that holds domain code (B17.6): `features` with feature-scoped
+   * architecture, else `modules`. Template paths spell it `__domains__`.
+   */
+  domainsDir: string
   /** Selected module ids, e.g. for `it.modules.includes('orm-prisma')`. */
   modules: readonly string[]
   /** Env vars of the modules at this depth, e.g. for the generated `config/env.ts`. */

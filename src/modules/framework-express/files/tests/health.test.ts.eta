@@ -4,14 +4,10 @@ import assert from 'node:assert/strict'
 
 import request from 'supertest'
 
-import { createApp } from '../src/app.js'
-import { createLogger } from '../src/lib/logger.js'
 import type { ReadinessCheck } from '../src/lib/readiness.js'
+import { testApp } from './helpers/app.js'
 
-const logger = createLogger('silent')
-
-const appWith = (readinessChecks: readonly ReadinessCheck[] = []) =>
-  createApp({ logger, readinessChecks })
+const appWith = (readinessChecks: readonly ReadinessCheck[] = []) => testApp({ readinessChecks })
 
 <%= vitest ? '' : 'await ' %>test('GET /health reports the process is alive', async () => {
   const response = await request(appWith()).get('/health')

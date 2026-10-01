@@ -72,6 +72,12 @@ export const NODE_CATALOG = {
   compression: { version: '^1.8.2' },
   '@types/compression': { version: '^1.8.1' },
 
+  // auth (D-06: password hashing is a catalog dependency, not a module); verified 2026-10-01
+  argon2: { version: '^0.45.1', allowBuilds: ['argon2'] },
+  jose: { version: '^6.2.12' },
+  'cookie-parser': { version: '^1.4.7' },
+  '@types/cookie-parser': { version: '^1.4.10' },
+
   // quality
   eslint: { version: '^10.11.0' },
   '@eslint/js': { version: '^10.0.1' },

@@ -9,3 +9,4 @@ datasource db {
 }
 
 // Add your models here, then run the db:migrate script.
+<%~ it.slots['prisma.models'] ? `\n${it.slots['prisma.models']}\n` : '' %>
