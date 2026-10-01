@@ -1505,7 +1505,7 @@ Format: `D-nn (date) — decision. Rationale. Supersedes/relates.`
   project to ESM before 0.3 would make the template's runtime `require()` of middleware throw
   inside its `try/catch` and silently disable every security middleware. Task 0.3 rewrites those
   templates with slots, so the ESM switch, Nest 12 and Prisma 7 land there together. Amends D-09.
-- **D-54 (2026-09-30)** — Apply never deletes. All files are rendered and formatted in memory,
+- **D-54 (2026-09-30, refined by D-58)** — Apply never deletes. All files are rendered and formatted in memory,
   written to a fresh staging directory under the OS temp dir, and only then copied into the
   project. A failure before the copy touches nothing; a failure during the copy stops and names
   every file already written plus the staging directory. There is no automatic rollback, because
@@ -1537,6 +1537,14 @@ Format: `D-nn (date) — decision. Rationale. Supersedes/relates.`
   350 MB. No catalog runtime dependency needs an optional dependency. pnpm's production install
   does not have this problem. Compose host ports are `${PORT:-3000}` and `${POSTGRES_PORT:-5432}`,
   while the container always listens on 3000.
+- **D-58 (2026-10-01)** — DevStack cleans up its own temporary data and never anything else. After
+  a successful write the CLI removes its staging copy; when files were overwritten it keeps the
+  `backup/` folder, which the summary points to, and drops only the staged copies. After a failure
+  everything stays, because the error message points at it. Tests remove the temp folders they
+  create, and the e2e harness removes its work dir unless run with `--keep`. Measured: a full test
+  run and both e2e legs now leave no temp folders, where one test run used to leave 26 (525
+  folders, 15 GB, had accumulated). User files, other projects and their Docker resources are
+  never touched. Refines D-54 (owner decision).
 
 # §8. Open questions
 

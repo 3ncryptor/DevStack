@@ -3,7 +3,7 @@ import type { Prompter } from '../../intake/prompter'
 import type { GenerationPlan, PlannedFile } from '../../types/plan'
 import type { Logger } from '../../utils/logger'
 import { assertPlanPaths, inspectTarget } from './inspect'
-import { stageFiles, writeIntoProject } from './write'
+import { discardStaging, stageFiles, writeIntoProject } from './write'
 
 export type FileStatus = 'new' | 'overwrite' | 'keep'
 
@@ -17,6 +17,8 @@ export interface ApplyOptions {
   force: boolean
   prompter: Prompter
   logger: Logger
+  /** Where the staging directory is created; defaults to the OS temp directory. */
+  tempRoot?: string
 }
 
 export interface ApplyResult {
@@ -102,8 +104,12 @@ export async function applyPlan(plan: GenerationPlan, options: ApplyOptions): Pr
         entry.status === 'new' || (entry.status === 'overwrite' && decision === 'overwrite')
     )
     .map((entry) => ({ file: entry.file, replaces: entry.status === 'overwrite' }))
-  const stagingDir = await stageFiles(entries.map((entry) => entry.file))
+  const stagingDir = await stageFiles(
+    entries.map((entry) => entry.file),
+    options.tempRoot
+  )
   const outcome = await writeIntoProject(plan, entries, stagingDir)
+  await discardStaging(stagingDir, outcome)
 
   const kept = classified
     .filter(

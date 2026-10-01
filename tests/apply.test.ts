@@ -1,21 +1,29 @@
-import { chmod, mkdir, mkdtemp, readFile, stat, symlink, writeFile } from 'node:fs/promises'
-import os from 'node:os'
+import { chmod, mkdir, readdir, readFile, stat, symlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { applyPlan, classifyFiles } from '../src/core/apply/index'
 import { Aborted, InputError } from '../src/errors'
 import type { GenerationPlan, PlannedFile } from '../src/types/plan'
 import { ConsoleLogger } from '../src/utils/logger'
 import { ScriptedPrompter } from './helpers/scripted-prompter'
+import { removeTempDirs, tempDir } from './helpers/temp-dirs'
 
 const logger = new ConsoleLogger({ silent: true })
 
-/** Each test gets its own fresh directory; nothing is ever deleted. */
+/** Each test gets its own fresh directory, removed when this file's tests are done. */
 function freshDir(): Promise<string> {
-  return mkdtemp(path.join(os.tmpdir(), 'devstack-apply-test-'))
+  return tempDir('devstack-apply-test-')
 }
+
+afterAll(removeTempDirs)
+
+/** Staging (and its backups) goes under a test-owned folder so nothing outlives the tests. */
+let stagingRoot = ''
+beforeAll(async () => {
+  stagingRoot = await tempDir('devstack-apply-staging-')
+})
 
 function file(filePath: string, content: string, extra: Partial<PlannedFile> = {}): PlannedFile {
   return { path: filePath, content, mode: 0o644, strategy: 'create', source: 'test', ...extra }
@@ -53,7 +61,8 @@ describe('applyPlan', () => {
       yes: true,
       force: false,
       prompter: new ScriptedPrompter([]),
-      logger
+      logger,
+      tempRoot: stagingRoot
     })
 
     expect(result.written).toEqual(['.husky/pre-commit', 'src/app.ts'])
@@ -67,7 +76,13 @@ describe('applyPlan', () => {
     const plan = planFor(dir, [file('src/app.ts', 'generated\n'), file('README.md', '# new\n')])
 
     await expect(
-      applyPlan(plan, { yes: true, force: false, prompter: new ScriptedPrompter([]), logger })
+      applyPlan(plan, {
+        yes: true,
+        force: false,
+        prompter: new ScriptedPrompter([]),
+        logger,
+        tempRoot: stagingRoot
+      })
     ).rejects.toThrow(InputError)
     expect(await read(dir, 'src/app.ts')).toBe('mine\n')
     await expect(stat(path.join(dir, 'README.md'))).rejects.toThrow()
@@ -81,7 +96,8 @@ describe('applyPlan', () => {
       yes: true,
       force: true,
       prompter: new ScriptedPrompter([]),
-      logger
+      logger,
+      tempRoot: stagingRoot
     })
 
     expect(await read(dir, 'src/app.ts')).toBe('generated\n')
@@ -94,7 +110,7 @@ describe('applyPlan', () => {
 
     const result = await applyPlan(
       planFor(dir, [file('README.md', '# generated\n', { strategy: 'skip-if-exists' })]),
-      { yes: false, force: false, prompter, logger }
+      { yes: false, force: false, prompter, logger, tempRoot: stagingRoot }
     )
 
     expect(await read(dir, 'README.md')).toBe('# mine\n')
@@ -111,7 +127,8 @@ describe('applyPlan', () => {
       yes: false,
       force: false,
       prompter: new ScriptedPrompter(['skip']),
-      logger
+      logger,
+      tempRoot: stagingRoot
     })
 
     expect(await read(dir, 'src/app.ts')).toBe('mine\n')
@@ -128,7 +145,8 @@ describe('applyPlan', () => {
         yes: false,
         force: false,
         prompter: new ScriptedPrompter(['abort']),
-        logger
+        logger,
+        tempRoot: stagingRoot
       })
     ).rejects.toThrow(Aborted)
     await expect(stat(path.join(dir, 'README.md'))).rejects.toThrow()
@@ -139,7 +157,13 @@ describe('applyPlan', () => {
     const plan = planFor(dir, [file('ok.txt', 'ok\n'), file('../escape.txt', 'nope\n')])
 
     await expect(
-      applyPlan(plan, { yes: true, force: true, prompter: new ScriptedPrompter([]), logger })
+      applyPlan(plan, {
+        yes: true,
+        force: true,
+        prompter: new ScriptedPrompter([]),
+        logger,
+        tempRoot: stagingRoot
+      })
     ).rejects.toThrow(InputError)
     await expect(stat(path.join(dir, 'ok.txt'))).rejects.toThrow()
   })
@@ -167,7 +191,13 @@ describe('classifyFiles', () => {
 })
 
 describe('applyPlan safety', () => {
-  const noPrompts = { yes: true, force: true, prompter: new ScriptedPrompter([]), logger }
+  const noPrompts = {
+    yes: true,
+    force: true,
+    prompter: new ScriptedPrompter([]),
+    logger,
+    tempRoot: stagingRoot
+  }
 
   it('refuses to write through a symlinked directory inside the project', async () => {
     const dir = await freshDir()
@@ -226,5 +256,39 @@ describe('applyPlan safety', () => {
     expect((await stat(path.join(dir, '.env'))).mode & 0o777).toBe(0o600)
     expect(result.backupDir).toBeDefined()
     expect(await readFile(path.join(result.backupDir ?? '', '.env'), 'utf8')).toBe('SECRET=mine\n')
+  })
+})
+
+describe('applyPlan cleanup (D-58)', () => {
+  const noPrompts = {
+    yes: true,
+    force: true,
+    prompter: new ScriptedPrompter([]),
+    logger,
+    tempRoot: stagingRoot
+  }
+
+  it('removes its own staging copy after a clean run', async () => {
+    const dir = await freshDir()
+    const tempRoot = await freshDir()
+
+    await applyPlan(planFor(dir, [file('a.txt', 'a\n')]), { ...noPrompts, tempRoot })
+
+    expect(await readdir(tempRoot)).toEqual([])
+  })
+
+  it('keeps the backups of overwritten files but drops the staged copies', async () => {
+    const dir = await freshDir()
+    const tempRoot = await freshDir()
+    await existing(dir, 'a.txt', 'mine\n')
+
+    const result = await applyPlan(planFor(dir, [file('a.txt', 'new\n')]), {
+      ...noPrompts,
+      tempRoot
+    })
+
+    const [staging] = await readdir(tempRoot)
+    expect(await readdir(path.join(tempRoot, staging ?? ''))).toEqual(['backup'])
+    expect(await readFile(path.join(result.backupDir ?? '', 'a.txt'), 'utf8')).toBe('mine\n')
   })
 })

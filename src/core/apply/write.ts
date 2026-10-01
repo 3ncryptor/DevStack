@@ -1,5 +1,5 @@
 import { constants } from 'node:fs'
-import { chmod, copyFile, mkdir, mkdtemp, stat, writeFile } from 'node:fs/promises'
+import { chmod, copyFile, mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -22,8 +22,11 @@ export interface WriteOutcome {
 }
 
 /** Renders every file into a fresh staging directory, so a failure here touches nothing. */
-export async function stageFiles(files: readonly PlannedFile[]): Promise<string> {
-  const stagingDir = await mkdtemp(path.join(os.tmpdir(), 'devstack-stage-'))
+export async function stageFiles(
+  files: readonly PlannedFile[],
+  tempRoot: string = os.tmpdir()
+): Promise<string> {
+  const stagingDir = await mkdtemp(path.join(tempRoot, 'devstack-stage-'))
   for (const file of files) {
     const target = resolveInside(path.join(stagingDir, 'files'), file.path)
     await mkdir(path.dirname(target), { recursive: true })
@@ -97,4 +100,14 @@ export async function writeIntoProject(
     }
   }
   return outcome
+}
+
+/**
+ * After a successful write, removes DevStack's own staging copy (D-58). Backups of files that were
+ * overwritten are the user's data and stay; the summary prints where they are. Never called after
+ * a failure, whose message points at the staging directory.
+ */
+export async function discardStaging(stagingDir: string, outcome: WriteOutcome): Promise<void> {
+  const target = outcome.backupDir === undefined ? stagingDir : path.join(stagingDir, 'files')
+  await rm(target, { recursive: true, force: true })
 }

@@ -1,8 +1,7 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
-import os from 'node:os'
+import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 
 import { CLI_PACKAGE, MANIFEST_PATH, parseStackConfig } from '../src/core/manifest'
 import { loadModules } from '../src/core/module-loader'
@@ -13,13 +12,16 @@ import { runCreateDevstack } from '../src/index'
 import { loadStackConfig } from '../src/intake/config'
 import type { GenerationPlan } from '../src/types/plan'
 import { ScriptedPrompter } from './helpers/scripted-prompter'
+import { removeTempDirs, tempDir } from './helpers/temp-dirs'
 
 const valid = { version: 1, name: 'demo-app', modules: ['framework-express'] }
 
-/** Each test gets its own fresh directory; nothing is ever deleted. */
+/** Each test gets its own fresh directory, removed when this file's tests are done. */
 function freshDir(): Promise<string> {
-  return mkdtemp(path.join(os.tmpdir(), 'devstack-config-test-'))
+  return tempDir('devstack-config-test-')
 }
+
+afterAll(removeTempDirs)
 
 describe('parseStackConfig', () => {
   it('accepts a minimal config', () => {
