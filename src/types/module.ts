@@ -18,6 +18,8 @@ export interface EnvDeclaration {
    * used purely locally such as `JWT_SECRET`. `.env.example` stays blank.
    */
   generate?: 'secret'
+  /** Only when this holds, e.g. an OAuth provider's credentials when it is selected. */
+  when?: Condition
   /**
    * Zod expression validating the value in the generated `config/env.ts`, e.g.
    * `z.coerce.number().int().positive().default(3000)`. Default: a non-empty string, optional
@@ -40,6 +42,8 @@ export type Condition =
   | { framework: string }
   | { option: string; equals: unknown }
   | { depth: Depth }
+  /** The target being rendered, e.g. `admin` (files only: slots and scripts never match it). */
+  | { target: ModuleTarget }
   | { all: readonly Condition[] }
   | { any: readonly Condition[] }
   | { not: Condition }
@@ -159,6 +163,7 @@ const conditionSchema: z.ZodType<Condition> = z.lazy(() =>
     z.strictObject({ framework: z.string().min(1) }),
     z.strictObject({ option: z.string().min(1), equals: z.unknown() }),
     z.strictObject({ depth: depthSchema }),
+    z.strictObject({ target: z.enum(MODULE_TARGETS) }),
     z.strictObject({ all: z.array(conditionSchema) }),
     z.strictObject({ any: z.array(conditionSchema) }),
     z.strictObject({ not: conditionSchema })
@@ -201,6 +206,7 @@ export const moduleDefinitionSchema = z.object({
         secret: z.boolean().optional(),
         warnIfUnset: z.string().optional(),
         generate: z.literal('secret').optional(),
+        when: conditionSchema.optional(),
         schema: z.string().min(1).optional()
       })
     )

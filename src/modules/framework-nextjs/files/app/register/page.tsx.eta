@@ -1,0 +1,89 @@
+<% const tailwind = it.modules.includes('ui-tailwind') %>
+<% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useState, type FormEvent } from 'react'
+
+import { ApiClientError } from '<%= it.packageNames.shared %>'
+
+import { auth } from '../../lib/auth'
+import { formText } from '../../lib/auth/form'
+
+/** The API's validation details, one line per field, e.g. "password: Too small". */
+function describe(failure: unknown): string {
+  if (!(failure instanceof ApiClientError)) return 'Could not register'
+  const issues = Array.isArray(failure.details)
+    ? (failure.details as Array<{ path?: string; message?: string }>)
+        .map((issue) => `${issue.path ?? ''}: ${issue.message ?? ''}`)
+        .join('\n')
+    : ''
+  return issues === '' ? failure.message : issues
+}
+
+export default function RegisterPage() {
+  const router = useRouter()
+  const [error, setError] = useState<string>()
+  const [pending, setPending] = useState(false)
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const name = formText(form, 'name').trim()
+    setPending(true)
+    setError(undefined)
+    auth
+      .register({
+        email: formText(form, 'email'),
+        password: formText(form, 'password'),
+        ...(name === '' ? {} : { name })
+      })
+      .then(
+        () => {
+          router.push('/account')
+        },
+        (failure: unknown) => {
+          setError(describe(failure))
+          setPending(false)
+        }
+      )
+  }
+
+  return (
+    <main<%~ cls('mx-auto grid min-h-screen max-w-sm content-center gap-4 p-6') %>>
+      <h1<%~ cls('text-2xl font-semibold') %>>Create an account</h1>
+      <form onSubmit={submit}<%~ cls('grid gap-3') %>>
+        <label<%~ cls('grid gap-1') %>>
+          Name (optional)
+          <input name="name" autoComplete="name"<%~ cls('rounded border px-3 py-2') %> />
+        </label>
+        <label<%~ cls('grid gap-1') %>>
+          Email
+          <input name="email" type="email" autoComplete="email" required<%~ cls('rounded border px-3 py-2') %> />
+        </label>
+        <label<%~ cls('grid gap-1') %>>
+          Password (8 characters or more)
+          <input
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={128}
+            required<%~ cls('rounded border px-3 py-2') %>
+          />
+        </label>
+        {error === undefined ? null : (
+          <p role="alert"<%~ cls('whitespace-pre-line text-red-600') %>>
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={pending}<%~ cls('rounded bg-neutral-900 px-3 py-2 text-white disabled:opacity-50') %>>
+          {pending ? 'Creating…' : 'Create account'}
+        </button>
+      </form>
+      <p>
+        Already registered? <a href="/login"<%~ cls('underline') %>>Log in</a>
+      </p>
+    </main>
+  )
+}

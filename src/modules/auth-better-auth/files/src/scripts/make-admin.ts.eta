@@ -1,0 +1,27 @@
+<% const usage = `${it.packageManager} run auth:make-admin ${it.packageManager === 'npm' ? '-- ' : ''}<email>` %>
+// Promotes a registered user to admin (D-67): <%= usage %>
+// config/env.js comes first: importing it loads .env, so DATABASE_URL is set
+import '../config/env.js'
+import { disconnectDatabase, prisma } from '../db/client.js'
+
+const email = process.argv[2]?.trim().toLowerCase()
+if (email === undefined || email === '') {
+  console.error('Usage: <%= usage %>')
+  process.exit(1)
+}
+
+try {
+  // Better Auth's admin plugin reads the role from the user row on every request
+  const { count } = await prisma.user.updateMany({ where: { email }, data: { role: 'admin' } })
+  if (count === 0) {
+    console.error(`No user with the email ${email}; register first, then run this again.`)
+    process.exitCode = 1
+  } else {
+    // sign-up does not verify email addresses: anyone could have registered this one first
+    console.log(
+      `${email} is now an admin. Email addresses are not verified: make sure this account is yours (log in with it).`
+    )
+  }
+} finally {
+  await disconnectDatabase()
+}

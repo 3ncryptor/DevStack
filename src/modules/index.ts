@@ -2,6 +2,7 @@ import type { DevstackModule } from '../types/module'
 import apiDocsScalar from './api-docs-scalar/index'
 import apiVersioning from './api-versioning/index'
 import appAdmin from './app-admin/index'
+import authBetterAuth from './auth-better-auth/index'
 import authJwt from './auth-jwt/index'
 import archWebAtomic from './arch-web-atomic/index'
 import archWebFeature from './arch-web-feature/index'
@@ -55,6 +56,7 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   sharedApi,
   ormPrisma,
   authJwt,
+  authBetterAuth,
   folderFeature,
   folderClean,
   folderMvc,

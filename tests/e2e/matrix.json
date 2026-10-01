@@ -187,7 +187,67 @@
       "quality-eslint",
       "quality-prettier",
       "quality-husky",
-      "auth-jwt"
+      "auth-jwt",
+      "app-admin"
+    ]
+  },
+  {
+    "id": "backend-better-auth",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "middleware-cors",
+      "security-origin-checks",
+      "security-helmet",
+      "security-rate-limit",
+      "middleware-request-logger",
+      "middleware-compression",
+      "orm-prisma",
+      "quality-eslint",
+      "quality-prettier",
+      "quality-husky",
+      "arch-clean",
+      {
+        "id": "auth-better-auth",
+        "options": {
+          "github": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "fullstack-better-auth",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "arch-feature",
+      "orm-prisma",
+      "security-helmet",
+      "middleware-cors",
+      "security-rate-limit",
+      "middleware-request-logger",
+      "api-versioning",
+      "api-docs-scalar",
+      "framework-nextjs",
+      "ui-tailwind",
+      "arch-web-feature",
+      "testing-vitest",
+      "testing-vitest-web",
+      "devops-docker",
+      "devops-docker-web",
+      "devops-github-actions",
+      "quality-eslint",
+      "quality-prettier",
+      "quality-husky",
+      "app-admin",
+      {
+        "id": "auth-better-auth",
+        "options": {
+          "github": true,
+          "google": true
+        }
+      }
     ]
   },
   {

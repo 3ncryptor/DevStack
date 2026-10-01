@@ -204,7 +204,12 @@ async function checkCombination(
         ['web', 'admin']
           .map((name) => ({ name, dir: path.join(projectDir, 'apps', name) }))
           .filter((app) => existsSync(path.join(app.dir, 'package.json')))
-          .map(async (app) => ({ ...app, command: await startCommand(app.dir) }))
+          .map(async (app) => ({
+            ...app,
+            command: await startCommand(app.dir),
+            // with auth, the admin home page is behind a login (D-67): its login page answers
+            guarded: app.name === 'admin' && existsSync(path.join(app.dir, 'app', 'login'))
+          }))
       )
       const manifest = (await readJson(path.join(projectDir, '.devstack', 'stack.json'))) as {
         modules: Array<string | { id: string }>

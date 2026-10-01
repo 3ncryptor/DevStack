@@ -6,11 +6,18 @@ import type { PlannedEnvVar } from '../../types/plan'
 const defaultSchema = (declaration: EnvDeclaration): string =>
   declaration.required ? 'z.string().min(1)' : 'z.string().optional()'
 
-/** Merges every module's env declarations; the first module to declare a variable owns its text. */
-export function collectEnv(modules: readonly DevstackModule[]): PlannedEnvVar[] {
+/**
+ * Merges every module's env declarations; the first module to declare a variable owns its text.
+ * `include` drops declarations whose `when` does not hold for the stack.
+ */
+export function collectEnv(
+  modules: readonly DevstackModule[],
+  include: (moduleDefinition: DevstackModule, declaration: EnvDeclaration) => boolean = () => true
+): PlannedEnvVar[] {
   const byName = new Map<string, PlannedEnvVar>()
   for (const moduleDefinition of modules) {
     for (const declaration of moduleDefinition.env ?? []) {
+      if (!include(moduleDefinition, declaration)) continue
       const existing = byName.get(declaration.name)
       const warnings = declaration.warnIfUnset === undefined ? [] : [declaration.warnIfUnset]
       if (existing === undefined) {

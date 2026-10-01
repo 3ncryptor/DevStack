@@ -12,6 +12,8 @@ const moduleDefinition: DevstackModule = {
   requires: ['framework-nextjs'],
   // vite is vitest's peer: declared, because yarn classic does not install peers
   devDependencies: ['vitest', 'vite'],
+  // the session logic of auth-jwt's web client (refresh on 401, one refresh at a time)
+  files: [{ path: 'tests/auth.test.ts', when: { has: 'auth-jwt' } }],
   scripts: [{ name: 'test', run: 'vitest run', depth: 'wired' }],
   filesPath: moduleFilesPath('testing-vitest-web')
 }

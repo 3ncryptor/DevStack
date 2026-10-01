@@ -1,0 +1,176 @@
+<% const betterAuth = it.modules.includes('auth-better-auth') %>
+import { ApiClientError, type ApiClient } from '<%= it.packageNames.shared %>'
+<% if (betterAuth) { %>
+
+import { API_ROOT } from '../api'
+
+/** The OAuth providers this API signs in with (D-38). */
+export type SocialProvider = 'github' | 'google'
+<% } %>
+
+/** The logged-in user, as the API's /auth/me returns it. */
+export interface SessionUser {
+  id: string
+  email: string
+  name: string | null
+  role: 'USER' | 'ADMIN'
+}
+
+export interface Credentials {
+  email: string
+  password: string
+}
+
+export interface Registration extends Credentials {
+  name?: string
+}
+
+/** What the pages need from auth, whichever auth module the API uses (B17.5, D-43). */
+export interface AuthClient {
+  /** null when nobody is logged in. */
+  currentUser(): Promise<SessionUser | null>
+  login(credentials: Credentials): Promise<SessionUser>
+  register(registration: Registration): Promise<SessionUser>
+  logout(): Promise<void>
+  /** Runs an API call; on 401 it refreshes the session once and retries the call. */
+  withSession<T>(call: () => Promise<T>): Promise<T>
+<% if (betterAuth) { %>
+  /** Sends the browser to the provider; it comes back to `returnTo` on this site, logged in. */
+  socialSignIn(provider: SocialProvider, returnTo: string): Promise<void>
+<% } %>
+}
+
+<% if (betterAuth) { %>
+const isUnauthorized = (error: unknown): boolean =>
+  error instanceof ApiClientError && error.status === 401
+
+/** Better Auth answers `{ code, message }` on errors; this turns them into ApiClientError. */
+async function authRequest<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${API_ROOT}/auth${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+  const payload = (await response.json().catch(() => null)) as
+    | (T & { code?: string; message?: string })
+    | null
+  if (!response.ok) {
+    throw new ApiClientError(
+      response.status,
+      payload?.code ?? 'AUTH_ERROR',
+      payload?.message ?? `Request failed (${response.status})`
+    )
+  }
+  return payload as T
+}
+
+/**
+ * Auth against Better Auth's routes (auth-better-auth, D-69): the session is an httpOnly cookie
+ * that Better Auth renews on its own, so there is nothing to refresh. The current user comes from
+ * the API's own GET /me.
+ */
+export function createAuthClient(api: ApiClient): AuthClient {
+  async function currentUser(): Promise<SessionUser | null> {
+    try {
+      const { data } = await api.get<{ user: SessionUser }>('/me')
+      return data.user
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) return null
+      throw error
+    }
+  }
+
+  async function signedIn(): Promise<SessionUser> {
+    const user = await currentUser()
+    if (user === null) throw new ApiClientError(401, 'UNAUTHORIZED', 'Not logged in')
+    return user
+  }
+
+  return {
+    withSession: (call) => call(),
+    currentUser,
+    async login(credentials) {
+      await authRequest('/sign-in/email', credentials)
+      return signedIn()
+    },
+    async register(registration) {
+      // Better Auth needs a name; the part of the email before @ stands in for a missing one
+      await authRequest('/sign-up/email', {
+        ...registration,
+        name: registration.name ?? registration.email.split('@')[0]
+      })
+      return signedIn()
+    },
+    async logout() {
+      await authRequest('/sign-out', {})
+    },
+    async socialSignIn(provider, returnTo) {
+      const { url } = await authRequest<{ url: string }>('/sign-in/social', {
+        provider,
+        callbackURL: new URL(returnTo, window.location.origin).href
+      })
+      window.location.assign(url)
+    }
+  }
+}
+<% } else { %>
+const isUnauthorized = (error: unknown): boolean =>
+  error instanceof ApiClientError && error.status === 401
+
+/**
+ * Auth against the API's /auth routes (auth-jwt, D-66). The tokens are httpOnly cookies, so
+ * this code never sees them: it only reacts to 401s by refreshing the session.
+ */
+export function createAuthClient(api: ApiClient): AuthClient {
+  let refreshing: Promise<boolean> | undefined
+
+  // one refresh at a time: concurrent 401s share it, so a rotated refresh token is never sent
+  // twice (which the API treats as theft and answers by ending every session)
+  const refresh = (): Promise<boolean> => {
+    refreshing ??= api
+      .post('/auth/refresh', {})
+      .then(
+        () => true,
+        () => false
+      )
+      .finally(() => {
+        refreshing = undefined
+      })
+    return refreshing
+  }
+
+  async function withSession<T>(call: () => Promise<T>): Promise<T> {
+    try {
+      return await call()
+    } catch (error: unknown) {
+      if (!isUnauthorized(error) || !(await refresh())) throw error
+      return call()
+    }
+  }
+
+  return {
+    withSession,
+    async currentUser() {
+      try {
+        const { data } = await withSession(() => api.get<{ user: SessionUser }>('/auth/me'))
+        return data.user
+      } catch (error: unknown) {
+        if (isUnauthorized(error)) return null
+        throw error
+      }
+    },
+    async login(credentials) {
+      const { data } = await api.post<{ user: SessionUser }>('/auth/login', credentials)
+      return data.user
+    },
+    async register(registration) {
+      const { data } = await api.post<{ user: SessionUser }>('/auth/register', registration)
+      return data.user
+    },
+    async logout() {
+      await api.post('/auth/logout', {})
+    }
+  }
+}
+<% } %>

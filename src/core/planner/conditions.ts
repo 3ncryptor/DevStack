@@ -9,6 +9,8 @@ export interface ConditionContext {
   /** Resolved options of the module the condition belongs to. */
   options: Readonly<Record<string, unknown>>
   depth: Depth
+  /** Role of the target a file is rendered for; unset for slots and scripts. */
+  target?: string
 }
 
 export function evaluateCondition(condition: Condition, context: ConditionContext): boolean {
@@ -18,6 +20,7 @@ export function evaluateCondition(condition: Condition, context: ConditionContex
   if ('has' in condition) return context.present.has(condition.has)
   if ('framework' in condition) return context.framework === condition.framework
   if ('option' in condition) return Object.is(context.options[condition.option], condition.equals)
+  if ('target' in condition) return context.target === condition.target
   return context.depth === condition.depth
 }
 

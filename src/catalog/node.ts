@@ -77,6 +77,8 @@ export const NODE_CATALOG = {
   jose: { version: '^6.2.12' },
   'cookie-parser': { version: '^1.4.7' },
   '@types/cookie-parser': { version: '^1.4.10' },
+  // D-38, D-69: ESM-only, no native code; verified 2026-10-02
+  'better-auth': { version: '^1.7.7' },
 
   // quality
   eslint: { version: '^10.11.0' },

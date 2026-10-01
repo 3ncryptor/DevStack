@@ -1,0 +1,97 @@
+<% const prefix = it.modules.includes('api-versioning') ? '/v1' : '' %>
+<% const { github, google } = it.options %>
+import { betterAuth } from 'better-auth'
+import type { prismaAdapter } from 'better-auth/adapters/prisma'
+import { admin } from 'better-auth/plugins'
+
+import type { Env } from '../../config/env.js'
+
+/**
+ * A Better Auth database adapter: Prisma in src/index.ts, in memory in tests. Typed from the
+ * Prisma adapter because the `database` option's own type spans drivers that are not installed.
+ */
+export type AuthDatabase = ReturnType<typeof prismaAdapter>
+
+/** Where Better Auth's routes live; the app mounts its handler there. */
+export const AUTH_BASE_PATH = '<%= prefix %>/auth'
+
+interface OAuthApp {
+  clientId: string
+  clientSecret: string
+}
+
+export interface AuthSettings {
+  secret: string
+  /** The API's public URL: OAuth providers call back to `${baseURL}${AUTH_BASE_PATH}/callback/...`. */
+  baseURL: string
+  /** Origins allowed to sign in and to send session cookies (CSRF), besides the API's own. */
+  trustedOrigins: string[]
+  production: boolean
+<% if (github) { %>
+  github?: OAuthApp
+<% } %>
+<% if (google) { %>
+  google?: OAuthApp
+<% } %>
+}
+
+<% if (github || google) { %>
+const oauthApp = (clientId?: string, clientSecret?: string): OAuthApp | undefined =>
+  clientId && clientSecret ? { clientId, clientSecret } : undefined
+
+<% } %>
+export function authSettings(env: Env): AuthSettings {
+  return {
+    secret: env.BETTER_AUTH_SECRET,
+    baseURL: env.BETTER_AUTH_URL ?? `http://localhost:${env.PORT}`,
+    trustedOrigins: (env.ALLOWED_ORIGINS ?? '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0),
+    production: env.NODE_ENV === 'production',
+<% if (github) { %>
+    // GitHub sign-in turns on once both are set
+    github: oauthApp(env.GITHUB_CLIENT_ID, env.GITHUB_CLIENT_SECRET),
+<% } %>
+<% if (google) { %>
+    google: oauthApp(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET),
+<% } %>
+  }
+}
+
+/**
+ * Better Auth (D-38, D-69): email + password<% if (github || google) { %> and social sign-in<% } %>, sessions in the database
+ * behind an httpOnly cookie, roles from the admin plugin (`user`, `admin`; D-67). It checks the
+ * Origin of every write against trustedOrigins (CSRF) and rate-limits sign-in in production.
+ * `database` is the Prisma adapter in src/index.ts and an in-memory one in tests (B17.6).
+ */
+export function createAuth(database: AuthDatabase, settings: AuthSettings) {
+  return betterAuth({
+    database,
+    secret: settings.secret,
+    baseURL: settings.baseURL,
+    basePath: AUTH_BASE_PATH,
+    trustedOrigins: settings.trustedOrigins,
+    emailAndPassword: { enabled: true, minPasswordLength: 8, maxPasswordLength: 128 },
+    socialProviders: {
+<% if (github) { %>
+      ...(settings.github === undefined ? {} : { github: settings.github }),
+<% } %>
+<% if (google) { %>
+      ...(settings.google === undefined ? {} : { google: settings.google }),
+<% } %>
+    },
+    plugins: [admin()],
+    advanced: {
+      // Better Auth skips its origin check under NODE_ENV=test; keep it on, so tests see CSRF
+      // protection exactly as production has it
+      disableOriginCheck: false,
+      // a split-origin web app (D-29) only gets the cookie back with SameSite=None; Secure
+      ...(settings.production
+        ? { defaultCookieAttributes: { sameSite: 'none' as const, secure: true } }
+        : {})
+    }
+  })
+}
+
+export type Auth = ReturnType<typeof createAuth>

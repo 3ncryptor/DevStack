@@ -1,5 +1,10 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
 <% const title = it.target === 'admin' ? `${it.projectName} admin` : it.projectName %>
+<% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
+<% const guarded = authed && it.target === 'admin' %>
+<% if (guarded) { %>
+import { RequireAuth } from '../lib/auth/require-auth'
+<% } %>
 import { getStatus } from '../lib/status'
 
 // read the API on every request, never at build time
@@ -16,18 +21,37 @@ export default async function Home() {
   ].join(' · ')
 
   return (
+<% if (guarded) { %>
+    // the admin app is for admins only (D-67); the API checks the role on its own routes too
+    <RequireAuth role="ADMIN">
+<% } %>
 <% if (tailwind) { %>
     <main className="grid min-h-screen place-content-center gap-2 text-center">
       <h1 className="text-2xl font-semibold"><%= title %></h1>
       <p data-testid="status" className="text-neutral-600">
         {line}
       </p>
+<% if (authed && !guarded) { %>
+      <nav className="flex justify-center gap-4 underline">
+        <a href="/login">Log in</a>
+        <a href="/register">Register</a>
+        <a href="/account">Account</a>
+      </nav>
+<% } %>
     </main>
 <% } else { %>
     <main>
       <h1><%= title %></h1>
       <p data-testid="status">{line}</p>
+<% if (authed && !guarded) { %>
+      <nav>
+        <a href="/login">Log in</a> · <a href="/register">Register</a> · <a href="/account">Account</a>
+      </nav>
+<% } %>
     </main>
+<% } %>
+<% if (guarded) { %>
+    </RequireAuth>
 <% } %>
   )
 }

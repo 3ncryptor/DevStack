@@ -1,0 +1,30 @@
+<% const { github, google } = it.options %>
+import { memoryAdapter } from 'better-auth/adapters/memory'
+
+import { createAuth, type AuthSettings } from '../../src/<%= it.domainsDir %>/auth/auth.js'
+
+export const WEB_ORIGIN = 'http://localhost:3000'
+
+export const TEST_AUTH_SETTINGS: AuthSettings = {
+  secret: 'test-only-secret-at-least-43-characters-long-0123',
+  baseURL: 'http://localhost:3001',
+  trustedOrigins: [WEB_ORIGIN],
+  production: false,
+<% if (github) { %>
+  github: { clientId: 'test-client-id', clientSecret: 'test-client-secret' },
+<% } %>
+<% if (google) { %>
+  google: { clientId: 'test-client-id', clientSecret: 'test-client-secret' },
+<% } %>
+}
+
+/** Better Auth on an in-memory database, so tests need no Postgres; `db` holds its rows. */
+export function testAuth(settings: Partial<AuthSettings> = {}) {
+  const db: Record<string, Array<Record<string, unknown>>> = {
+    user: [],
+    session: [],
+    account: [],
+    verification: []
+  }
+  return { auth: createAuth(memoryAdapter(db), { ...TEST_AUTH_SETTINGS, ...settings }), db }
+}

@@ -1,0 +1,173 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
+<% const awaitTest = vitest ? '' : 'await ' %>
+<% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
+<% const { github } = it.options %>
+import assert from 'node:assert/strict'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+
+import express from 'express'
+import request, { type Response } from 'supertest'
+
+import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
+import { testApp } from './helpers/app.js'
+import { testAuth, WEB_ORIGIN } from './helpers/auth.js'
+
+const AUTH = '<%= base %>/auth'
+const ME = '<%= base %>/me'
+const ada = { email: 'ada@example.com', password: 'correct horse battery staple', name: 'Ada' }
+
+/** The cookies a response sets, as one Cookie header to send back. */
+function cookies(response: Response): string {
+  const set = (response.headers['set-cookie'] as unknown as string[] | undefined) ?? []
+  return set.map((cookie) => cookie.split(';')[0]).join('; ')
+}
+
+function appWithAuth() {
+  const { auth, db } = testAuth()
+  return { app: testApp({ auth }), auth, db }
+}
+
+<%= awaitTest %>test('sign-up starts a session in an httpOnly cookie; GET /me returns the user', async () => {
+  const { app } = appWithAuth()
+
+  const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
+  const me = await request(app).get(ME).set('cookie', cookies(signedUp))
+
+  assert.equal(signedUp.status, 200)
+  assert.match((signedUp.headers['set-cookie'] as unknown as string[]).join('\n'), /session_token=[^;]+;.*HttpOnly/i)
+  assert.equal(me.status, 200)
+  assert.deepEqual((me.body as { data: { user: { email: string; role: string } } }).data.user.email, ada.email)
+  assert.equal((me.body as { data: { user: { role: string } } }).data.user.role, 'USER')
+})
+
+<%= awaitTest %>test('a wrong password is refused, and GET /me needs a session', async () => {
+  const { app } = appWithAuth()
+  await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
+
+  const wrong = await request(app)
+    .post(`${AUTH}/sign-in/email`)
+    .set('origin', WEB_ORIGIN)
+    .send({ email: ada.email, password: 'not the password' })
+  const anonymous = await request(app).get(ME)
+
+  assert.equal(wrong.status, 401)
+  assert.equal(anonymous.status, 401)
+})
+
+<%= awaitTest %>test('sign-out ends the session', async () => {
+  const { app } = appWithAuth()
+  const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
+  const session = cookies(signedUp)
+
+  const signedOut = await request(app)
+    .post(`${AUTH}/sign-out`)
+    .set('origin', WEB_ORIGIN)
+    .set('cookie', session)
+  const me = await request(app).get(ME).set('cookie', session)
+
+  assert.equal(signedOut.status, 200)
+  assert.equal(me.status, 401)
+})
+
+<%= awaitTest %>test('writes with a session cookie from an untrusted origin are refused (CSRF)', async () => {
+  const { app } = appWithAuth()
+  const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
+
+  const forged = await request(app)
+    .post(`${AUTH}/sign-out`)
+    .set('origin', 'https://evil.example')
+    .set('cookie', cookies(signedUp))
+
+  assert.equal(forged.status, 403)
+})
+
+<%= awaitTest %>test('requireRole lets only admins through', async () => {
+  const { app, auth, db } = appWithAuth()
+  const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
+  const guarded = express().get('/admin', requireAuth(auth), requireRole('ADMIN'), (_request, response) => {
+    response.json({ ok: true })
+  })
+
+  const asUser = await request(guarded).get('/admin').set('cookie', cookies(signedUp))
+  // what auth:make-admin does in the database
+  for (const user of db.user ?? []) user.role = 'admin'
+  const asAdmin = await request(guarded).get('/admin').set('cookie', cookies(signedUp))
+
+  assert.equal(asUser.status, 403)
+  assert.equal(asAdmin.status, 200)
+})
+<%= awaitTest %>test("requireAuth refuses cookie-authenticated writes from an untrusted origin", async () => {
+  const { app, auth } = appWithAuth()
+  const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
+  const guarded = express().post('/notes', requireAuth(auth), (_request, response) => {
+    response.json({ ok: true })
+  })
+
+  const forged = await request(guarded)
+    .post('/notes')
+    .set('origin', 'https://evil.example')
+    .set('cookie', cookies(signedUp))
+  const trusted = await request(guarded)
+    .post('/notes')
+    .set('origin', WEB_ORIGIN)
+    .set('cookie', cookies(signedUp))
+
+  assert.equal(forged.status, 403)
+  assert.equal(trusted.status, 200)
+})
+<% if (github) { %>
+
+/** GitHub's endpoints, answered locally: the OAuth flow runs without network or a real app. */
+function mockGitHub(): () => void {
+  const realFetch = globalThis.fetch
+  globalThis.fetch = (input, init) => {
+    const url = input instanceof Request ? input.url : String(input)
+    if (url.startsWith('https://github.com/login/oauth/access_token')) {
+      return Promise.resolve(
+        Response.json({ access_token: 'gho_test', token_type: 'bearer', scope: 'read:user,user:email' })
+      )
+    }
+    if (url === 'https://api.github.com/user') {
+      return Promise.resolve(
+        Response.json({ id: 42, login: 'ada', name: 'Ada', email: 'ada@example.com', avatar_url: '' })
+      )
+    }
+    if (url === 'https://api.github.com/user/emails') {
+      return Promise.resolve(Response.json([{ email: 'ada@example.com', primary: true, verified: true }]))
+    }
+    return realFetch(input, init)
+  }
+  return () => {
+    globalThis.fetch = realFetch
+  }
+}
+
+<%= awaitTest %>test('GitHub sign-in: redirect to GitHub, callback, then a session (mocked provider)', async () => {
+  const { app } = appWithAuth()
+  const restore = mockGitHub()
+  try {
+    const started = await request(app)
+      .post(`${AUTH}/sign-in/social`)
+      .set('origin', WEB_ORIGIN)
+      .send({ provider: 'github', callbackURL: `${WEB_ORIGIN}/account` })
+    const authorize = new URL((started.body as { url: string }).url)
+    const callback = await request(app)
+      .get(`${AUTH}/callback/github`)
+      .query({ code: 'test-code', state: authorize.searchParams.get('state') ?? '' })
+      .set('cookie', cookies(started))
+    const me = await request(app).get(ME).set('cookie', cookies(callback))
+
+    assert.equal(authorize.origin, 'https://github.com')
+    assert.equal(
+      authorize.searchParams.get('redirect_uri'),
+      `http://localhost:3001${AUTH}/callback/github`
+    )
+    assert.equal(callback.status, 302)
+    assert.equal(callback.headers.location, `${WEB_ORIGIN}/account`)
+    assert.equal(me.status, 200)
+    assert.equal((me.body as { data: { user: { email: string } } }).data.user.email, 'ada@example.com')
+  } finally {
+    restore()
+  }
+})
+<% } %>

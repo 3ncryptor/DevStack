@@ -1,0 +1,68 @@
+<% const tailwind = it.modules.includes('ui-tailwind') %>
+<% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
+'use client'
+
+import { usePathname, useRouter } from 'next/navigation'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+
+import { auth, type SessionUser } from './index'
+
+const SessionContext = createContext<SessionUser | null>(null)
+
+/** The logged-in user, inside <RequireAuth>. */
+export function useSessionUser(): SessionUser {
+  const user = useContext(SessionContext)
+  if (user === null) throw new Error('useSessionUser() is only available inside <RequireAuth>')
+  return user
+}
+
+interface RequireAuthProps {
+  children: ReactNode
+  /** Only users with this role see the children, e.g. ADMIN for the admin app (D-67). */
+  role?: SessionUser['role']
+}
+
+/**
+ * Protected-route helper (D-43): shows its children to a logged-in user, sends anyone else to
+ * /login and back afterwards. It checks in the browser, so it works when the API is on another
+ * origin (D-29); the API still enforces every rule itself.
+ */
+export function RequireAuth({ children, role }: RequireAuthProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [user, setUser] = useState<SessionUser | null | undefined>(undefined)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    auth.currentUser().then(
+      (current) => {
+        if (!active) return
+        if (current === null) router.replace(`/login?next=${encodeURIComponent(pathname)}`)
+        setUser(current)
+      },
+      () => {
+        if (active) setFailed(true)
+      }
+    )
+    return () => {
+      active = false
+    }
+  }, [pathname, router])
+
+  if (failed) {
+    return <p role="alert"<%~ cls('p-8 text-red-600') %>>Could not reach the API; try again later.</p>
+  }
+  if (user === undefined || user === null) {
+    return <p<%~ cls('p-8 text-neutral-600') %>>Checking your session…</p>
+  }
+  if (role !== undefined && user.role !== role) {
+    return (
+      <main<%~ cls('grid min-h-screen place-content-center gap-2 text-center') %>>
+        <h1<%~ cls('text-xl font-semibold') %>>Not allowed</h1>
+        <p>{user.email} does not have the {role} role.</p>
+      </main>
+    )
+  }
+  return <SessionContext.Provider value={user}>{children}</SessionContext.Provider>
+}

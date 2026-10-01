@@ -1,0 +1,59 @@
+import { expect, test, vi } from 'vitest'
+
+import { createApiClient } from '<%= it.packageNames.shared %>'
+
+import { createAuthClient } from '../lib/auth/session'
+
+const ada = { id: '1', email: 'ada@example.com', name: null, role: 'USER' }
+const unauthorized = () =>
+  Response.json(
+    { success: false, error: { code: 'UNAUTHORIZED', message: 'Expired', requestId: 'r' } },
+    { status: 401 }
+  )
+const ok = (data: unknown) => Response.json({ success: true, data })
+
+/** An auth client on a fake API: `routes` answers each call by path, in order. */
+function clientWith(routes: Record<string, Array<() => Response>>) {
+  const calls: string[] = []
+  const fetch = vi.fn((url: string) => {
+    const path = url.replace('http://api', '')
+    calls.push(path)
+    const next = routes[path]?.shift()
+    return Promise.resolve(next === undefined ? unauthorized() : next())
+  })
+  const api = createApiClient({ baseUrl: 'http://api', fetch: fetch as unknown as typeof globalThis.fetch })
+  return { auth: createAuthClient(api), calls }
+}
+
+test('returns the current user', async () => {
+  const { auth } = clientWith({ '/auth/me': [() => ok({ user: ada })] })
+
+  await expect(auth.currentUser()).resolves.toEqual(ada)
+})
+
+test('refreshes an expired session once and retries the call', async () => {
+  const { auth, calls } = clientWith({
+    '/auth/me': [unauthorized, () => ok({ user: ada })],
+    '/auth/refresh': [() => ok({ user: ada })]
+  })
+
+  await expect(auth.currentUser()).resolves.toEqual(ada)
+  expect(calls).toEqual(['/auth/me', '/auth/refresh', '/auth/me'])
+})
+
+test('concurrent calls share one refresh, so a rotated token is never replayed', async () => {
+  const { auth, calls } = clientWith({
+    '/auth/me': [unauthorized, unauthorized, () => ok({ user: ada }), () => ok({ user: ada })],
+    '/auth/refresh': [() => ok({ user: ada })]
+  })
+
+  await Promise.all([auth.currentUser(), auth.currentUser()])
+
+  expect(calls.filter((call) => call === '/auth/refresh')).toHaveLength(1)
+})
+
+test('is logged out when the session cannot be refreshed', async () => {
+  const { auth } = clientWith({ '/auth/me': [unauthorized], '/auth/refresh': [unauthorized] })
+
+  await expect(auth.currentUser()).resolves.toBeNull()
+})

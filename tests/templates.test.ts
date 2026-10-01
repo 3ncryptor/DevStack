@@ -20,6 +20,7 @@ const context: TemplateContext = {
   versions: {},
   packageNames: {},
   domainsDir: 'modules',
+  moduleOptions: {},
   env: [],
   options: {},
   slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' }

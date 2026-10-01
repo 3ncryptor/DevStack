@@ -1,11 +1,17 @@
 <% const versioned = it.modules.includes('api-versioning') %>
+<% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
 import { createApiClient } from '<%= it.packageNames.shared %>'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api'
 const API_VERSION = '<%= versioned ? '/v1' : '' %>'
+<% if (authed) { %>
+/** The API's root as the browser reaches it, e.g. for Better Auth's own routes. */
+export const API_ROOT = `${API_BASE}${API_VERSION}`
+<% } %>
 
 /**
  * Typed calls to the API: `const { data } = await api.get<Todo[]>('/todos')`. In development the
- * browser goes through the /api proxy; in production set NEXT_PUBLIC_API_URL (split origin, D-29).
+ * browser goes through the /api proxy; in production set NEXT_PUBLIC_API_URL (split origin, D-29).<% if (authed) { %>
+ * The session cookies go with every call (credentials), to the API's origin in production too.<% } %>
  */
-export const api = createApiClient({ baseUrl: `${API_BASE}${API_VERSION}` })
+export const api = createApiClient({ baseUrl: `${API_BASE}${API_VERSION}`<%~ authed ? ", credentials: 'include'" : '' %> })

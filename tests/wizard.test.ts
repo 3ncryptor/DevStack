@@ -41,6 +41,7 @@ const Q = {
   database: 'Database',
   orm: 'ORM',
   auth: 'Authentication',
+  oauth: 'OAuth providers (client id and secret go in .env later)',
   packageManager: 'Package manager',
   architecture: 'Backend architecture',
   preCommit: 'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
@@ -156,6 +157,19 @@ describe('guided wizard (A0.2 order)', () => {
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
     expect(result.modules).toContain('auth-jwt')
+  })
+
+  it('asks for OAuth providers after Better Auth and sets them as its options (D-38)', async () => {
+    const prompter = new AnswerPrompter([
+      [Q.auth, 'auth-better-auth'],
+      [Q.oauth, ['github']]
+    ])
+
+    const result = await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(prompter.asked).toContain(Q.oauth)
+    expect(result.modules).toContain('auth-better-auth')
+    expect(result.moduleOptions['auth-better-auth']).toEqual({ github: true, google: false })
   })
 
   it('does not offer auth without Express and Prisma (M3 scope)', async () => {

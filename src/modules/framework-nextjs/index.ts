@@ -1,5 +1,10 @@
 import { moduleFilesPath } from '../../paths'
-import type { DevstackModule } from '../../types/module'
+import type { Condition, DevstackModule } from '../../types/module'
+
+/** Any auth module on the API: the web apps get login pages (D-43). */
+const AUTH: Condition = { has: 'auth' }
+/** Registration and the account page are for the web app; admins are promoted (D-67). */
+const WEB_AUTH: Condition = { all: [AUTH, { target: 'frontend' }] }
 
 const moduleDefinition: DevstackModule = {
   id: 'framework-nextjs',
@@ -14,7 +19,16 @@ const moduleDefinition: DevstackModule = {
   requires: ['layout:monorepo', 'shared-api'],
   dependencies: ['next', 'react', 'react-dom', 'zod'],
   devDependencies: ['@types/node', '@types/react', '@types/react-dom', 'typescript'],
-  files: [{ path: 'app/globals.css', when: { not: { has: 'ui-tailwind' } } }],
+  files: [
+    { path: 'app/globals.css', when: { not: { has: 'ui-tailwind' } } },
+    { path: 'lib/auth/index.ts', when: AUTH },
+    { path: 'lib/auth/session.ts', when: AUTH },
+    { path: 'lib/auth/form.ts', when: AUTH },
+    { path: 'lib/auth/require-auth.tsx', when: AUTH },
+    { path: 'app/login/page.tsx', when: AUTH },
+    { path: 'app/register/page.tsx', when: WEB_AUTH },
+    { path: 'app/account/page.tsx', when: WEB_AUTH }
+  ],
   env: [
     {
       name: 'API_URL',

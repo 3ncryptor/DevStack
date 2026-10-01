@@ -60,6 +60,12 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
   for your routes, and `auth:make-admin <email>` to promote a user. `JWT_SECRET` gets a random
   value in your local `.env` only. Tests run on in-memory repositories, plus one against
   Postgres once it is migrated.
+- **Better Auth** (optional, Express + Prisma): email + password and, if you pick them, GitHub
+  and Google sign-in, with database sessions and admin roles; the client id and secret stay
+  blank in `.env` until you add them.
+- **Login pages in the web apps** whenever an API has auth: login, register, account and
+  logout, OAuth buttons, and `<RequireAuth>` for protected pages; the admin app only lets admins
+  in.
 - **Tooling that passes on day one:** ESLint 10 (flat config), Prettier, Husky + lint-staged +
   commitlint. Every generated file is formatted with the project's own Prettier config.
 - **Docker** (optional): a multi-stage, non-root Dockerfile for your package manager with a

@@ -61,6 +61,8 @@ export interface WebApp {
   name: string
   dir: string
   command: string[]
+  /** The home page needs a login, so the login page is checked instead of the status line. */
+  guarded?: boolean
 }
 
 export interface FullstackOptions {
@@ -75,6 +77,14 @@ export interface FullstackOptions {
   /** Whether the database is reachable, i.e. what the status page must say about it. */
   databaseUp: boolean
   hasDatabase: boolean
+}
+
+async function loginProblems(app: RunningApp, name: string): Promise<string[]> {
+  const response = await fetch(`http://127.0.0.1:${app.port}/login`)
+  const html = await response.text()
+  return response.status === 200 && html.includes('Log in')
+    ? []
+    : [`${name}: GET /login returned ${response.status} without the login form`]
 }
 
 async function statusProblems(
@@ -107,7 +117,7 @@ async function versionProblems(apiPort: number): Promise<string[]> {
  */
 export async function bootFullstack(options: FullstackOptions): Promise<BootResult> {
   const api = start(options.apiDir, options.apiCommand, options.env, await findFreePort())
-  const webs: Array<{ name: string; app: RunningApp }> = []
+  const webs: Array<{ name: string; app: RunningApp; guarded: boolean }> = []
   for (const web of options.webApps) {
     const app = start(
       web.dir,
@@ -115,7 +125,7 @@ export async function bootFullstack(options: FullstackOptions): Promise<BootResu
       { API_URL: `http://127.0.0.1:${api.port}`, NEXT_TELEMETRY_DISABLED: '1' },
       await findFreePort()
     )
-    webs.push({ name: web.name, app })
+    webs.push({ name: web.name, app, guarded: web.guarded === true })
   }
   const problems: string[] = []
   const deadline = Date.now() + options.timeoutMs
@@ -127,7 +137,7 @@ export async function bootFullstack(options: FullstackOptions): Promise<BootResu
   if (apiUp === undefined) problems.push('the API did not become healthy')
   if (apiUp !== undefined && options.versioned) problems.push(...(await versionProblems(api.port)))
 
-  for (const { name, app } of webs) {
+  for (const { name, app, guarded } of webs) {
     const up = await pollUntilHealthy(
       `http://127.0.0.1:${app.port}/health`,
       deadline,
@@ -136,7 +146,9 @@ export async function bootFullstack(options: FullstackOptions): Promise<BootResu
     if (up === undefined) {
       problems.push(`${name} did not answer GET /health`)
     } else if (apiUp !== undefined) {
-      problems.push(...(await statusProblems(app, options, name)))
+      problems.push(
+        ...(guarded ? await loginProblems(app, name) : await statusProblems(app, options, name))
+      )
     }
   }
 

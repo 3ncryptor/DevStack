@@ -25,8 +25,8 @@ const matrix = parseMatrix(
 )
 const registry = loadModules()
 
-/** The context each e2e combination generates with. */
-const combinations = matrix.map((combination) => {
+/** The context each e2e combination generates with, once per app it has (files see a target). */
+const combinations = matrix.flatMap((combination) => {
   const requested =
     combination.preset !== undefined
       ? [...(getPreset(combination.preset)?.modules ?? [])]
@@ -43,7 +43,12 @@ const combinations = matrix.map((combination) => {
     options: {},
     depth: combination.depth ?? 'wired'
   }
-  return { id: combination.id, context }
+  const targets = [
+    'backend',
+    ...(context.present.has('framework-nextjs') ? ['frontend'] : []),
+    ...(context.present.has('app-admin') ? ['admin'] : [])
+  ]
+  return targets.map((target) => ({ id: combination.id, context: { ...context, target } }))
 })
 
 /** Every condition atom a module declares, with the module that declares it. */

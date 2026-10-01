@@ -71,12 +71,13 @@ function ruleIncluded(
   moduleDefinition: DevstackModule,
   rule: { depth?: Depth; when?: Condition } | undefined,
   moduleOptions: ResolvedModuleOptions,
-  depth: Depth
+  depth: Depth,
+  target?: string
 ): boolean {
   if (!includedAtDepth(rule?.depth ?? moduleDepth(moduleDefinition), depth)) return false
   if (rule?.when === undefined) return true
   const context = conditionContextFor(modules, moduleOptions[moduleDefinition.id] ?? {}, depth)
-  return evaluateCondition(rule.when, context)
+  return evaluateCondition(rule.when, { ...context, target })
 }
 
 /** Adds each target module's conditional scripts (`ScriptRule`) that apply to this stack. */
@@ -179,7 +180,16 @@ async function targetOutput(
 ): Promise<TargetOutput> {
   const env = envForTarget(
     target,
-    collectEnv(modulesAtDepth(target.modules, context.depth)),
+    collectEnv(modulesAtDepth(target.modules, context.depth), (moduleDefinition, declaration) =>
+      ruleIncluded(
+        context.modules,
+        moduleDefinition,
+        { when: declaration.when },
+        context.moduleOptions,
+        context.depth,
+        target.role
+      )
+    ),
     context.targets
   )
   const packageJson = targetPackageJson(input, target, context)
@@ -202,7 +212,8 @@ async function targetOutput(
       context.targets.map((candidate) => [candidate.role, candidate.packageName])
     ),
     env,
-    slots: context.slots
+    slots: context.slots,
+    moduleOptions: context.moduleOptions
   }
   const files: PlannedFile[] = [
     generatedFile('package.json', `${JSON.stringify(packageJson, null, 2)}\n`),
@@ -221,7 +232,8 @@ async function targetOutput(
         moduleDefinition,
         moduleDefinition.files?.find((rule) => rule.path === outputPath),
         context.moduleOptions,
-        context.depth
+        context.depth,
+        target.role
       )
     files.push(
       ...(await moduleTemplateFiles(

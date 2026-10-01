@@ -20,6 +20,7 @@ export interface WizardAnswers {
   database?: string
   orm?: string
   auth?: string
+  oauthProviders?: string[]
   packageManager?: PackageManagerId
   architecture?: string
   preCommit?: boolean
@@ -93,8 +94,47 @@ const AUTHS: Choice<string>[] = [
     value: 'auth-jwt',
     label: 'Email + password (JWT)',
     hint: 'httpOnly cookies, rotating refresh tokens, admin role'
+  },
+  {
+    value: 'auth-better-auth',
+    label: 'Better Auth',
+    hint: 'email + password, optional GitHub and Google sign-in, database sessions'
   }
 ]
+
+/** Question 7b (D-38): social sign-in through Better Auth; credentials stay blank in .env. */
+const OAUTH_PROVIDERS: Choice<string>[] = [
+  { value: 'github', label: 'GitHub' },
+  { value: 'google', label: 'Google' }
+]
+
+const oauthProvidersStep: WizardStep = {
+  key: 'oauthProviders',
+  label: 'OAuth providers',
+  applies: (answers) => answers.auth === 'auth-better-auth',
+  ask: async (prompter, answers) => ({
+    ...answers,
+    oauthProviders: await prompter.multiselect({
+      message: 'OAuth providers (client id and secret go in .env later)',
+      choices: OAUTH_PROVIDERS,
+      initialValues: answers.oauthProviders ?? [],
+      required: false
+    })
+  }),
+  describe: (answers) =>
+    (answers.oauthProviders ?? []).length === 0
+      ? 'None'
+      : (answers.oauthProviders ?? []).map((id) => labelOf(OAUTH_PROVIDERS, id)).join(', '),
+  modules: () => [],
+  moduleOptions: (answers) => ({
+    'auth-better-auth': Object.fromEntries(
+      OAUTH_PROVIDERS.map((choice) => [
+        choice.value,
+        (answers.oauthProviders ?? []).includes(choice.value)
+      ])
+    )
+  })
+}
 const ARCHITECTURES: Choice<string>[] = [
   { value: 'arch-feature', label: 'Feature-scoped', hint: 'src/features/<name> per domain' },
   { value: 'arch-clean', label: 'Clean architecture' },
@@ -379,6 +419,7 @@ export const STEPS: readonly WizardStep[] = [
     applies: (answers) => answers.framework === 'framework-express' && answers.orm === 'orm-prisma',
     addsModule: true
   }),
+  oauthProvidersStep,
   packageManagerStep,
   selectStep({
     key: 'architecture',
@@ -506,6 +547,8 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     database: orm === undefined ? NONE : 'postgres',
     orm,
     auth: firstOf(modules, AUTHS) ?? NONE,
+    // a module list carries no options: providers start unselected
+    oauthProviders: [],
     architecture: firstOf(modules, ARCHITECTURES) ?? NONE,
     preCommit: modules.includes('quality-husky'),
     docker: modules.includes('devops-docker'),

@@ -39,6 +39,8 @@ export interface TemplateContext {
   slots: Record<string, string>
   /** Resolved options of the module whose template is rendering (task 1.6). */
   options: Record<string, unknown>
+  /** Resolved options of every selected module, e.g. the OAuth providers for login buttons. */
+  moduleOptions: Readonly<Record<string, Readonly<Record<string, unknown>>>>
 }
 
 // Templates render developer-controlled data into source code, so no HTML escaping; exact
