@@ -46,17 +46,31 @@ create-devstack-app my-app --config stack.json    # from a stack config
 create-devstack-app . --in-place                  # into the current directory
 create-devstack-app my-app --dry-run              # show the plan, write nothing
 create-devstack-app my-app --preset backend --print-plan json
+
+create-devstack-app plan --preset backend         # what init would write and run
+create-devstack-app modules list                  # every module, by category
+create-devstack-app doctor                        # check Node.js, package managers, git, Docker
 ```
+
+The wizard first checks your machine (Node.js version, package managers, git identity), then
+asks only the questions that apply: framework, database and ORM, package manager, architecture,
+pre-commit hooks, Docker and what `app.ts` sets up. ESLint, Prettier and TypeScript are always
+configured. Nothing is written until the review screen, where you can generate, change any
+answer, save the stack as a file for `--config`, or cancel. A missing package manager is caught
+there too, before any file is written.
+
+`plan`, `modules` and `doctor` are commands, so a project with one of those names needs the
+explicit form: `create-devstack-app init doctor`.
 
 | Flag                        | Effect                                                                                                         |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `--preset <name>`           | Use a built-in preset (`backend`)                                                                              |
+| `--preset <name>`           | Start from a built-in preset (`backend`); you still see the review screen unless you pass `--yes`              |
 | `--pm <name>`               | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm) |
 | `--depth <level>`           | `wired` (default): integration code included. `bare`: config, tooling and folders only                         |
 | `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                    |
 | `--yes`                     | Accept defaults, never ask. Never overwrites existing files                                                    |
 | `--force`                   | Overwrite existing files. Originals are backed up first                                                        |
-| `--advanced`                | Pick modules one by one                                                                                        |
+| `--advanced`                | Pick modules one by one; the review screen offers fixes when they do not fit together                          |
 | `--in-place`                | Generate into the current directory                                                                            |
 | `--dry-run`                 | Print the plan (files and commands) and stop                                                                   |
 | `--print-plan [text\|json]` | Print the plan in a format; `json` never prompts                                                               |

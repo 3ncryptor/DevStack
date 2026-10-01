@@ -40,4 +40,6 @@ export interface Prompter {
   select<T extends string>(prompt: SelectPrompt<T>): Promise<T>
   multiselect<T extends string>(prompt: MultiselectPrompt<T>): Promise<T[]>
   confirm(prompt: ConfirmPrompt): Promise<boolean>
+  /** Shows a block of text (e.g. the review summary) without asking anything. */
+  note(message: string, title?: string): void
 }

@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 import { Command, CommanderError } from 'commander'
 
+import { runDoctor } from '../src/commands/doctor'
+import { listModules } from '../src/commands/modules'
+import { systemProbe } from '../src/core/doctor'
 import { CLI_PACKAGE } from '../src/core/manifest'
+import { loadModules } from '../src/core/module-loader'
 import { Aborted, EXIT_CODE, exitCodeFor } from '../src/errors'
 import { runCreateDevstack } from '../src/index'
 import type { CliOptions } from '../src/types/cli'
@@ -62,6 +66,59 @@ program
         depth: depth as CliOptions['depth'],
         printPlan: printPlan as CliOptions['printPlan']
       }
+    })
+  })
+
+interface PlanFlags {
+  preset?: string
+  config?: string
+  pm?: string
+  depth?: string
+  json: boolean
+}
+
+// Post-init commands live on the same bin for now (Q-12 is open): `npx <package> doctor`.
+// A project named like a command needs the explicit form: `npx <package> init doctor`.
+program
+  .command('plan')
+  .description('Resolve a stack and print what init would write and run; writes nothing')
+  .argument('[project-name]', 'Name to plan for (default: from the config, or devstack-app)')
+  .option('--preset <name>', 'Plan a predefined preset (default: backend)')
+  .option('--config <file>', 'Plan a stack config, e.g. .devstack/stack.json')
+  .option('--pm <name>', 'Package manager: npm, pnpm, yarn or bun')
+  .option('--depth <level>', 'bare or wired')
+  .option('--json', 'Print the plan as JSON', false)
+  .action(async (projectName: string | undefined, flags: PlanFlags) => {
+    await runCreateDevstack({
+      projectName,
+      options: {
+        preset: flags.preset,
+        config: flags.config,
+        pm: flags.pm as CliOptions['pm'],
+        depth: flags.depth as CliOptions['depth'],
+        yes: true,
+        printPlan: flags.json ? 'json' : 'text'
+      }
+    })
+  })
+
+program
+  .command('modules')
+  .description('Inspect the module registry')
+  .command('list')
+  .description('List modules by category')
+  .option('--category <name>', 'Only modules of this category')
+  .option('--json', 'Print JSON', false)
+  .action((flags: { category?: string; json: boolean }) => {
+    process.stdout.write(listModules(loadModules(), flags))
+  })
+
+program
+  .command('doctor')
+  .description('Check Node.js, package managers, git and Docker')
+  .action(async () => {
+    process.exitCode = await runDoctor(systemProbe, (text) => {
+      process.stdout.write(`${text}\n`)
     })
   })
 

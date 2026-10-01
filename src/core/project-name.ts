@@ -72,7 +72,8 @@ export function resolveInside(baseDir: string, relative: string): string {
   const base = path.resolve(baseDir)
   const resolved = path.resolve(base, relative)
   const fromBase = path.relative(base, resolved)
-  const inside = fromBase === '' || (!fromBase.startsWith('..') && !path.isAbsolute(fromBase))
+  const escapes = fromBase === '..' || fromBase.startsWith(`..${path.sep}`)
+  const inside = !escapes && !path.isAbsolute(fromBase)
   if (path.isAbsolute(relative) || !inside) {
     throw new InputError(`Refusing to write "${relative}": it is outside ${base}.`)
   }

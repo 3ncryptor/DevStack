@@ -12,7 +12,7 @@ import { projectNameProblem } from './project-name'
 /** Where every generated project records the stack it was generated from (buildPlan B12). */
 export const MANIFEST_PATH = '.devstack/stack.json'
 
-const STACK_CONFIG_VERSION = 1
+export const STACK_CONFIG_VERSION = 1
 
 export const CLI_PACKAGE = JSON.parse(
   readFileSync(path.join(PACKAGE_ROOT, 'package.json'), 'utf8')

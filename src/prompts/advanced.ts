@@ -2,7 +2,7 @@ import type { Prompter } from '../intake/prompter'
 import type { DevstackModule } from '../types/module'
 
 export async function runAdvancedPrompt(
-  registry: Map<string, DevstackModule>,
+  registry: ReadonlyMap<string, DevstackModule>,
   prompter: Prompter,
   defaultModules: string[] = []
 ): Promise<string[]> {

@@ -1,4 +1,4 @@
-import type { Diagnostic } from '../../types/diagnostics'
+import type { Diagnostic, FixAction } from '../../types/diagnostics'
 import type { DevstackModule } from '../../types/module'
 import {
   checkCatalog,
@@ -11,7 +11,7 @@ import {
 import { expandSelection } from './expand'
 import { orderModules } from './order'
 
-export type { Diagnostic } from '../../types/diagnostics'
+export type { Diagnostic, FixAction } from '../../types/diagnostics'
 
 export interface ResolutionResult {
   /** Resolved modules in deterministic order; complete only when there are no error diagnostics. */
@@ -57,4 +57,10 @@ export function formatDiagnostics(diagnostics: readonly Diagnostic[]): string {
     ...(diagnostic.fix === undefined ? [] : [`    fix: ${diagnostic.fix}`])
   ])
   return ['The selected modules do not form a valid stack:', ...lines].join('\n')
+}
+
+/** The selection after a fix: removed ids dropped, added ids appended once. */
+export function applyFixAction(selection: readonly string[], action: FixAction): string[] {
+  const kept = selection.filter((id) => !action.remove.includes(id))
+  return [...kept, ...action.add.filter((id) => !kept.includes(id))]
 }

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { composeModules } from '../src/core/composer'
 import { loadModules } from '../src/core/module-loader'
 import { getPreset } from '../src/core/presets'
-import { resolveStack, type Diagnostic } from '../src/core/resolver/index'
+import { applyFixAction, resolveStack, type Diagnostic } from '../src/core/resolver/index'
 import { ResolutionError } from '../src/errors'
 import type { DevstackModule } from '../src/types/module'
 import { testModule } from './helpers/modules'
@@ -150,5 +150,49 @@ describe('composeModules', () => {
     expect(error.diagnostics).toHaveLength(2)
     expect(error.message).toContain('framework')
     expect(error.message).toContain('architecture')
+  })
+})
+
+describe('diagnostic fix actions', () => {
+  const registry = loadModules()
+
+  it('offers adding each provider of a missing capability', () => {
+    const [diagnostic] = resolveStack(['security-helmet'], registry).diagnostics
+
+    expect(diagnostic?.actions).toEqual([
+      { label: 'Add framework-express', add: ['framework-express'], remove: [] },
+      { label: 'Add framework-nest', add: ['framework-nest'], remove: [] }
+    ])
+  })
+
+  it('offers keeping each module of a single-select category', () => {
+    const [diagnostic] = resolveStack(['framework-express', 'framework-nest'], registry).diagnostics
+
+    expect(diagnostic?.actions).toEqual([
+      { label: 'Keep framework-express', add: [], remove: ['framework-nest'] },
+      { label: 'Keep framework-nest', add: [], remove: ['framework-express'] }
+    ])
+  })
+
+  it('offers removing either side of a conflict', () => {
+    const conflicting = registryOf([
+      testModule({ id: 'a', conflictsWith: ['b'] }),
+      testModule({ id: 'b' })
+    ])
+    const [diagnostic] = resolveStack(['a', 'b'], conflicting).diagnostics
+
+    expect(diagnostic?.actions).toEqual([
+      { label: 'Remove a', add: [], remove: ['a'] },
+      { label: 'Remove b', add: [], remove: ['b'] }
+    ])
+  })
+
+  it('applies an action and resolves cleanly afterwards', () => {
+    const [diagnostic] = resolveStack(['security-helmet'], registry).diagnostics
+    const action = diagnostic?.actions?.[0]
+    const fixed = action === undefined ? [] : applyFixAction(['security-helmet'], action)
+
+    expect(fixed).toEqual(['security-helmet', 'framework-express'])
+    expect(resolveStack(fixed, registry).diagnostics).toEqual([])
   })
 })

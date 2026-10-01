@@ -10,23 +10,40 @@ import {
   projectDirectoryName,
   projectNameProblem
 } from './core/project-name'
-import { InputError } from './errors'
+import { DevstackError, InputError, ResolutionError } from './errors'
 import { ClackPrompter } from './intake/clack-prompter'
 import { loadStackConfig } from './intake/config'
 import type { Prompter } from './intake/prompter'
-import { runAdvancedPrompt } from './prompts/advanced'
-import { runBasicPrompt } from './prompts/basic'
+import { checkAnswers, runPreflight } from './intake/preflight'
+import { saveStackPreset } from './intake/save-preset'
+import {
+  runAdvancedWizard,
+  runWizard,
+  type StackDraft,
+  type StackPreview,
+  type WizardContext,
+  type WizardServices
+} from './prompts/wizard/index'
 import { cliOptionSchema, type CliOptions } from './types/cli'
 import type { DevstackModule } from './types/module'
 import { ConsoleLogger } from './utils/logger'
-import { choosePackageManager, lockfilesIn } from './adapters/package-manager/index'
+import {
+  choosePackageManager,
+  lockfilesIn,
+  type PackageManagerId
+} from './adapters/package-manager/index'
+import { systemProbe, type EnvironmentReport, type Probe } from './core/doctor'
 import { splitModuleEntries, type StackConfig } from './core/manifest'
+import { buildGenerationPlan } from './core/planner/index'
+import { resolveStack } from './core/resolver/index'
 
 export interface CreateDevstackInput {
   projectName?: string
   options: Partial<CliOptions>
   /** Injected in tests; defaults to the interactive clack prompter. */
   prompter?: Prompter
+  /** Injected in tests; defaults to running the real commands for the pre-flight. */
+  probe?: Probe
 }
 
 interface ProjectTarget {
@@ -71,30 +88,104 @@ async function resolveProjectTarget(
   return { projectName: name, projectDir: path.resolve(process.cwd(), projectDirectoryName(name)) }
 }
 
-async function selectModules(
-  registry: Map<string, DevstackModule>,
+interface StackChoice {
+  modules: string[]
+  /** Set when the wizard asked; otherwise the detected package manager is used. */
+  packageManager?: PackageManagerId
+}
+
+function presetModules(options: CliOptions): string[] | undefined {
+  if (options.preset === undefined) return undefined
+  const preset = getPreset(options.preset)
+  if (!preset) {
+    throw new InputError(`Unknown preset: ${options.preset}`)
+  }
+  return [...preset.modules]
+}
+
+/** Questions are asked unless --yes, a config file or --print-plan json says not to. */
+async function selectStack(
   options: CliOptions,
   prompter: Prompter,
-  config: StackConfig | undefined
-): Promise<string[]> {
+  config: StackConfig | undefined,
+  context: WizardContext,
+  services: WizardServices
+): Promise<StackChoice> {
   if (config !== undefined) {
-    return splitModuleEntries(config.modules).ids
+    return { modules: splitModuleEntries(config.modules).ids }
   }
+  const fromPreset = presetModules(options)
+  const interactive = !options.yes && options.printPlan !== 'json'
+  if (!interactive) {
+    return { modules: fromPreset ?? [...(getPreset('backend')?.modules ?? [])] }
+  }
+  const wizardContext = { ...context, presetModules: fromPreset }
   if (options.advanced) {
-    const presetModules = options.preset ? (getPreset(options.preset)?.modules ?? []) : []
-    return runAdvancedPrompt(registry, prompter, presetModules)
+    return { modules: (await runAdvancedWizard(prompter, wizardContext, services)).modules }
   }
-  if (options.preset) {
-    const preset = getPreset(options.preset)
-    if (!preset) {
-      throw new InputError(`Unknown preset: ${options.preset}`)
-    }
-    return [...preset.modules]
+  return runWizard(prompter, wizardContext, services)
+}
+
+function missingPackageManager(
+  draft: StackDraft,
+  options: CliOptions,
+  installed: ReadonlySet<PackageManagerId> | undefined
+): string[] {
+  if (installed === undefined || options.skipInstall || installed.has(draft.packageManager)) {
+    return []
   }
-  if (options.yes) {
-    return [...(getPreset('backend')?.modules ?? [])]
+  return [
+    `${draft.packageManager} is not installed. Pick another package manager, install it, or re-run with --skip-install.`
+  ]
+}
+
+/** Plans in memory for the review screen; a stack that cannot be planned becomes a problem. */
+async function previewDraft(
+  draft: StackDraft,
+  registry: Map<string, DevstackModule>,
+  projectDir: string,
+  options: CliOptions
+): Promise<Pick<StackPreview, 'diagnostics' | 'fileCount' | 'problems'>> {
+  const { diagnostics } = resolveStack(draft.modules, registry)
+  if (diagnostics.some((diagnostic) => diagnostic.severity === 'error')) {
+    return { diagnostics }
   }
-  return (await runBasicPrompt(registry, prompter)).selectedModules
+  try {
+    const plan = await buildGenerationPlan({
+      projectName: draft.projectName,
+      projectDir,
+      selectedModuleNames: draft.modules,
+      depth: draft.depth,
+      registry,
+      packageManager: draft.packageManager,
+      options: { skipInstall: options.skipInstall, skipGit: options.skipGit }
+    })
+    return { diagnostics, fileCount: plan.files.length }
+  } catch (error: unknown) {
+    if (error instanceof ResolutionError) return { diagnostics: [...error.diagnostics] }
+    // other DevStack errors are reported on the review screen; anything else is a bug
+    if (error instanceof DevstackError) return { diagnostics, problems: [error.message] }
+    throw error
+  }
+}
+
+function wizardServices(
+  registry: Map<string, DevstackModule>,
+  projectDir: string,
+  options: CliOptions,
+  installed: ReadonlySet<PackageManagerId> | undefined
+): WizardServices {
+  return {
+    preview: async (draft): Promise<StackPreview> => {
+      const preview = await previewDraft(draft, registry, projectDir, options)
+      const problems = [
+        ...(preview.problems ?? []),
+        ...missingPackageManager(draft, options, installed)
+      ]
+      return { ...preview, problems }
+    },
+    savePreset: (fileName, draft) => saveStackPreset(process.cwd(), fileName, draft)
+  }
 }
 
 /** Prompts write to stdout, which would corrupt the JSON document; require every answer upfront. */
@@ -145,31 +236,75 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
   if (options.printPlan === 'json') {
     assertNonInteractive(projectName, options)
   }
+  const probe = input.probe ?? systemProbe
+  // Nothing is installed or committed in a dry run, so the environment does not matter there.
+  const environment: EnvironmentReport | undefined =
+    options.dryRun || options.printPlan !== undefined
+      ? undefined
+      : await runPreflight(probe, logger)
+
   const target = await resolveProjectTarget(projectName, options, prompter)
 
   logger.info('Loading modules...')
   const registry = loadModules()
-
-  const selectedModules = await selectModules(registry, options, prompter, config)
-  if (selectedModules.length === 0) {
-    throw new InputError('No modules selected. Aborting.')
-  }
-
-  const choice = choosePackageManager({
+  const depth = options.depth ?? config?.depth ?? 'wired'
+  const detected = choosePackageManager({
     flag: options.pm,
     config: config?.packageManager,
     userAgent: process.env.npm_config_user_agent ?? '',
     lockfiles: await lockfilesIn(process.cwd())
   })
-  const packageManager = choice.id
-  logger.info(`Package manager: ${packageManager} (${choice.source})`)
+
+  const fixedPackageManager = options.pm ?? config?.packageManager
+  if (environment !== undefined && fixedPackageManager !== undefined) {
+    // fail before the questions, not after them
+    await checkAnswers(
+      probe,
+      environment,
+      { packageManager: fixedPackageManager, skipInstall: options.skipInstall, usesDocker: false },
+      logger
+    )
+  }
+
+  const choice = await selectStack(
+    options,
+    prompter,
+    config,
+    {
+      registry,
+      projectName: target.projectName,
+      depth,
+      defaultPackageManager: detected.id,
+      fixedPackageManager,
+      installedPackageManagers: environment?.installedPackageManagers
+    },
+    wizardServices(registry, target.projectDir, options, environment?.installedPackageManagers)
+  )
+  if (choice.modules.length === 0) {
+    throw new InputError('No modules selected. Aborting.')
+  }
+  const answered = fixedPackageManager === undefined && choice.packageManager !== undefined
+  const packageManager = (answered ? choice.packageManager : undefined) ?? detected.id
+  logger.info(`Package manager: ${packageManager} (${answered ? 'your answer' : detected.source})`)
+  if (environment !== undefined) {
+    await checkAnswers(
+      probe,
+      environment,
+      {
+        packageManager,
+        skipInstall: options.skipInstall,
+        usesDocker: choice.modules.includes('devops-docker')
+      },
+      logger
+    )
+  }
 
   await generateProject({
     projectName: target.projectName,
     projectDir: target.projectDir,
-    selectedModuleNames: selectedModules,
+    selectedModuleNames: choice.modules,
     moduleOptions: config === undefined ? {} : splitModuleEntries(config.modules).options,
-    depth: options.depth ?? config?.depth ?? 'wired',
+    depth,
     registry,
     packageManager,
     options,

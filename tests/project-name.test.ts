@@ -46,6 +46,10 @@ describe('resolveInside', () => {
     expect(resolveInside(base, 'src/app.ts')).toBe(path.join(base, 'src', 'app.ts'))
   })
 
+  it('accepts a file whose name only starts with two dots', () => {
+    expect(resolveInside(base, '..notes.json')).toBe(path.join(base, '..notes.json'))
+  })
+
   it.each(['../outside', '../../etc/passwd', '/etc/passwd', 'src/../../x'])(
     'rejects %s, which escapes the base directory',
     (relative) => {

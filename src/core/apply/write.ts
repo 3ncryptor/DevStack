@@ -26,6 +26,10 @@ export async function stageFiles(
   files: readonly PlannedFile[],
   tempRoot: string = os.tmpdir()
 ): Promise<string> {
+  if (!path.isAbsolute(tempRoot)) {
+    // a relative root would stage inside whatever folder the CLI runs in
+    throw new ApplyError(`Staging root must be an absolute path, got "${tempRoot}".`)
+  }
   const stagingDir = await mkdtemp(path.join(tempRoot, 'devstack-stage-'))
   for (const file of files) {
     const target = resolveInside(path.join(stagingDir, 'files'), file.path)

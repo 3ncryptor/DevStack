@@ -1,5 +1,5 @@
 import { isCatalogName } from '../../catalog/node'
-import type { Diagnostic } from '../../types/diagnostics'
+import type { Diagnostic, FixAction } from '../../types/diagnostics'
 import type { DevstackModule, ModuleCategory } from '../../types/module'
 
 /** Categories that allow one module per project (buildPlan B4); more than one is an error. */
@@ -35,6 +35,9 @@ const providersOf = (
     .map((candidate) => candidate.id)
     .sort()
 
+const addAction = (id: string): FixAction => ({ label: `Add ${id}`, add: [id], remove: [] })
+const removeAction = (id: string): FixAction => ({ label: `Remove ${id}`, add: [], remove: [id] })
+
 export function checkRequirements(context: CheckContext): Diagnostic[] {
   const diagnostics: Diagnostic[] = []
   for (const moduleDefinition of context.selected.values()) {
@@ -45,7 +48,8 @@ export function checkRequirements(context: CheckContext): Diagnostic[] {
         code: 'missing-requirement',
         moduleId: moduleDefinition.id,
         message: `Module "${moduleDefinition.id}" requires "${requirement}".`,
-        fix: `Add one of: ${providersOf([requirement], context.registry).join(', ')}.`
+        fix: `Add one of: ${providersOf([requirement], context.registry).join(', ')}.`,
+        actions: providersOf([requirement], context.registry).map(addAction)
       })
     }
     const anyOf = moduleDefinition.requiresAny ?? []
@@ -55,7 +59,8 @@ export function checkRequirements(context: CheckContext): Diagnostic[] {
         code: 'unmet-requirement',
         moduleId: moduleDefinition.id,
         message: `Module "${moduleDefinition.id}" needs one of: ${anyOf.join(', ')}.`,
-        fix: `Add one of: ${providersOf(anyOf, context.registry).join(', ')}.`
+        fix: `Add one of: ${providersOf(anyOf, context.registry).join(', ')}.`,
+        actions: providersOf(anyOf, context.registry).map(addAction)
       })
     }
   }
@@ -81,7 +86,8 @@ export function checkConflicts(context: CheckContext): Diagnostic[] {
           code: 'conflict',
           moduleId: moduleDefinition.id,
           message: `Module "${moduleDefinition.id}" conflicts with "${other.id}".`,
-          fix: `Remove "${moduleDefinition.id}" or "${other.id}".`
+          fix: `Remove "${moduleDefinition.id}" or "${other.id}".`,
+          actions: [moduleDefinition.id, other.id].sort().map(removeAction)
         })
       }
     }
@@ -100,12 +106,20 @@ export function checkSingleSelect(context: CheckContext): Diagnostic[] {
   }
   return [...byCategory.entries()]
     .filter(([, chosen]) => chosen.length > 1)
-    .map(([category, chosen]) => ({
-      severity: 'error' as const,
-      code: 'single-select' as const,
-      message: `Only one ${category} module can be selected, but ${chosen.length} are: ${chosen.sort().join(', ')}.`,
-      fix: `Keep one of: ${chosen.join(', ')}.`
-    }))
+    .map(([category, chosen]) => {
+      const sorted = [...chosen].sort()
+      return {
+        severity: 'error' as const,
+        code: 'single-select' as const,
+        message: `Only one ${category} module can be selected, but ${sorted.length} are: ${sorted.join(', ')}.`,
+        fix: `Keep one of: ${sorted.join(', ')}.`,
+        actions: sorted.map((kept) => ({
+          label: `Keep ${kept}`,
+          add: [],
+          remove: sorted.filter((id) => id !== kept)
+        }))
+      }
+    })
 }
 
 export function checkSlots(context: CheckContext): Diagnostic[] {

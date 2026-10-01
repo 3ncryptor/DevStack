@@ -65,4 +65,8 @@ export class ClackPrompter implements Prompter {
     })
     return clack.isCancel(value) ? abort() : value
   }
+
+  note(message: string, title?: string): void {
+    clack.note(message, title)
+  }
 }

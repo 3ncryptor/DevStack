@@ -9,6 +9,13 @@ export type DiagnosticCode =
   | 'unknown-slot'
   | 'unknown-package'
 
+/** One way to fix a diagnostic, as module ids to add and remove, so a UI can apply it directly. */
+export interface FixAction {
+  label: string
+  add: string[]
+  remove: string[]
+}
+
 export interface Diagnostic {
   severity: 'error' | 'warning'
   code: DiagnosticCode
@@ -17,4 +24,6 @@ export interface Diagnostic {
   moduleId?: string
   /** A concrete next step, e.g. "keep one of: framework-express, framework-nest". */
   fix?: string
+  /** The fixes a UI can offer as choices; absent when the fix needs a code change. */
+  actions?: FixAction[]
 }

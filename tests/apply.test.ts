@@ -4,6 +4,7 @@ import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { applyPlan, classifyFiles } from '../src/core/apply/index'
+import { stageFiles } from '../src/core/apply/write'
 import { Aborted, InputError } from '../src/errors'
 import type { GenerationPlan, PlannedFile } from '../src/types/plan'
 import { ConsoleLogger } from '../src/utils/logger'
@@ -197,7 +198,10 @@ describe('applyPlan safety', () => {
     force: true,
     prompter: new ScriptedPrompter([]),
     logger,
-    tempRoot: stagingRoot
+    // read when a test runs: beforeAll has not set stagingRoot while tests are being collected
+    get tempRoot() {
+      return stagingRoot
+    }
   }
 
   it('refuses to write through a symlinked directory inside the project', async () => {
@@ -260,13 +264,22 @@ describe('applyPlan safety', () => {
   })
 })
 
+describe('staging location', () => {
+  it('refuses a relative temp root instead of staging in the current folder', async () => {
+    await expect(stageFiles([], '')).rejects.toThrow(/absolute/)
+  })
+})
+
 describe('applyPlan cleanup (D-58)', () => {
   const noPrompts = {
     yes: true,
     force: true,
     prompter: new ScriptedPrompter([]),
     logger,
-    tempRoot: stagingRoot
+    // read when a test runs: beforeAll has not set stagingRoot while tests are being collected
+    get tempRoot() {
+      return stagingRoot
+    }
   }
 
   it('removes its own staging copy after a clean run', async () => {

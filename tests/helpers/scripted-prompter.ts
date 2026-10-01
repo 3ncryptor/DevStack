@@ -9,6 +9,8 @@ import type {
 /** A Prompter that returns pre-recorded answers in order and records every question asked. */
 export class ScriptedPrompter implements Prompter {
   readonly asked: string[] = []
+  /** Every note shown, as "title: message". */
+  readonly notes: string[] = []
 
   constructor(private readonly answers: unknown[]) {}
 
@@ -34,5 +36,9 @@ export class ScriptedPrompter implements Prompter {
 
   confirm(prompt: ConfirmPrompt): Promise<boolean> {
     return this.next(prompt.message)
+  }
+
+  note(message: string, title?: string): void {
+    this.notes.push(title === undefined ? message : `${title}: ${message}`)
   }
 }
