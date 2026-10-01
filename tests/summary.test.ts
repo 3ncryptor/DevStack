@@ -107,6 +107,7 @@ describe('docker-basic templates', () => {
     const dockerfile = plan.files.find((file) => file.path === 'Dockerfile')?.content ?? ''
 
     expect(dockerfile).toContain('RUN npm ci')
+    expect(dockerfile).toContain('npm ci --omit=dev --omit=optional --ignore-scripts')
     expect(dockerfile).toContain('CMD ["node", "dist/main.js"]')
     expect(dockerfile).not.toContain('prisma generate')
   })
@@ -121,5 +122,7 @@ describe('docker-basic templates', () => {
     expect(compose(withDb)).toContain('condition: service_healthy')
     expect(compose(withoutDb)).not.toContain('postgres')
     expect(compose(withDb)).not.toMatch(/^version:/m)
+    expect(compose(withDb)).toContain('${POSTGRES_PORT:-5432}:5432')
+    expect(compose(withoutDb)).toContain('${PORT:-3000}:3000')
   })
 })

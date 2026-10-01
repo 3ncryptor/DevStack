@@ -1,15 +1,18 @@
 # Local development stack. The database credentials below are for local use only.
+# Host ports are configurable when 3000 or 5432 are taken: PORT=4000 POSTGRES_PORT=5433 docker compose up
 <% const hasDatabase = it.modules.includes('orm-prisma') %>
 services:
   app:
     build: .
     ports:
-      - '3000:3000'
+      - '${PORT:-3000}:3000'
     env_file:
       - path: .env
         required: false
-<% if (hasDatabase) { %>    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
+    environment:
+      # the container always listens on 3000 (EXPOSE, healthcheck); PORT only picks the host port
+      PORT: 3000
+<% if (hasDatabase) { %>      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
     depends_on:
       db:
         condition: service_healthy
@@ -21,7 +24,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: devstack
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT:-5432}:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d devstack']
       interval: 5s

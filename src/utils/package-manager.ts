@@ -140,7 +140,9 @@ export function packageManagerCommands(manager: PackageManager): PackageManagerC
         setup: '',
         manifests: 'package.json package-lock.json',
         installFrozen: 'npm ci',
-        installProd: 'npm ci --omit=dev --ignore-scripts',
+        // dev tools that are also optional peers of a runtime package (prisma, typescript) are
+        // `devOptional` in the lockfile and are only dropped when optional is omitted as well
+        installProd: 'npm ci --omit=dev --omit=optional --ignore-scripts',
         exec: 'npx --no --',
         run: 'npm run'
       }
