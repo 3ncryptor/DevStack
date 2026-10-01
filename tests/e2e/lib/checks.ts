@@ -81,6 +81,10 @@ export interface Combination {
   boot?: boolean
   /** Part of the fast smoke tier run on every change; the full tier runs everything. */
   smoke?: boolean
+  /** Run the CLI's own finish pipeline: verification, initial commit, push to a local remote. */
+  finish?: boolean
+  /** Full tier, with Docker running: docker compose up the whole stack and check the status page. */
+  compose?: boolean
 }
 
 /** Ids become folder and project names, so keep them to safe kebab-case. */
@@ -106,7 +110,9 @@ export function parseMatrix(raw: unknown): Combination[] {
     const extra = {
       ...(candidate.depth === undefined ? {} : { depth: candidate.depth }),
       ...(candidate.boot === undefined ? {} : { boot: candidate.boot }),
-      ...(candidate.smoke === undefined ? {} : { smoke: candidate.smoke })
+      ...(candidate.smoke === undefined ? {} : { smoke: candidate.smoke }),
+      ...(candidate.finish === undefined ? {} : { finish: candidate.finish }),
+      ...(candidate.compose === undefined ? {} : { compose: candidate.compose })
     }
     return hasPreset
       ? { id: candidate.id, preset: candidate.preset, ...extra }

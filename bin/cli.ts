@@ -20,6 +20,9 @@ interface InitFlags {
   inPlace: boolean
   skipInstall: boolean
   skipGit: boolean
+  skipVerify: boolean
+  github?: string
+  start: boolean
   verbose: boolean
   force: boolean
   dryRun: boolean
@@ -52,6 +55,9 @@ program
   .option('--in-place', 'Generate in current directory instead of creating a new folder', false)
   .option('--skip-install', 'Skip dependency installation', false)
   .option('--skip-git', 'Skip git initialization', false)
+  .option('--skip-verify', 'Skip the checks and boot test after install', false)
+  .option('--github <url>', 'Push the initial commit to this existing, empty GitHub repository')
+  .option('--start', 'Start the project when it is ready (db:up, then dev)', false)
   .option('--verbose', 'Print debug output and full error details', false)
   .option('--force', 'Overwrite files that already exist (--yes alone never does)', false)
   .option('--dry-run', 'Show what would be written and run, then stop', false)

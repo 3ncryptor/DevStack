@@ -16,6 +16,7 @@ import path from 'node:path'
 import { parseEnv } from 'node:util'
 
 import { bootAndProbe } from './lib/boot'
+import { composeCheck } from './lib/compose'
 import { bootFullstack } from './lib/web'
 import { parseMatrix, type Combination, type ReadyExpectation } from './lib/checks'
 import { killAllGroups, run } from './lib/process'
@@ -156,6 +157,8 @@ async function checkCombination(
   tier: Tier
 ): Promise<CombinationReport> {
   const steps: StepResult[] = []
+  const finish =
+    combination.finish === true ? await localGitHub(projectsDir, combination.id) : undefined
   const generate = await run(
     cliBin,
     [
@@ -163,11 +166,23 @@ async function checkCombination(
       ...(await stackArgs(combination, projectsDir)),
       ...(combination.depth === undefined ? [] : ['--depth', combination.depth]),
       '--yes',
-      '--skip-git'
+      // the harness runs the same gates itself; only `finish` combinations pay for them twice
+      ...(finish === undefined ? ['--skip-git', '--skip-verify'] : ['--github', finish.url])
     ],
-    { cwd: projectsDir, timeoutMs: INSTALL_TIMEOUT_MS, env: { npm_config_user_agent: `${pm}/e2e` } }
+    {
+      cwd: projectsDir,
+      timeoutMs: INSTALL_TIMEOUT_MS,
+      env: { npm_config_user_agent: `${pm}/e2e`, ...(finish?.env ?? {}) }
+    }
   )
-  steps.push(toStep('generate + install', generate, generate.output))
+  steps.push(
+    toStep(
+      finish === undefined ? 'generate + install' : 'generate + verify + commit + push',
+      generate,
+      generate.output
+    )
+  )
+  if (generate.ok && finish !== undefined) steps.push(await pushedStep(finish.bare))
   if (!generate.ok) {
     return { id: combination.id, pm, steps }
   }
@@ -233,6 +248,9 @@ async function checkCombination(
       detail: 'skipped: build failed'
     })
   }
+  if (combination.compose === true && tier === 'full' && built) {
+    steps.push(await composeCheck(projectDir, combination.id))
+  }
   return { id: combination.id, pm, steps }
 }
 
@@ -283,6 +301,56 @@ function readyExpectation(projectDir: string): ReadyExpectation {
   return hasDatabase && process.env.E2E_DATABASE_URL === undefined
     ? { status: 503, failing: ['db'] }
     : { status: 200, failing: [] }
+}
+
+const INITIAL_COMMIT = 'chore: initial project setup (devstack)'
+
+/**
+ * A stand-in for GitHub: a local bare repository, reached through a throwaway git config that
+ * rewrites one github.com URL to it (the CLI's URL check stays strict), plus a git identity.
+ * The developer's own git config is never read or written.
+ */
+async function localGitHub(
+  projectsDir: string,
+  id: string
+): Promise<{ url: string; bare: string; env: Record<string, string> }> {
+  const home = path.join(projectsDir, `${id}.git-home`)
+  await mkdir(home, { recursive: true })
+  const bare = path.join(home, 'remote.git')
+  await run('git', ['init', '--bare', '--quiet', '-b', 'main', bare], {
+    cwd: home,
+    timeoutMs: STEP_TIMEOUT_MS
+  })
+  const url = `https://github.com/devstack-e2e/${id}.git`
+  const config = path.join(home, 'gitconfig')
+  await writeFile(
+    config,
+    [
+      '[user]',
+      '  name = DevStack e2e',
+      '  email = e2e@devstack.invalid',
+      `[url "file://${bare}"]`,
+      `  insteadOf = ${url}`,
+      ''
+    ].join('\n')
+  )
+  return { url, bare, env: { GIT_CONFIG_GLOBAL: config, GIT_CONFIG_NOSYSTEM: '1' } }
+}
+
+/** The remote received exactly the initial commit, on main. */
+async function pushedStep(bare: string): Promise<StepResult> {
+  const startedAt = Date.now()
+  const log = await run('git', ['--git-dir', bare, 'log', '--format=%s', 'main'], {
+    cwd: path.dirname(bare),
+    timeoutMs: STEP_TIMEOUT_MS
+  })
+  const ok = log.ok && log.stdout.trim() === INITIAL_COMMIT
+  return {
+    step: 'pushed initial commit',
+    ok,
+    durationMs: Date.now() - startedAt,
+    detail: ok ? '' : `remote log: ${log.output}`
+  }
 }
 
 /** Files every generated project must contain; dotfiles are the ones npm packing drops. */

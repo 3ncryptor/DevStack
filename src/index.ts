@@ -14,6 +14,7 @@ import { DevstackError, InputError, ResolutionError } from './errors'
 import { ClackPrompter } from './intake/clack-prompter'
 import { loadStackConfig } from './intake/config'
 import type { Prompter } from './intake/prompter'
+import { githubUrlProblem } from './core/finish/github'
 import { checkAnswers, runPreflight } from './intake/preflight'
 import { saveStackPreset } from './intake/save-preset'
 import {
@@ -191,6 +192,31 @@ function wizardServices(
   }
 }
 
+/** A0.2 #19: an existing, empty GitHub repository to push to; --github answers it upfront. */
+async function githubUrl(
+  options: CliOptions,
+  prompter: Prompter,
+  config: StackConfig | undefined
+): Promise<string | undefined> {
+  if (options.github !== undefined) {
+    const problem = githubUrlProblem(options.github)
+    if (problem !== undefined) throw new InputError(`--github: ${problem}`)
+    return options.github
+  }
+  const interactive = !options.yes && options.printPlan === undefined && !options.dryRun
+  if (!interactive || options.skipGit || config !== undefined) return undefined
+  const connect = await prompter.confirm({
+    message: 'Connect a GitHub repository? (an existing, empty one; pushed after the checks pass)',
+    initialValue: false
+  })
+  if (!connect) return undefined
+  return prompter.text({
+    message: 'GitHub repository URL',
+    placeholder: 'https://github.com/<owner>/<repo>',
+    validate: (value) => githubUrlProblem(value.trim())
+  })
+}
+
 /** Prompts write to stdout, which would corrupt the JSON document; require every answer upfront. */
 function assertNonInteractive(projectName: string | undefined, options: CliOptions): void {
   const needsName = projectName === undefined && !options.yes
@@ -314,7 +340,7 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     registry,
     packageManager,
     packageManagerVersion: environment?.packageManagerVersions[packageManager],
-    options,
+    options: { ...options, github: await githubUrl(options, prompter, config) },
     logger,
     prompter
   })

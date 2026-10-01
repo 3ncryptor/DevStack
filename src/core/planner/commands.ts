@@ -23,7 +23,7 @@ export function planCommands(
     commands.push({
       phase: 'git',
       command: 'git',
-      args: ['init'],
+      args: ['init', '-b', 'main'],
       description: 'Initialise a git repository',
       skipIfExists: '.git'
     })

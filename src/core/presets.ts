@@ -23,6 +23,36 @@ export const PRESETS: Record<string, PresetDefinition> = {
       'quality-husky',
       'arch-clean'
     ]
+  },
+  // the M2 vertical slice (D-47): every recommended answer for a fullstack app
+  'fullstack-next-express': {
+    name: 'fullstack-next-express',
+    description:
+      'Express + Prisma + Next.js + Tailwind monorepo, with Docker, CI, API docs and tests',
+    modules: [
+      'language-node',
+      'layout-monorepo',
+      'framework-express',
+      'arch-feature',
+      'orm-prisma',
+      'security-helmet',
+      'middleware-cors',
+      'security-rate-limit',
+      'middleware-request-logger',
+      'api-versioning',
+      'api-docs-scalar',
+      'framework-nextjs',
+      'ui-tailwind',
+      'arch-web-feature',
+      'testing-vitest',
+      'testing-vitest-web',
+      'devops-docker',
+      'devops-docker-web',
+      'devops-github-actions',
+      'quality-eslint',
+      'quality-prettier',
+      'quality-husky'
+    ]
   }
 }
 

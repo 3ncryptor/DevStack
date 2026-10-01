@@ -101,7 +101,7 @@ describe('buildGenerationPlan', () => {
     expect(
       plan.commands.map((command) => [command.phase, command.command, ...command.args])
     ).toEqual([
-      ['git', 'git', 'init'],
+      ['git', 'git', 'init', '-b', 'main'],
       ['install', 'pnpm', 'install'],
       ['hooks', 'pnpm', 'exec', 'husky'],
       ['postInstall', 'pnpm', 'exec', 'prisma', 'generate']

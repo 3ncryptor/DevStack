@@ -1,6 +1,7 @@
 import { packageManagerAdapter } from '../adapters/package-manager/index'
 import type { GenerationPlan } from '../types/plan'
 import type { ApplyResult } from './apply/index'
+import type { FinishResult } from './finish/index'
 import { projectDirectoryName } from './project-name'
 
 export interface SummaryOptions {
@@ -69,13 +70,41 @@ function section(title: string, lines: readonly string[]): string[] {
 }
 
 /** What to do next, what to configure, and what to watch out for (buildPlan B3 "summarise"). */
+/** Verified, committed, pushed: what happened after the files were written (A0.4). */
+function statusLines(finish: FinishResult | undefined): string[] {
+  if (finish === undefined) return []
+  const { verification, commit, push } = finish
+  return [
+    verification.status === 'verified'
+      ? `Verified ✓ (${[...verification.gates, `boot: ${verification.booted.join(', ') || 'no server'}`].join(', ')})`
+      : `Not verified: ${verification.reason}`,
+    ...(verification.status === 'verified' ? verification.readiness : []),
+    ...(commit === undefined
+      ? []
+      : [
+          commit.status === 'committed'
+            ? `Committed ${commit.sha} on main`
+            : `Not committed: ${commit.reason}`
+        ]),
+    ...(push === undefined
+      ? []
+      : [
+          push.status === 'pushed'
+            ? `Pushed to ${push.url}`
+            : `Not pushed: ${push.reason}${push.retry === undefined ? '' : `\n    retry: ${push.retry}`}`
+        ])
+  ]
+}
+
 export function buildSummary(
   plan: GenerationPlan,
   result: ApplyResult,
-  options: SummaryOptions
+  options: SummaryOptions,
+  finish?: FinishResult
 ): string {
   return [
     `Project ${plan.projectName} is ready in ${plan.projectDir}`,
+    ...section('Status', statusLines(finish)),
     ...section('Next steps', nextSteps(plan, options)),
     ...section('Environment variables (.env.example)', plan.env.length > 0 ? envLines(plan) : []),
     ...section(

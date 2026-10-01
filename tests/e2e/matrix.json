@@ -2,7 +2,8 @@
   {
     "id": "backend-preset",
     "preset": "backend",
-    "smoke": true
+    "smoke": true,
+    "finish": true
   },
   {
     "id": "backend-bare",
@@ -91,7 +92,8 @@
       "quality-husky",
       "testing-vitest",
       "testing-vitest-web"
-    ]
+    ],
+    "finish": true
   },
   {
     "id": "fullstack-plain-css",
@@ -134,6 +136,11 @@
       "quality-husky"
     ],
     "smoke": true
+  },
+  {
+    "id": "fullstack-preset",
+    "preset": "fullstack-next-express",
+    "compose": true
   },
   {
     "id": "node-prisma",

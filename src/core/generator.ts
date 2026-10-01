@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import path from 'node:path'
+
 import type { Prompter } from '../intake/prompter'
 import type { GeneratorOptions } from '../types/context'
 import type { DevstackModule } from '../types/module'
@@ -8,6 +11,8 @@ import { runPlanCommands } from './apply/commands'
 import { applyPlan, classifyFiles } from './apply/index'
 import { formatPlanText, planToJson } from './plan-output'
 import { buildSummary } from './summary'
+import { finishProject, type FinishResult } from './finish/index'
+import { startProject } from './finish/start'
 import { buildGenerationPlan } from './planner/index'
 
 export interface GenerateProjectInput {
@@ -64,6 +69,8 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
   }
 
   input.logger.info(`Composing project with modules: ${plan.modules.join(', ')}`)
+  // checked before anything is written: an existing repository's history is the user's
+  const preexistingRepo = existsSync(path.join(plan.projectDir, '.git'))
   const result = await applyPlan(plan, {
     yes: input.options.yes,
     force: input.options.force,
@@ -73,10 +80,31 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
   input.logger.info(`Wrote ${result.written.length} files.`)
 
   await runPlanCommands(plan, input.logger)
+  const finish = await finishProject({
+    plan,
+    skipInstall: input.options.skipInstall,
+    skipVerify: input.options.skipVerify,
+    skipGit: input.options.skipGit,
+    github: input.options.github,
+    yes: input.options.yes,
+    preexistingRepo,
+    prompter: input.prompter,
+    logger: input.logger
+  })
   input.logger.success(
-    buildSummary(plan, result, {
-      inPlace: input.options.inPlace,
-      skipInstall: input.options.skipInstall
-    })
+    buildSummary(
+      plan,
+      result,
+      { inPlace: input.options.inPlace, skipInstall: input.options.skipInstall },
+      finish
+    )
   )
+  if (await shouldStart(input, finish)) await startProject(plan, input.logger)
+}
+
+/** "Start it now?" (A0.4 step 7): asked only after a verified run; --start skips the question. */
+async function shouldStart(input: GenerateProjectInput, finish: FinishResult): Promise<boolean> {
+  if (input.options.start) return true
+  if (input.options.yes || finish.verification.status !== 'verified') return false
+  return input.prompter.confirm({ message: 'Start it now? (db:up, then dev)', initialValue: false })
 }

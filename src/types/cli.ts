@@ -15,6 +15,12 @@ export const cliOptionSchema = z.strictObject({
   inPlace: z.boolean().default(false),
   skipInstall: z.boolean().default(false),
   skipGit: z.boolean().default(false),
+  /** Skip the gates and boot check after install; the project is then "Not verified". */
+  skipVerify: z.boolean().default(false),
+  /** Existing, empty GitHub repository to push the initial commit to (A0.5). */
+  github: z.string().optional(),
+  /** Start the project after generation (A0.4 step 7). */
+  start: z.boolean().default(false),
   verbose: z.boolean().default(false),
   force: z.boolean().default(false),
   dryRun: z.boolean().default(false),
