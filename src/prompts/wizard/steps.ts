@@ -27,6 +27,8 @@ export interface WizardAnswers {
   rateLimitAlgorithm?: string
   tests?: string
   apiVersioning?: boolean
+  apiDocs?: boolean
+  ci?: boolean
   asyncHandler?: boolean
 }
 
@@ -186,7 +188,7 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
 }
 
 interface ConfirmStepDefinition {
-  key: 'preCommit' | 'docker' | 'asyncHandler' | 'admin' | 'apiVersioning'
+  key: 'preCommit' | 'docker' | 'asyncHandler' | 'admin' | 'apiVersioning' | 'apiDocs' | 'ci'
   label: string
   message: string
   moduleId: string
@@ -388,9 +390,16 @@ export const STEPS: readonly WizardStep[] = [
     label: 'Docker',
     message: 'Add a Dockerfile and docker compose?',
     moduleId: 'devops-docker',
+    defaultValue: true
+  }),
+  confirmStep({
+    key: 'apiDocs',
+    label: 'API docs',
+    message: 'Add API docs? (Scalar at /docs, OpenAPI at /openapi.json)',
+    moduleId: 'api-docs-scalar',
     defaultValue: true,
-    // per-app images for the monorepo come with Docker v2 (task 3.7)
-    applies: (answers) => !isFullstack(answers)
+    // the Nest variant (@nestjs/swagger) comes later
+    applies: (answers) => answers.framework === 'framework-express'
   }),
   appSetupStep,
   rateLimitAlgorithmStep(),
@@ -401,6 +410,13 @@ export const STEPS: readonly WizardStep[] = [
     moduleId: 'api-versioning',
     defaultValue: true,
     applies: (answers) => isModule(answers.framework)
+  }),
+  confirmStep({
+    key: 'ci',
+    label: 'CI',
+    message: 'Add GitHub Actions CI? (lint, format, typecheck, build, test)',
+    moduleId: 'devops-github-actions',
+    defaultValue: true
   }),
   confirmStep({
     key: 'asyncHandler',
@@ -436,9 +452,14 @@ export function modulesFromAnswers(answers: WizardAnswers, registry: Registry): 
   // a fullstack app lives in a monorepo: apps/api, apps/web, packages/shared (B8)
   const layout = isFullstack(answers) ? ['layout-monorepo'] : []
   // Vitest for the API also tests the web apps
-  const webTests =
-    isFullstack(answers) && chosen.includes('testing-vitest') ? ['testing-vitest-web'] : []
-  return [...new Set([...ALWAYS_INCLUDED, ...layout, ...chosen, ...webTests])]
+  // tests and Docker images for the API extend to the web apps
+  const webExtras = isFullstack(answers)
+    ? [
+        ...(chosen.includes('testing-vitest') ? ['testing-vitest-web'] : []),
+        ...(chosen.includes('devops-docker') ? ['devops-docker-web'] : [])
+      ]
+    : []
+  return [...new Set([...ALWAYS_INCLUDED, ...layout, ...chosen, ...webExtras])]
 }
 
 const firstOf = (modules: readonly string[], choices: Choice<string>[]): string | undefined =>
@@ -457,6 +478,8 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     frontendArchitecture: firstOf(modules, FRONTEND_ARCHITECTURES),
     apiVersioning: modules.includes('api-versioning'),
     tests: modules.includes('testing-vitest') ? 'testing-vitest' : NONE,
+    apiDocs: modules.includes('api-docs-scalar'),
+    ci: modules.includes('devops-github-actions'),
     // a module list carries no options: a preset with rate limiting starts from the default
     rateLimitAlgorithm: modules.includes('security-rate-limit') ? 'fixed-window' : undefined,
     database: orm === undefined ? NONE : 'postgres',

@@ -21,7 +21,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prepare": "husky",
-    "e2e": "tsx tests/e2e/harness.ts",
+    "e2e": "tsx tests/e2e/harness.ts --tier smoke",
+    "e2e:full": "tsx tests/e2e/harness.ts --tier full",
     "prepack": "npm run build",
     "test:coverage": "vitest run --coverage"
   },

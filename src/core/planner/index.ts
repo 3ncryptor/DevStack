@@ -4,6 +4,7 @@ import type { Condition, Depth, DevstackModule } from '../../types/module'
 import type { PackageJson } from '../../types/package-json'
 import type { GenerationPlan, PlannedEnvVar, PlannedFile } from '../../types/plan'
 import { NODE_LANGUAGE } from '../../adapters/language/node'
+import { NODE_CATALOG } from '../../catalog/node'
 import {
   packageManagerAdapter,
   type PackageManagerId as PackageManager
@@ -185,6 +186,13 @@ async function targetOutput(
     language: NODE_LANGUAGE,
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
     target: target.role,
+    port: portOf(target.role, context.monorepo),
+    scripts: Object.keys(packageJson.scripts ?? {}),
+    packageManagerVersion:
+      input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager],
+    versions: Object.fromEntries(
+      Object.entries(NODE_CATALOG).map(([name, entry]) => [name, entry.version])
+    ),
     packageNames: Object.fromEntries(
       context.targets.map((candidate) => [candidate.role, candidate.packageName])
     ),

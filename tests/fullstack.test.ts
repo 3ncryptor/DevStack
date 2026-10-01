@@ -87,6 +87,13 @@ describe('fullstack wiring (task 3.9, B17.4)', () => {
     expect(content(result, 'apps/api/.env')).toContain('ALLOWED_ORIGINS=http://localhost:3000')
   })
 
+  it('does not warn about an empty CORS allowlist it filled in itself', async () => {
+    const result = await plan(FULLSTACK)
+    const cors = result.env.find((variable) => variable.name === 'ALLOWED_ORIGINS')
+
+    expect(cors?.warnings).toEqual([])
+  })
+
   it('renders the status page from /ready on the server', async () => {
     const page = content(await plan(FULLSTACK), 'apps/web/app/page.tsx')
 

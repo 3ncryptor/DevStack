@@ -1,8 +1,17 @@
-import type { NextConfig } from 'next'
+<% const docker = it.modules.includes('devops-docker-web') %>
+<% if (docker) { %>import path from 'node:path'
+
+<% } %>import type { NextConfig } from 'next'
 
 const apiUrl = process.env.API_URL ?? 'http://localhost:3001'
 
 const nextConfig: NextConfig = {
+<% if (docker) { %>
+  // the Docker image runs the standalone server; tracing starts at the workspace root
+  // (next build runs in this app's folder, so the root is two levels up)
+  output: 'standalone',
+  outputFileTracingRoot: path.join(process.cwd(), '..', '..'),
+<% } %>
   // the shared package ships TypeScript source
   transpilePackages: ['<%= it.packageNames.shared %>'],
   // Development proxy (B17.4): the browser only talks to this origin, so CORS never arises.

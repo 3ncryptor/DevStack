@@ -145,7 +145,9 @@ npm install
 npm run dev -- my-app --dry-run   # run the CLI from source
 npm test                          # unit tests
 npm run test:coverage             # with coverage
-npm run e2e -- --pm pnpm --keep   # generate projects and run their own gates
+npm run e2e                       # smoke: 4 stacks on pnpm, in parallel (~1 min)
+npm run e2e:full                  # every stack on npm, pnpm, yarn and bun (~10 min)
+npm run e2e -- --only fullstack-docker --keep   # one stack, keeping the project
 npm run lint && npm run typecheck && npm run build
 ```
 

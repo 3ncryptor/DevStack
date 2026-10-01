@@ -1,4 +1,5 @@
 import type { DevstackModule } from '../types/module'
+import apiDocsScalar from './api-docs-scalar/index'
 import apiVersioning from './api-versioning/index'
 import appAdmin from './app-admin/index'
 import archWebAtomic from './arch-web-atomic/index'
@@ -6,6 +7,8 @@ import archWebFeature from './arch-web-feature/index'
 import archWebLayer from './arch-web-layer/index'
 import coreBackend from './core-backend/index'
 import dockerBasic from './devops-docker/index'
+import dockerWeb from './devops-docker-web/index'
+import githubActions from './devops-github-actions/index'
 import folderClean from './arch-clean/index'
 import folderFeature from './arch-feature/index'
 import folderMvc from './arch-mvc/index'
@@ -64,5 +67,8 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   middlewareCompression,
   middlewareAsyncHandler,
   apiVersioning,
-  dockerBasic
+  apiDocsScalar,
+  dockerBasic,
+  dockerWeb,
+  githubActions
 ]

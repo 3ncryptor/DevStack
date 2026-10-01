@@ -1,0 +1,52 @@
+<% const pm = it.packageManager -%>
+<% const monorepo = it.modules.includes('layout-monorepo') -%>
+<% const gates = ['lint', 'format', 'typecheck', 'build', 'test'].filter((name) => it.scripts.includes(name)) -%>
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# read-only token: this workflow only checks the code
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # git hooks are for developers' machines
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v7
+<% if (pm === 'pnpm') { -%>
+      - uses: pnpm/action-setup@v6
+<% if (!monorepo) { -%>
+        with:
+          version: <%= it.packageManagerVersion %>
+<% } -%>
+<% } else if (pm === 'bun') { -%>
+      - uses: oven-sh/setup-bun@v2
+<% } -%>
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+<% if (pm !== 'bun') { -%>
+          cache: <%= pm %>
+<% } -%>
+      - run: <%= it.pm.installFrozen %>
+<% if (it.modules.includes('orm-prisma')) { -%>
+      - run: <%= it.pm.exec %> prisma generate
+<% if (monorepo) { -%>
+        working-directory: apps/api
+<% } -%>
+<% } -%>
+<% for (const gate of gates) { -%>
+      - run: <%= it.pm.run %> <%= gate %>
+<% } -%>

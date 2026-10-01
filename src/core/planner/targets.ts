@@ -97,7 +97,8 @@ export function envForTarget(
   }
   return env.map((variable) => {
     const example = overrides[variable.name]
-    return example === undefined ? variable : { ...variable, example }
+    // a value DevStack fills in is not "left empty", so its unset-warning no longer applies
+    return example === undefined ? variable : { ...variable, example, warnings: [] }
   })
 }
 

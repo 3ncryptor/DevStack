@@ -4,6 +4,7 @@ import { loadModules } from '../src/core/module-loader'
 import { PRESETS } from '../src/core/presets'
 import { resolveStack } from '../src/core/resolver/index'
 import { Aborted } from '../src/errors'
+import type { SelectPrompt } from '../src/intake/prompter'
 import {
   answersFromModules,
   APP_SETUP_CHOICES,
@@ -17,7 +18,7 @@ import {
   type WizardContext,
   type WizardServices
 } from '../src/prompts/wizard/index'
-import { ScriptedPrompter } from './helpers/scripted-prompter'
+import { AnswerPrompter } from './helpers/answer-prompter'
 
 const registry = loadModules()
 
@@ -27,6 +28,34 @@ const CONTEXT: WizardContext = {
   depth: 'wired',
   defaultPackageManager: 'npm'
 }
+
+/** Question texts, as the wizard asks them. */
+const Q = {
+  preset: 'Start from a preset?',
+  appType: 'App type',
+  framework: 'Backend framework',
+  frontend: 'Frontend framework',
+  styling: 'Styling',
+  admin: 'Add an admin frontend? (apps/admin on port 3002, same API)',
+  frontendArchitecture: 'Frontend architecture',
+  database: 'Database',
+  orm: 'ORM',
+  packageManager: 'Package manager',
+  architecture: 'Backend architecture',
+  preCommit: 'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
+  tests: 'Test runner',
+  docker: 'Add a Dockerfile and docker compose?',
+  apiDocs: 'Add API docs? (Scalar at /docs, OpenAPI at /openapi.json)',
+  appSetup: 'App setup (app.ts)',
+  rateLimit: 'Rate-limit algorithm',
+  versioning: 'Version the API under /v1? (health routes stay unversioned)',
+  ci: 'Add GitHub Actions CI? (lint, format, typecheck, build, test)',
+  asyncHandler:
+    'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
+  next: 'What next?',
+  which: 'Which answer?',
+  saveAs: 'Save as'
+} as const
 
 /** Real resolution, fake planning (the file count is the module count), recorded saves. */
 function fakeServices(): WizardServices & {
@@ -47,118 +76,103 @@ function fakeServices(): WizardServices & {
   }
 }
 
+/** Records the choices offered for one question. */
+function offeredFor(prompter: AnswerPrompter, message: string): string[][] {
+  const offered: string[][] = []
+  const select = prompter.select.bind(prompter)
+  prompter.select = <T extends string>(prompt: SelectPrompt<T>): Promise<T> => {
+    if (prompt.message === message) {
+      offered.push(prompt.choices.map((choice) => `${choice.value}:${choice.hint ?? ''}`))
+    }
+    return select(prompt)
+  }
+  return offered
+}
+
 const sorted = (ids: readonly string[]): string[] => [...ids].sort()
 
-const ALWAYS = ['language-node', 'quality-eslint', 'quality-prettier']
+/** A minimal NestJS backend: no database, no extras. */
+const NEST: ReadonlyArray<readonly [string, unknown]> = [
+  [Q.framework, 'framework-nest'],
+  [Q.database, 'none'],
+  [Q.preCommit, false],
+  [Q.tests, 'none'],
+  [Q.docker, false],
+  [Q.appSetup, []],
+  [Q.versioning, false],
+  [Q.ci, false]
+]
 
 describe('guided wizard (A0.2 order)', () => {
-  it('asks the applicable questions in order and builds the stack from the answers', async () => {
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-express',
-      'postgres',
-      'pnpm',
-      'arch-mvc',
-      true,
-      'none',
-      false,
-      ['middleware-cors', 'security-helmet'],
-      false,
-      false,
-      'generate'
-    ])
+  it('asks the applicable questions in order, with their defaults', async () => {
+    const prompter = new AnswerPrompter()
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
     expect(prompter.asked).toEqual([
-      'Start from a preset?',
-      'App type',
-      'Backend framework',
-      'Database',
-      'Package manager',
-      'Backend architecture',
-      'Add pre-commit hooks? (Husky, lint-staged, commitlint)',
-      'Test runner',
-      'Add a Dockerfile and docker compose?',
-      'App setup (app.ts)',
-      'Version the API under /v1? (health routes stay unversioned)',
-      'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
-      'What next?'
+      Q.preset,
+      Q.appType,
+      Q.framework,
+      Q.database,
+      Q.packageManager,
+      Q.architecture,
+      Q.preCommit,
+      Q.tests,
+      Q.docker,
+      Q.apiDocs,
+      Q.appSetup,
+      Q.rateLimit,
+      Q.versioning,
+      Q.ci,
+      Q.asyncHandler,
+      Q.next
     ])
-    expect(sorted(result.modules)).toEqual(
-      sorted([
-        ...ALWAYS,
+    // the defaults: Express, Postgres + Prisma, feature folders, everything recommended on
+    expect(result.modules).toEqual(
+      expect.arrayContaining([
         'framework-express',
         'orm-prisma',
-        'arch-mvc',
+        'arch-feature',
         'quality-husky',
-        'middleware-cors',
-        'security-helmet'
+        'testing-vitest',
+        'devops-docker',
+        'api-docs-scalar',
+        'security-helmet',
+        'security-rate-limit',
+        'api-versioning',
+        'devops-github-actions'
       ])
     )
-    expect(result.packageManager).toBe('pnpm')
+    expect(result.modules).not.toContain('middleware-async-handler')
+    expect(result.moduleOptions).toEqual({ 'security-rate-limit': { algorithm: 'fixed-window' } })
   })
 
   it('picks a step with a single compatible option without asking (ORM)', async () => {
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-express',
-      'postgres',
-      'npm',
-      'arch-clean',
-      false,
-      'none',
-      false,
-      [],
-      false,
-      false,
-      'generate'
-    ])
+    const prompter = new AnswerPrompter([[Q.database, 'postgres']])
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    expect(prompter.asked).not.toContain('ORM')
+    expect(prompter.asked).not.toContain(Q.orm)
     expect(result.modules).toContain('orm-prisma')
     expect(prompter.notes.join('\n')).toContain('ORM              Prisma')
   })
 
-  it('skips the architecture question for NestJS, which has its own module layout', async () => {
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-nest',
-      'none',
-      'npm',
-      false,
-      'none',
-      false,
-      [],
-      false,
-      'generate'
-    ])
+  it('skips the Express-only questions for NestJS', async () => {
+    const prompter = new AnswerPrompter(NEST)
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    expect(prompter.asked).not.toContain('Backend architecture')
-    expect(prompter.asked).not.toContain('ORM')
-    expect(sorted(result.modules)).toEqual(sorted([...ALWAYS, 'framework-nest']))
+    for (const skipped of [Q.architecture, Q.orm, Q.apiDocs, Q.asyncHandler]) {
+      expect(prompter.asked).not.toContain(skipped)
+    }
+    expect(sorted(result.modules)).toEqual(
+      sorted(['language-node', 'quality-eslint', 'quality-prettier', 'framework-nest'])
+    )
+    expect(prompter.unused()).toEqual([])
   })
 
   it('does not ask for the package manager when --pm or a config fixed it', async () => {
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-nest',
-      'none',
-      false,
-      'none',
-      false,
-      [],
-      false,
-      'generate'
-    ])
+    const prompter = new AnswerPrompter(NEST)
 
     const result = await runWizard(
       prompter,
@@ -166,32 +180,13 @@ describe('guided wizard (A0.2 order)', () => {
       fakeServices()
     )
 
-    expect(prompter.asked).not.toContain('Package manager')
+    expect(prompter.asked).not.toContain(Q.packageManager)
     expect(result.packageManager).toBe('yarn')
   })
 
   it('marks package managers that are not installed', async () => {
-    const choices: string[] = []
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-nest',
-      'none',
-      'npm',
-      false,
-      'none',
-      false,
-      [],
-      false,
-      'generate'
-    ])
-    const select = prompter.select.bind(prompter)
-    prompter.select = (prompt) => {
-      if (prompt.message === 'Package manager') {
-        choices.push(...prompt.choices.map((choice) => `${choice.value}:${choice.hint ?? ''}`))
-      }
-      return select(prompt)
-    }
+    const prompter = new AnswerPrompter(NEST)
+    const offered = offeredFor(prompter, Q.packageManager)
 
     await runWizard(
       prompter,
@@ -199,20 +194,20 @@ describe('guided wizard (A0.2 order)', () => {
       fakeServices()
     )
 
-    expect(choices).toEqual(['npm:', 'pnpm:', 'yarn:not installed', 'bun:not installed'])
+    expect(offered[0]).toEqual(['npm:', 'pnpm:', 'yarn:not installed', 'bun:not installed'])
   })
 
   it('pre-fills every answer from a chosen preset and goes to review', async () => {
-    const prompter = new ScriptedPrompter(['backend', 'npm', 'generate'])
+    const prompter = new AnswerPrompter([[Q.preset, 'backend']])
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    expect(prompter.asked).toEqual(['Start from a preset?', 'Package manager', 'What next?'])
+    expect(prompter.asked).toEqual([Q.preset, Q.packageManager, Q.next])
     expect(sorted(result.modules)).toEqual(sorted(PRESETS.backend?.modules ?? []))
   })
 
   it('starts from --preset without asking which preset', async () => {
-    const prompter = new ScriptedPrompter(['npm', 'generate'])
+    const prompter = new AnswerPrompter()
 
     const result = await runWizard(
       prompter,
@@ -220,39 +215,27 @@ describe('guided wizard (A0.2 order)', () => {
       fakeServices()
     )
 
-    expect(prompter.asked).toEqual(['Package manager', 'What next?'])
+    expect(prompter.asked).toEqual([Q.packageManager, Q.next])
     expect(sorted(result.modules)).toEqual(sorted(PRESETS.backend?.modules ?? []))
   })
 })
 
-describe('rate limiting and versioning answers (D-64)', () => {
-  it('asks for the algorithm only when rate limiting is chosen, and returns it as an option', async () => {
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-nest',
-      'none',
-      'npm',
-      false,
-      'none',
-      false,
-      ['security-rate-limit'],
-      'leaky-bucket',
-      true,
-      'generate'
+describe('questions added for D-64 and M2', () => {
+  it('asks for the rate-limit algorithm only with rate limiting, and returns it as an option', async () => {
+    const without = new AnswerPrompter([...NEST])
+    const withLimit = new AnswerPrompter([
+      ...NEST.filter(([message]) => message !== Q.appSetup),
+      [Q.appSetup, ['security-rate-limit']],
+      [Q.rateLimit, 'leaky-bucket']
     ])
 
-    const result = await runWizard(prompter, CONTEXT, fakeServices())
+    await runWizard(without, CONTEXT, fakeServices())
+    const result = await runWizard(withLimit, CONTEXT, fakeServices())
 
-    expect(prompter.asked).toContain('Rate-limit algorithm')
+    expect(without.asked).not.toContain(Q.rateLimit)
     expect(result.moduleOptions).toEqual({ 'security-rate-limit': { algorithm: 'leaky-bucket' } })
-    expect(result.modules).toEqual(
-      expect.arrayContaining(['security-rate-limit', 'api-versioning'])
-    )
   })
-})
 
-describe('test runner answer (task 3.5)', () => {
   it('adds Vitest for the API and, in a fullstack app, for the web apps', () => {
     const modules = modulesFromAnswers(
       {
@@ -266,42 +249,32 @@ describe('test runner answer (task 3.5)', () => {
 
     expect(modules).toEqual(expect.arrayContaining(['testing-vitest', 'testing-vitest-web']))
   })
-})
 
-describe('fullstack app type', () => {
-  it('asks for the frontend styling, skips Docker, and builds a monorepo', async () => {
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'fullstack',
-      'framework-express',
-      'ui-tailwind',
-      false,
-      'arch-web-feature',
-      'postgres',
-      'npm',
-      'arch-clean',
-      true,
-      'none',
-      [],
-      false,
-      false,
-      'generate'
+  it('builds a fullstack monorepo: styling, admin, frontend folders, images for each app', async () => {
+    const prompter = new AnswerPrompter([
+      [Q.appType, 'fullstack'],
+      [Q.admin, true],
+      [Q.frontendArchitecture, 'arch-web-atomic']
     ])
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    expect(prompter.asked).toContain('Styling')
-    expect(prompter.asked).not.toContain('Frontend framework')
-    expect(prompter.asked).not.toContain('Add a Dockerfile and docker compose?')
+    expect(prompter.asked).toEqual(
+      expect.arrayContaining([Q.styling, Q.admin, Q.frontendArchitecture])
+    )
+    expect(prompter.asked).not.toContain(Q.frontend)
     expect(result.modules).toEqual(
       expect.arrayContaining([
         'layout-monorepo',
         'framework-nextjs',
         'ui-tailwind',
-        'framework-express'
+        'app-admin',
+        'arch-web-atomic',
+        'devops-docker',
+        'devops-docker-web',
+        'testing-vitest-web'
       ])
     )
-    expect(result.modules).not.toContain('devops-docker')
   })
 
   it('pre-fills the fullstack answers from its modules', () => {
@@ -316,21 +289,8 @@ describe('fullstack app type', () => {
 })
 
 describe('review screen', () => {
-  const nestAnswers = [
-    'custom',
-    'backend',
-    'framework-nest',
-    'none',
-    'npm',
-    false,
-    'none',
-    false,
-    [],
-    false
-  ]
-
   it('shows every answer, the always-included tooling and the file count', async () => {
-    const prompter = new ScriptedPrompter([...nestAnswers, 'generate'])
+    const prompter = new AnswerPrompter(NEST)
 
     await runWizard(prompter, CONTEXT, fakeServices())
     const review = prompter.notes.find((note) => note.startsWith('Review'))
@@ -342,40 +302,38 @@ describe('review screen', () => {
   })
 
   it('edits one answer and asks any question that now applies', async () => {
-    const prompter = new ScriptedPrompter([
-      ...nestAnswers,
-      'edit',
-      'framework',
-      'framework-express',
-      'arch-clean',
-      true,
-      'generate'
+    const prompter = new AnswerPrompter([
+      ...NEST,
+      [Q.next, 'edit'],
+      [Q.which, 'framework'],
+      [Q.framework, 'framework-express'],
+      [Q.architecture, 'arch-clean'],
+      [Q.apiDocs, false],
+      [Q.asyncHandler, true]
     ])
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    expect(prompter.asked.slice(-5)).toEqual([
-      'Which answer?',
-      'Backend framework',
-      'Backend architecture',
-      'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
-      'What next?'
+    expect(prompter.asked.slice(prompter.asked.indexOf(Q.which))).toEqual([
+      Q.which,
+      Q.framework,
+      Q.architecture,
+      Q.apiDocs,
+      Q.asyncHandler,
+      Q.next
     ])
-    // asked only once it applies, and the yes adds the module
-    expect(result.modules).toContain('middleware-async-handler')
-    expect(result.modules).toContain('framework-express')
-    expect(result.modules).toContain('arch-clean')
+    expect(result.modules).toEqual(
+      expect.arrayContaining(['framework-express', 'arch-clean', 'middleware-async-handler'])
+    )
     expect(result.modules).not.toContain('framework-nest')
   })
 
   it('drops modules of questions that no longer apply after an edit', async () => {
-    const prompter = new ScriptedPrompter([
-      'backend',
-      'npm',
-      'edit',
-      'framework',
-      'framework-nest',
-      'generate'
+    const prompter = new AnswerPrompter([
+      [Q.preset, 'backend'],
+      [Q.next, 'edit'],
+      [Q.which, 'framework'],
+      [Q.framework, 'framework-nest']
     ])
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
@@ -385,7 +343,7 @@ describe('review screen', () => {
 
   it('saves the stack as a preset file and returns to the review', async () => {
     const services = fakeServices()
-    const prompter = new ScriptedPrompter([...nestAnswers, 'save', 'nest.stack.json', 'generate'])
+    const prompter = new AnswerPrompter([...NEST, [Q.next, 'save'], [Q.saveAs, 'nest.stack.json']])
 
     await runWizard(prompter, CONTEXT, services)
 
@@ -409,7 +367,7 @@ describe('review screen', () => {
       ...fakeServices(),
       savePreset: () => Promise.reject(new Error('nest.stack.json already exists'))
     }
-    const prompter = new ScriptedPrompter([...nestAnswers, 'save', 'nest.stack.json', 'generate'])
+    const prompter = new AnswerPrompter([...NEST, [Q.next, 'save']])
 
     await runWizard(prompter, CONTEXT, services)
 
@@ -417,28 +375,12 @@ describe('review screen', () => {
   })
 
   it('throws Aborted on Cancel', async () => {
-    const prompter = new ScriptedPrompter([...nestAnswers, 'cancel'])
+    const prompter = new AnswerPrompter([...NEST, [Q.next, 'cancel']])
 
     await expect(runWizard(prompter, CONTEXT, fakeServices())).rejects.toThrow(Aborted)
   })
-})
-
-describe('review problems', () => {
-  const nestAnswers = [
-    'custom',
-    'backend',
-    'framework-nest',
-    'none',
-    'npm',
-    false,
-    'none',
-    false,
-    [],
-    false
-  ]
 
   it('blocks Generate while a problem is reported, until an edit clears it', async () => {
-    const offered: string[][] = []
     const services: WizardServices = {
       ...fakeServices(),
       preview: (draft) =>
@@ -448,38 +390,25 @@ describe('review problems', () => {
           problems: draft.packageManager === 'bun' ? ['bun is not installed.'] : []
         })
     }
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-nest',
-      'none',
-      'bun',
-      false,
-      'none',
-      false,
-      [],
-      false,
-      'edit',
-      'packageManager',
-      'npm',
-      'generate'
+    const prompter = new AnswerPrompter([
+      ...NEST,
+      [Q.packageManager, 'bun'],
+      [Q.next, 'edit'],
+      [Q.which, 'packageManager'],
+      [Q.packageManager, 'npm']
     ])
-    const select = prompter.select.bind(prompter)
-    prompter.select = (prompt) => {
-      if (prompt.message === 'What next?') offered.push(prompt.choices.map((c) => c.value))
-      return select(prompt)
-    }
+    const offered = offeredFor(prompter, Q.next)
 
     const result = await runWizard(prompter, CONTEXT, services)
 
-    expect(offered[0]).toEqual(['edit', 'cancel'])
+    expect(offered[0]).toEqual(['edit:', 'cancel:'])
     expect(prompter.notes.join('\n')).toContain('bun is not installed.')
     expect(result.packageManager).toBe('npm')
   })
 
   it('suggests a preset file name without the npm scope', async () => {
     const defaults: string[] = []
-    const prompter = new ScriptedPrompter([...nestAnswers, 'save', 'x.json', 'generate'])
+    const prompter = new AnswerPrompter([...NEST, [Q.next, 'save'], [Q.saveAs, 'x.json']])
     const text = prompter.text.bind(prompter)
     prompter.text = (prompt) => {
       defaults.push(prompt.initialValue ?? '')
@@ -493,8 +422,22 @@ describe('review problems', () => {
 })
 
 describe('advanced mode review', () => {
+  it('lists problems, hides Generate and offers the resolver fixes as choices', async () => {
+    const prompter = new AnswerPrompter([
+      ['Select modules to include', ['language-node', 'framework-express', 'framework-nest']],
+      [Q.next, 'fix:0']
+    ])
+    const offered = offeredFor(prompter, Q.next)
+
+    const result = await runAdvancedWizard(prompter, CONTEXT, fakeServices())
+
+    expect(offered[0]).toEqual(['fix:0:', 'fix:1:', 'edit:', 'cancel:'])
+    expect(prompter.notes.join('\n')).toContain('Only one framework module')
+    expect(offered[1]?.[0]).toBe('generate:')
+    expect(sorted(result.modules)).toEqual(['framework-express', 'language-node'])
+  })
+
   it('offers only fixes that change the selection, once each', async () => {
-    const offered: string[][] = []
     const services: WizardServices = {
       ...fakeServices(),
       preview: () =>
@@ -518,36 +461,14 @@ describe('advanced mode review', () => {
           ]
         })
     }
-    const prompter = new ScriptedPrompter([['a', 'b'], 'cancel'])
-    const select = prompter.select.bind(prompter)
-    prompter.select = (prompt) => {
-      offered.push(prompt.choices.map((choice) => choice.label))
-      return select(prompt)
-    }
+    const prompter = new AnswerPrompter([
+      ['Select modules to include', ['a', 'b']],
+      [Q.next, 'cancel']
+    ])
+    const offered = offeredFor(prompter, Q.next)
 
     await expect(runAdvancedWizard(prompter, CONTEXT, services)).rejects.toThrow(Aborted)
-    expect(offered[0]).toEqual(['Remove a', 'Edit an answer', 'Cancel'])
-  })
-
-  it('lists problems, hides Generate and offers the resolver fixes as choices', async () => {
-    const offered: string[][] = []
-    const prompter = new ScriptedPrompter([
-      ['language-node', 'framework-express', 'framework-nest'],
-      'fix:0',
-      'generate'
-    ])
-    const select = prompter.select.bind(prompter)
-    prompter.select = (prompt) => {
-      offered.push(prompt.choices.map((choice) => choice.value))
-      return select(prompt)
-    }
-
-    const result = await runAdvancedWizard(prompter, CONTEXT, fakeServices())
-
-    expect(offered[0]).toEqual(['fix:0', 'fix:1', 'edit', 'cancel'])
-    expect(prompter.notes.join('\n')).toContain('Only one framework module')
-    expect(offered[1]).toContain('generate')
-    expect(sorted(result.modules)).toEqual(['framework-express', 'language-node'])
+    expect(offered[0]).toEqual(['fix:0:', 'edit:', 'cancel:'])
   })
 })
 
@@ -561,11 +482,9 @@ describe('answers ↔ modules', () => {
   })
 
   it('resolves every combination of answers without a diagnostic', () => {
-    const subsets = (items: readonly string[]): string[][] =>
-      items.reduce<string[][]>(
-        (all, item) => [...all, ...all.map((subset) => [...subset, item])],
-        [[]]
-      )
+    // every dimension with a rule between modules; independent ones (CI, styling, frontend
+    // folders) are fixed, since they cannot change whether a stack resolves
+    const appSetups = [[], APP_SETUP_CHOICES.map((choice) => choice.value)]
     /** Every combination of the given values, one answers object each. */
     const product = (dimensions: Record<string, readonly unknown[]>): WizardAnswers[] =>
       Object.entries(dimensions).reduce<WizardAnswers[]>(
@@ -575,14 +494,19 @@ describe('answers ↔ modules', () => {
       )
     const combinations = product({
       appType: ['backend', 'fullstack'],
-      styling: ['ui-tailwind', 'none'],
+      styling: ['ui-tailwind'],
+      admin: [true, false],
+      frontendArchitecture: ['arch-web-feature'],
       framework: ['framework-express', 'framework-nest'],
       database: ['postgres', 'none'],
-      architecture: ['arch-clean', 'arch-mvc', 'none'],
-      asyncHandler: [true, false],
-      preCommit: [true, false],
+      architecture: ['arch-feature', 'none'],
+      tests: ['testing-vitest', 'none'],
       docker: [true, false],
-      appSetup: subsets(APP_SETUP_CHOICES.map((choice) => choice.value))
+      apiDocs: [true, false],
+      ci: [true],
+      asyncHandler: [true, false],
+      appSetup: appSetups,
+      apiVersioning: [true, false]
     })
 
     const failures = combinations
@@ -592,6 +516,7 @@ describe('answers ↔ modules', () => {
       )
       .map((answers) => JSON.stringify(answers))
 
+    expect(combinations).toHaveLength(2048)
     expect(failures).toEqual([])
   })
 })

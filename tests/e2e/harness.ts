@@ -2,7 +2,12 @@
  * e2e harness (buildPlan task 0.2): packs the CLI as npm would publish it, generates each
  * matrix combination, and checks that the generated project passes its own gates.
  *
- *   npx tsx tests/e2e/harness.ts [--pm npm|pnpm|yarn|bun] [--only <id>] [--keep] [--report <file>]
+ *   npx tsx tests/e2e/harness.ts [--tier smoke|full] [--pm npm|pnpm|yarn|bun|all]
+ *                                [--concurrency <n>] [--only <id>] [--keep] [--report <file>]
+ *
+ * smoke (default): the combinations marked `smoke`, on one package manager, in parallel; fast
+ * enough for every change. full: every combination, all four package managers, plus the
+ * post-build lint; for nightly runs and releases.
  */
 import { existsSync, rmSync } from 'node:fs'
 import { access, mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises'
@@ -21,8 +26,12 @@ type PackageManager = (typeof PACKAGE_MANAGERS)[number]
 const isPackageManager = (value: string): value is PackageManager =>
   (PACKAGE_MANAGERS as readonly string[]).includes(value)
 
+type Tier = 'smoke' | 'full'
+
 interface HarnessArgs {
-  pm: PackageManager
+  tier: Tier
+  pms: PackageManager[]
+  concurrency?: number
   only?: string
   keep: boolean
   report?: string
@@ -62,11 +71,23 @@ function parseArgs(argv: string[]): HarnessArgs {
     const index = argv.indexOf(flag)
     return index === -1 ? undefined : argv[index + 1]
   }
-  const pm = valueOf('--pm') ?? 'npm'
-  if (!isPackageManager(pm)) {
-    throw new Error(`--pm must be one of ${PACKAGE_MANAGERS.join(', ')}, got "${pm}"`)
+  const tier = valueOf('--tier') ?? 'smoke'
+  if (tier !== 'smoke' && tier !== 'full') {
+    throw new Error(`--tier must be smoke or full, got "${tier}"`)
   }
-  return { pm, only: valueOf('--only'), keep: argv.includes('--keep'), report: valueOf('--report') }
+  const pm = valueOf('--pm') ?? (tier === 'full' ? 'all' : 'pnpm')
+  if (pm !== 'all' && !isPackageManager(pm)) {
+    throw new Error(`--pm must be one of ${PACKAGE_MANAGERS.join(', ')} or all, got "${pm}"`)
+  }
+  const concurrency = valueOf('--concurrency')
+  return {
+    tier,
+    pms: pm === 'all' ? [...PACKAGE_MANAGERS] : [pm],
+    concurrency: concurrency === undefined ? undefined : Number.parseInt(concurrency, 10),
+    only: valueOf('--only'),
+    keep: argv.includes('--keep'),
+    report: valueOf('--report')
+  }
 }
 
 async function readJson(file: string): Promise<unknown> {
@@ -131,7 +152,8 @@ async function checkCombination(
   cliBin: string,
   combination: Combination,
   pm: PackageManager,
-  projectsDir: string
+  projectsDir: string,
+  tier: Tier
 ): Promise<CombinationReport> {
   const steps: StepResult[] = []
   const generate = await run(
@@ -152,7 +174,7 @@ async function checkCombination(
 
   const projectDir = path.join(projectsDir, combination.id)
   steps.push(await checkRequiredFiles(projectDir))
-  steps.push(...(await runGateScripts(projectDir, pm)))
+  steps.push(...(await runGateScripts(projectDir, pm, tier)))
 
   const built = steps.find((step) => step.step === 'build')?.ok === true
   if (combination.boot === false) {
@@ -281,7 +303,11 @@ async function checkRequiredFiles(projectDir: string): Promise<StepResult> {
   return { step: 'required files', ok: missing.length === 0, durationMs: 0, detail }
 }
 
-async function runGateScripts(projectDir: string, pm: PackageManager): Promise<StepResult[]> {
+async function runGateScripts(
+  projectDir: string,
+  pm: PackageManager,
+  tier: Tier
+): Promise<StepResult[]> {
   const manifest = (await readJson(path.join(projectDir, 'package.json'))) as {
     scripts?: Record<string, string>
   }
@@ -299,9 +325,19 @@ async function runGateScripts(projectDir: string, pm: PackageManager): Promise<S
     const result = await run(pm, ['run', script], { cwd: projectDir, timeoutMs: STEP_TIMEOUT_MS })
     results.push(toStep(script, result, result.output))
   }
+  // a generated CI workflow must be valid for GitHub Actions before anyone pushes it
+  const workflow = path.join(projectDir, '.github', 'workflows', 'ci.yml')
+  if (existsSync(workflow)) {
+    const result = await run('npx', ['--yes', '@action-validator/cli@0.6.0', workflow], {
+      cwd: projectDir,
+      timeoutMs: STEP_TIMEOUT_MS
+    })
+    results.push(toStep('ci workflow valid', result, result.output))
+  }
   // builds write files of their own (next-env.d.ts, route types); the gates must still pass
   if (results.find((result) => result.step === 'build')?.ok === true) {
-    for (const script of ['lint', 'format'] as const) {
+    // format catches files a build writes (next-env.d.ts); lint after build is the slow, rare one
+    for (const script of tier === 'full' ? (['lint', 'format'] as const) : (['format'] as const)) {
       const result = await run(pm, ['run', script], { cwd: projectDir, timeoutMs: STEP_TIMEOUT_MS })
       results.push(toStep(`${script} (after build)`, result, result.output))
     }
@@ -314,10 +350,11 @@ async function checkCombinationSafely(
   cliBin: string,
   combination: Combination,
   pm: PackageManager,
-  projectsDir: string
+  projectsDir: string,
+  tier: Tier
 ): Promise<CombinationReport> {
   try {
-    return await checkCombination(cliBin, combination, pm, projectsDir)
+    return await checkCombination(cliBin, combination, pm, projectsDir, tier)
   } catch (error: unknown) {
     const detail = error instanceof Error ? (error.stack ?? error.message) : String(error)
     return {
@@ -354,25 +391,81 @@ function printReport(reports: CombinationReport[]): void {
   }
 }
 
+/** Runs `work` over `items` with at most `limit` running at once; results keep their order. */
+async function inPool<T, R>(
+  items: readonly T[],
+  limit: number,
+  work: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = []
+  let next = 0
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next
+      next += 1
+      const item = items[index]
+      if (item !== undefined) results[index] = await work(item)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker))
+  return results
+}
+
+/** yarn classic's cache is not safe for concurrent installs; the others share theirs fine. */
+const defaultConcurrency = (pm: PackageManager): number => (pm === 'yarn' ? 1 : 4)
+
+/** Generated projects need Node 24 (D-09); yarn refuses to install them on anything older. */
+function skipReason(pm: PackageManager): string | undefined {
+  const major = Number.parseInt(process.versions.node.split('.')[0] ?? '0', 10)
+  return pm === 'yarn' && major < 24
+    ? `yarn skipped: it needs Node 24 for generated projects (this is ${process.versions.node})`
+    : undefined
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
-  const matrix = parseMatrix(await readJson(path.join(import.meta.dirname, 'matrix.json'))).filter(
-    (combination) => args.only === undefined || combination.id === args.only
-  )
+  const matrix = parseMatrix(await readJson(path.join(import.meta.dirname, 'matrix.json')))
+    .filter((combination) => args.tier === 'full' || combination.smoke === true)
+    .filter((combination) => args.only === undefined || combination.id === args.only)
   if (matrix.length === 0) {
-    throw new Error(`--only "${args.only ?? ''}" matches no combination in matrix.json`)
+    throw new Error(`--only "${args.only ?? ''}" matches no ${args.tier} combination`)
   }
   const workDir = await mkdtemp(path.join(os.tmpdir(), 'devstack-e2e-'))
   cleanUpOnInterrupt(workDir, args.keep)
 
   try {
     const cliBin = await installPackedCli(workDir)
-    const projectsDir = path.join(workDir, 'projects')
-    await mkdir(projectsDir)
-
     const reports: CombinationReport[] = []
-    for (const combination of matrix) {
-      reports.push(await checkCombinationSafely(cliBin, combination, args.pm, projectsDir))
+    for (const pm of args.pms) {
+      const skipped = skipReason(pm)
+      if (skipped !== undefined) {
+        console.log(skipped)
+        continue
+      }
+      const projectsDir = path.join(workDir, 'projects', pm)
+      await mkdir(projectsDir, { recursive: true })
+      const startedAt = Date.now()
+      reports.push(
+        ...(await inPool(
+          matrix,
+          args.concurrency ?? defaultConcurrency(pm),
+          async (combination) => {
+            const report = await checkCombinationSafely(
+              cliBin,
+              combination,
+              pm,
+              projectsDir,
+              args.tier
+            )
+            const ok = report.steps.every((step) => step.ok)
+            console.log(`${ok ? '✔' : '✖'} ${combination.id} (${pm})`)
+            return report
+          }
+        ))
+      )
+      console.log(
+        `${pm}: ${matrix.length} combinations in ${Math.round((Date.now() - startedAt) / 1000)}s`
+      )
     }
 
     printReport(reports)

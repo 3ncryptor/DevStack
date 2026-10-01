@@ -1,0 +1,34 @@
+# syntax=docker/dockerfile:1
+<% const app = it.target === 'admin' ? 'admin' : 'web' %>
+<% const pkg = it.packageNames[it.target] %>
+# Build from the repository root: docker build -f apps/<%= app %>/Dockerfile .
+FROM <%= it.language.dockerBaseImage %> AS base
+WORKDIR /app
+<% if (it.pm.setup !== '') { %><%= it.pm.setup %>
+<% } %>
+# only the packages this app needs, as Turborepo recommends for monorepo images
+FROM base AS prune
+RUN npm install --global turbo@<%= it.versions.turbo %>
+COPY . .
+RUN turbo prune <%= pkg %> --docker
+
+FROM base AS build
+ENV HUSKY=0 NEXT_TELEMETRY_DISABLED=1
+COPY --from=prune /app/out/json/ ./
+RUN <%= it.pm.installFrozen %>
+COPY --from=prune /app/out/full/ ./
+WORKDIR /app/apps/<%= app %>
+RUN <%= it.pm.run %> build
+
+# Next.js standalone output carries only the files the server needs
+FROM <%= it.language.dockerBaseImage %> AS runtime
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=<%= it.port %> HOSTNAME=0.0.0.0
+WORKDIR /app
+COPY --from=build --chown=node:node /app/apps/<%= app %>/.next/standalone ./
+COPY --from=build --chown=node:node /app/apps/<%= app %>/.next/static ./apps/<%= app %>/.next/static
+# never run as root
+USER node
+EXPOSE <%= it.port %>
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:<%= it.port %>/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+CMD ["node", "apps/<%= app %>/server.js"]

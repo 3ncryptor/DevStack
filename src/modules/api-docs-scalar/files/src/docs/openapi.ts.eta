@@ -1,0 +1,94 @@
+<% const prefix = it.modules.includes('api-versioning') ? '/v1' : '/' %>
+/**
+ * The API's OpenAPI 3.1 document, served at /openapi.json and rendered at /docs. Add an entry
+ * under `paths` for every route you add; the response shapes follow the envelope (D-61).
+ */
+export const openApiDocument = {
+  openapi: '3.1.0',
+  info: { title: '<%= it.projectName %>', version: '0.1.0' },
+  paths: {
+    '/health': {
+      get: {
+        summary: 'Liveness: the process is up (never touches dependencies)',
+        responses: {
+          '200': {
+            description: 'Alive',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Health' } } }
+          }
+        }
+      }
+    },
+    '/ready': {
+      get: {
+        summary: 'Readiness: every dependency (e.g. the database) answers',
+        responses: {
+          '200': {
+            description: 'Ready',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Readiness' } } }
+          },
+          '503': {
+            description: 'A dependency is not ready',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Readiness' } } }
+          }
+        }
+      }
+    },
+    '<%= prefix %>': {
+      get: {
+        summary: 'What this API is',
+        responses: {
+          '200': {
+            description: 'API name<% if (prefix === '/v1') { %> and version<% } %>',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/InfoEnvelope' } } }
+          }
+        }
+      }
+    }
+  },
+  components: {
+    schemas: {
+      Health: {
+        type: 'object',
+        properties: { status: { const: 'ok' }, uptime: { type: 'integer' } },
+        required: ['status', 'uptime']
+      },
+      Readiness: {
+        type: 'object',
+        properties: {
+          status: { enum: ['ok', 'error'] },
+          checks: { type: 'object', additionalProperties: { enum: ['ok', 'error'] } }
+        },
+        required: ['status', 'checks']
+      },
+      InfoEnvelope: {
+        type: 'object',
+        properties: {
+          success: { const: true },
+          data: {
+            type: 'object',
+            properties: { name: { type: 'string' }, version: { type: 'string' } },
+            required: ['name']
+          }
+        },
+        required: ['success', 'data']
+      },
+      ErrorEnvelope: {
+        type: 'object',
+        properties: {
+          success: { const: false },
+          error: {
+            type: 'object',
+            properties: {
+              code: { type: 'string' },
+              message: { type: 'string' },
+              requestId: { type: 'string' },
+              details: {}
+            },
+            required: ['code', 'message', 'requestId']
+          }
+        },
+        required: ['success', 'error']
+      }
+    }
+  }
+} as const

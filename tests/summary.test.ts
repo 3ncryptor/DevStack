@@ -127,7 +127,14 @@ describe('docker-basic templates', () => {
     const plan = await planFor(dockerModules(['orm-prisma']), 'pnpm')
     const ignore = plan.files.find((file) => file.path === '.dockerignore')?.content ?? ''
 
-    for (const entry of ['node_modules', 'dist', '.git', '.env', '.env.*', '!.env.example']) {
+    for (const entry of [
+      '**/node_modules',
+      '**/dist',
+      '.git',
+      '**/.env',
+      '**/.env.*',
+      '!**/.env.example'
+    ]) {
       expect(ignore.split('\n')).toContain(entry)
     }
   })

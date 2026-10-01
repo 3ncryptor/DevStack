@@ -1,7 +1,40 @@
-# Local development stack. The database credentials below are for local use only.
-# Host ports are configurable when 3000 or 5432 are taken: PORT=4000 POSTGRES_PORT=5433 docker compose up
 <% const hasDatabase = it.modules.includes('orm-prisma') %>
+<% const monorepo = it.modules.includes('layout-monorepo') %>
+<% const webApps = monorepo && it.modules.includes('devops-docker-web') ? [['web', 3000], ...(it.modules.includes('app-admin') ? [['admin', 3002]] : [])] : [] %>
+# Local stack (D-41): docker compose up runs everything, each service starting once the one it
+# needs is healthy. The database credentials below are for local use only.
+# Host ports are configurable when taken, e.g. PORT=4000 POSTGRES_PORT=5433 docker compose up
 services:
+<% if (monorepo) { %>
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - '${API_PORT:-3001}:3001'
+    environment:
+      PORT: 3001
+<% if (webApps.length > 0) { %>      ALLOWED_ORIGINS: <%= webApps.map(([name, port]) => `http://localhost:${port}`).join(',') %>
+<% } %><% if (hasDatabase) { %>      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
+    depends_on:
+      db:
+        condition: service_healthy
+<% } %>
+<% for (const [name, port] of webApps) { %>
+  <%= name %>:
+    build:
+      context: .
+      dockerfile: apps/<%= name %>/Dockerfile
+    ports:
+      - '${<%= name.toUpperCase() %>_PORT:-<%= port %>}:<%= port %>'
+    environment:
+      # the server-rendered status page calls the API inside the compose network
+      API_URL: http://api:3001
+    depends_on:
+      api:
+        condition: service_healthy
+<% } %>
+<% } else { %>
   app:
     build: .
     ports:
@@ -12,13 +45,13 @@ services:
     environment:
       # the container always listens on 3000 (EXPOSE, healthcheck); PORT only picks the host port
       PORT: 3000
-      # .env is for local development; the container runs the production build
-      NODE_ENV: production
 <% if (hasDatabase) { %>      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
     depends_on:
       db:
         condition: service_healthy
-
+<% } %>
+<% } %>
+<% if (hasDatabase) { %>
   db:
     image: postgres:18-alpine
     environment:

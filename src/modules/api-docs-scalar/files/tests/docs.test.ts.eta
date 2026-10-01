@@ -1,0 +1,24 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
+import assert from 'node:assert/strict'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+
+import request from 'supertest'
+
+import { createApp } from '../src/app.js'
+import { createLogger } from '../src/lib/logger.js'
+
+const app = createApp({ logger: createLogger('silent'), readinessChecks: [] })
+
+<%= vitest ? '' : 'await ' %>test('GET /openapi.json serves the OpenAPI document', async () => {
+  const response = await request(app).get('/openapi.json')
+
+  assert.equal(response.status, 200)
+  assert.equal((response.body as { openapi: string }).openapi, '3.1.0')
+})
+
+<%= vitest ? '' : 'await ' %>test('GET /docs serves the API reference', async () => {
+  const response = await request(app).get('/docs')
+
+  assert.equal(response.status, 200)
+  assert.match(response.text, /openapi\.json/)
+})

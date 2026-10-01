@@ -79,6 +79,8 @@ export interface Combination {
   depth?: 'bare' | 'wired'
   /** false when the project has no server to boot (bare depth, no framework). */
   boot?: boolean
+  /** Part of the fast smoke tier run on every change; the full tier runs everything. */
+  smoke?: boolean
 }
 
 /** Ids become folder and project names, so keep them to safe kebab-case. */
@@ -103,7 +105,8 @@ export function parseMatrix(raw: unknown): Combination[] {
     }
     const extra = {
       ...(candidate.depth === undefined ? {} : { depth: candidate.depth }),
-      ...(candidate.boot === undefined ? {} : { boot: candidate.boot })
+      ...(candidate.boot === undefined ? {} : { boot: candidate.boot }),
+      ...(candidate.smoke === undefined ? {} : { smoke: candidate.smoke })
     }
     return hasPreset
       ? { id: candidate.id, preset: candidate.preset, ...extra }

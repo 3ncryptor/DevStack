@@ -21,7 +21,8 @@ const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   misc: ['core-', 'shared-', 'app-'],
   styling: ['ui-'],
   'api-style': ['api-'],
-  testing: ['testing-']
+  testing: ['testing-'],
+  'api-docs': ['api-docs-']
 }
 
 describe('module contract v2', () => {

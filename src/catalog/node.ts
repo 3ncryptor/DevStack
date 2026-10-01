@@ -55,6 +55,8 @@ export const NODE_CATALOG = {
   zod: { version: '^4.6.5' },
   supertest: { version: '^7.3.0' },
   vitest: { version: '^5.0.3' },
+  // vitest's peer; yarn classic does not install peers on its own
+  vite: { version: '^8.3.2' },
   'unplugin-swc': { version: '^2.0.0' },
   secretlint: { version: '^13.0.6' },
   '@secretlint/secretlint-rule-preset-recommend': { version: '^13.0.6' },
@@ -64,6 +66,7 @@ export const NODE_CATALOG = {
   cors: { version: '^2.8.6' },
   '@types/cors': { version: '^2.8.19' },
   helmet: { version: '^8.3.0' },
+  '@scalar/express-api-reference': { version: '^0.10.25' },
   morgan: { version: '^1.12.1' },
   '@types/morgan': { version: '^1.9.10' },
   compression: { version: '^1.8.2' },

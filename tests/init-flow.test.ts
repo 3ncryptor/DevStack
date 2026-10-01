@@ -6,6 +6,7 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import type { Probe } from '../src/core/doctor'
 import { InputError } from '../src/errors'
 import { runCreateDevstack } from '../src/index'
+import { AnswerPrompter } from './helpers/answer-prompter'
 import { ScriptedPrompter } from './helpers/scripted-prompter'
 import { removeTempDirs, tempDir } from './helpers/temp-dirs'
 
@@ -38,18 +39,11 @@ const exists = (file: string): Promise<boolean> =>
 describe('init flow', () => {
   it('runs the guided wizard and plans the answers (dry run skips the pre-flight)', async () => {
     const output = captureStdout()
-    const prompter = new ScriptedPrompter([
-      'custom',
-      'backend',
-      'framework-nest',
-      'none',
-      'npm',
-      false,
-      'none',
-      false,
-      ['security-helmet'],
-      false,
-      'generate'
+    // answered by question; every other question takes its default
+    const prompter = new AnswerPrompter([
+      ['Backend framework', 'framework-nest'],
+      ['Database', 'none'],
+      ['App setup (app.ts)', ['security-helmet']]
     ])
 
     await runCreateDevstack({

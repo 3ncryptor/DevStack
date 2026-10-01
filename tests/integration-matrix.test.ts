@@ -77,3 +77,32 @@ describe('integration matrix coverage (buildPlan B13)', () => {
     }
   )
 })
+
+describe('e2e smoke tier', () => {
+  const smoke = matrix.filter((combination) => combination.smoke === true)
+  const modulesOf = (combination: (typeof matrix)[number]): string[] =>
+    combination.preset !== undefined
+      ? [...(getPreset(combination.preset)?.modules ?? [])]
+      : (combination.modules ?? []).map(moduleIdOf)
+
+  it('stays small enough to run on every change', () => {
+    expect(smoke.length).toBeGreaterThan(0)
+    expect(smoke.length).toBeLessThanOrEqual(4)
+  })
+
+  it('still covers both frameworks, both depths, the monorepo, the web app and Docker', () => {
+    const covered = new Set(smoke.flatMap(modulesOf))
+    const depths = new Set(smoke.map((combination) => combination.depth ?? 'wired'))
+
+    for (const id of [
+      'framework-express',
+      'framework-nest',
+      'layout-monorepo',
+      'framework-nextjs',
+      'devops-docker'
+    ]) {
+      expect(covered).toContain(id)
+    }
+    expect([...depths].sort()).toEqual(['bare', 'wired'])
+  })
+})

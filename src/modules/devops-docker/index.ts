@@ -7,7 +7,13 @@ const moduleDefinition: DevstackModule = {
   category: 'devops',
   language: 'node',
   depth: 'bare',
-  description: 'Basic Dockerfile and docker-compose setup',
+  // the compose file runs the whole stack from the repository root (D-41)
+  target: 'root',
+  description: 'Production Dockerfiles and a docker compose file for the whole stack',
+  files: [
+    { path: 'Dockerfile', when: { not: { has: 'layout:monorepo' } } },
+    { path: 'apps/api/Dockerfile', when: { has: 'layout:monorepo' } }
+  ],
   filesPath: moduleFilesPath('devops-docker')
 }
 

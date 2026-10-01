@@ -1,8 +1,11 @@
-node_modules
-dist
-coverage
-src/generated
+# kept out of every image build context: dependencies, build output, secrets
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/src/generated
 .git
-.env
-.env.*
-!.env.example
+**/.env
+**/.env.*
+!**/.env.example

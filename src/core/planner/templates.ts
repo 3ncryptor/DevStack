@@ -16,6 +16,14 @@ export interface TemplateContext {
   language: LanguageAdapter
   /** Target being rendered: `root` in the single layout; `frontend` or `admin` for web apps. */
   target: string
+  /** Port of the target being rendered (D-30): 3000 single, api 3001, web 3000, admin 3002. */
+  port: number
+  /** Script names of the target's package.json, e.g. which gates CI can run. */
+  scripts: readonly string[]
+  /** Installed version of the package manager (or a fallback in dry runs). */
+  packageManagerVersion: string
+  /** Catalog version ranges by package, e.g. `it.versions.turbo` for a Dockerfile. */
+  versions: Readonly<Record<string, string>>
   /** Workspace package names by target, e.g. `it.packageNames.shared` (monorepo). */
   packageNames: Readonly<Record<string, string>>
   /** Selected module ids, e.g. for `it.modules.includes('orm-prisma')`. */

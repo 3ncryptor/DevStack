@@ -10,7 +10,8 @@ const moduleDefinition: DevstackModule = {
   target: 'frontend',
   description: 'Vitest for the web apps, starting with the status page logic',
   requires: ['framework-nextjs'],
-  devDependencies: ['vitest'],
+  // vite is vitest's peer: declared, because yarn classic does not install peers
+  devDependencies: ['vitest', 'vite'],
   scripts: [{ name: 'test', run: 'vitest run', depth: 'wired' }],
   filesPath: moduleFilesPath('testing-vitest-web')
 }

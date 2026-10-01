@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import { loadModules } from '../src/core/module-loader'
 import { buildGenerationPlan } from '../src/core/planner/index'
-import { ResolutionError } from '../src/errors'
 import type { GenerationPlan } from '../src/types/plan'
 
 const API = [
@@ -124,7 +123,9 @@ describe('monorepo layout (tasks 2.1–2.3, B8)', () => {
     expect(config['*.{ts,tsx}']).toEqual(['eslint --fix'])
   })
 
-  it('refuses Docker until the per-app images of task 3.7', async () => {
-    await expect(plan([...API, 'devops-docker'])).rejects.toThrow(ResolutionError)
+  it('accepts Docker, with one image per app (task 3.7)', async () => {
+    const files = (await plan([...API, 'devops-docker'])).files.map((file) => file.path)
+
+    expect(files).toContain('apps/api/Dockerfile')
   })
 })
