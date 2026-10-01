@@ -19,6 +19,7 @@ export const NODE_CATALOG = {
   '@types/node': { version: '^24.19.0' },
   typescript: { version: '~6.0.3' }, // typescript-eslint supports < 6.1
   tsx: { version: '^4.23.15', allowBuilds: ['esbuild'] },
+  turbo: { version: '^2.11.6' },
 
   // HTTP frameworks
   express: { version: '^5.2.1' },

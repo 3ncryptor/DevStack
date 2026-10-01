@@ -307,6 +307,7 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     depth,
     registry,
     packageManager,
+    packageManagerVersion: environment?.packageManagerVersions[packageManager],
     options,
     logger,
     prompter

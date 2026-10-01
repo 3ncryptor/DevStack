@@ -44,7 +44,13 @@ const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..')
 const GATE_SCRIPTS = ['lint', 'format', 'typecheck', 'build'] as const
 /** Run when the project has them; `bare` projects have no tests yet. */
 const OPTIONAL_GATE_SCRIPTS = ['test'] as const
-const REQUIRED_FILES = ['package.json', '.gitignore', 'tsconfig.json'] as const
+const REQUIRED_FILES = ['package.json', '.gitignore'] as const
+
+/** The app to boot: apps/api in a monorepo (B8), the project itself otherwise. */
+const appDirOf = (projectDir: string): string =>
+  existsSync(path.join(projectDir, 'apps', 'api', 'package.json'))
+    ? path.join(projectDir, 'apps', 'api')
+    : projectDir
 const MINUTE_MS = 60_000
 const INSTALL_TIMEOUT_MS = 10 * MINUTE_MS
 const STEP_TIMEOUT_MS = 5 * MINUTE_MS
@@ -152,11 +158,12 @@ async function checkCombination(
     steps.push({ step: 'boot + /health (skipped: no server)', ok: true, durationMs: 0, detail: '' })
   } else if (built) {
     const startedAt = Date.now()
-    const [command, ...args] = await startCommand(projectDir)
-    const boot = await bootAndProbe(projectDir, command, args, {
+    const appDir = appDirOf(projectDir)
+    const [command, ...args] = await startCommand(appDir)
+    const boot = await bootAndProbe(appDir, command, args, {
       timeoutMs: BOOT_TIMEOUT_MS,
-      env: await bootEnv(projectDir),
-      ready: readyExpectation(projectDir)
+      env: await bootEnv(appDir),
+      ready: readyExpectation(appDir)
     })
     const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
     steps.push(
@@ -224,6 +231,8 @@ async function checkRequiredFiles(projectDir: string): Promise<StepResult> {
       missing.push(file)
     }
   }
+  // a TypeScript config, at the root or in the app of a monorepo
+  if (!existsSync(path.join(appDirOf(projectDir), 'tsconfig.json'))) missing.push('tsconfig.json')
   const detail = `missing: ${missing.join(', ')}`
   return { step: 'required files', ok: missing.length === 0, durationMs: 0, detail }
 }

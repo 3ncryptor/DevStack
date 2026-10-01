@@ -6,6 +6,8 @@ const moduleDefinition: DevstackModule = {
   category: 'quality',
   language: 'node',
   depth: 'bare',
+  // repo-wide tooling: at the root of a monorepo
+  target: 'root',
   provides: ['git-hooks'],
   description: 'Husky + lint-staged + commitlint setup',
   requiresAny: ['linter', 'formatter'],

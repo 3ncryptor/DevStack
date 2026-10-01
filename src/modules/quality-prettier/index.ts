@@ -7,6 +7,8 @@ const moduleDefinition: DevstackModule = {
   category: 'quality',
   language: 'node',
   depth: 'bare',
+  // repo-wide tooling: at the root of a monorepo
+  target: 'root',
   provides: ['formatter'],
   description: 'Prettier formatting defaults',
   devDependencies: ['prettier'],

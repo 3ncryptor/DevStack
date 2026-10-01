@@ -96,6 +96,14 @@ export type ModuleCategory = (typeof MODULE_CATEGORIES)[number]
 
 export type LanguageId = 'node'
 
+/**
+ * Where a module's files, scripts and dependencies go (B8). In the single layout every target is
+ * the project root (D-03); in a monorepo backend → apps/api, frontend → apps/web,
+ * shared → packages/shared, and root stays at the root (tooling, workspace files).
+ */
+export const MODULE_TARGETS = ['root', 'backend', 'frontend', 'shared'] as const
+export type ModuleTarget = (typeof MODULE_TARGETS)[number]
+
 /** Module contract v2 (buildPlan B4). */
 export interface DevstackModule {
   /** Stable forever, kebab-case and category-prefixed; renames go through src/modules/aliases.ts. */
@@ -109,6 +117,8 @@ export interface DevstackModule {
   provides?: readonly string[]
   /** Depth of this module's files, slots and env; default `wired`. Tooling modules are `bare`. */
   depth?: Depth
+  /** Target the module belongs to; default `backend`. Only matters in a monorepo. */
+  target?: ModuleTarget
   /** Per-file `when`/`depth` overrides for templates under `filesPath`. */
   files?: readonly FileRule[]
   /** Catalog package names; versions come from src/catalog (D-08). */
@@ -158,6 +168,7 @@ export const moduleDefinitionSchema = z.object({
   language: z.literal('node'),
   provides: z.array(z.string().min(1)).optional(),
   depth: depthSchema.optional(),
+  target: z.enum(MODULE_TARGETS).optional(),
   files: z
     .array(
       z.strictObject({

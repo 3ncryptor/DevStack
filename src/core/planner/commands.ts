@@ -11,7 +11,9 @@ export interface CommandOptions {
 export function planCommands(
   modules: readonly DevstackModule[],
   packageManager: PackageManagerId,
-  options: CommandOptions
+  options: CommandOptions,
+  /** The module's target directory; module commands run there (monorepo: e.g. apps/api). */
+  dirOf: (moduleDefinition: DevstackModule) => string = () => ''
 ): PlannedCommand[] {
   const pm = packageManagerAdapter(packageManager)
   const commands: PlannedCommand[] = []
@@ -51,7 +53,8 @@ export function planCommands(
         phase: moduleCommand.phase,
         command: packageManager,
         args: pm.exec(binary, args),
-        description: `${moduleDefinition.id}: ${moduleCommand.run.join(' ')}`
+        description: `${moduleDefinition.id}: ${moduleCommand.run.join(' ')}`,
+        ...(dirOf(moduleDefinition) === '' ? {} : { cwd: dirOf(moduleDefinition) })
       })
     }
   }

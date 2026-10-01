@@ -26,7 +26,10 @@ export async function runPlanCommands(plan: GenerationPlan, logger: Logger): Pro
     }
     logger.info(`${command.description}...`)
     try {
-      await execa(command.command, command.args, { cwd: plan.projectDir, stdio: 'inherit' })
+      await execa(command.command, command.args, {
+        cwd: resolveInside(plan.projectDir, command.cwd ?? '.'),
+        stdio: 'inherit'
+      })
     } catch (error: unknown) {
       const reason = error instanceof ExecaError ? error.shortMessage : String(error)
       throw new ApplyError(

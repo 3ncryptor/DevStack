@@ -25,7 +25,10 @@ export function formatPlanText(plan: GenerationPlan, files: readonly ClassifiedF
     }),
     '',
     `Commands (${plan.commands.length}):`,
-    ...plan.commands.map((command) => `  $ ${[command.command, ...command.args].join(' ')}`),
+    ...plan.commands.map(
+      (command) =>
+        `  $ ${[command.command, ...command.args].join(' ')}${command.cwd === undefined ? '' : `   (in ${command.cwd})`}`
+    ),
     ''
   ]
   return lines.join('\n')

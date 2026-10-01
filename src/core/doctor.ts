@@ -30,6 +30,8 @@ export type Probe = (command: string, args: readonly string[]) => Promise<string
 export interface EnvironmentReport {
   checks: DoctorCheck[]
   installedPackageManagers: ReadonlySet<PackageManagerId>
+  /** Installed versions, e.g. for a monorepo's `packageManager` field. */
+  packageManagerVersions: Readonly<Partial<Record<PackageManagerId, string>>>
 }
 
 export interface InspectOptions {
@@ -160,9 +162,16 @@ export async function inspectEnvironment(
   const installedPackageManagers = new Set(
     PACKAGE_MANAGERS.filter((_id, index) => packageManagers[index]?.status === 'ok')
   )
+  const packageManagerVersions = Object.fromEntries(
+    PACKAGE_MANAGERS.flatMap((id, index) => {
+      const check = packageManagers[index]
+      return check?.status === 'ok' ? [[id, check.detail.replace(/^v/, '')]] : []
+    })
+  ) as Partial<Record<PackageManagerId, string>>
   return {
     checks: [nodeCheck(options.nodeVersion), ...packageManagers, ...git, ...docker],
-    installedPackageManagers
+    installedPackageManagers,
+    packageManagerVersions
   }
 }
 

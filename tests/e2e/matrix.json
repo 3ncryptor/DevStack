@@ -27,6 +27,18 @@
     ]
   },
   {
+    "id": "monorepo-api",
+    "modules": [
+      "layout-monorepo",
+      "framework-express",
+      "orm-prisma",
+      "security-helmet",
+      "quality-eslint",
+      "quality-prettier",
+      "quality-husky"
+    ]
+  },
+  {
     "id": "node-prisma",
     "modules": ["language-node", "orm-prisma", "quality-eslint", "quality-prettier"],
     "boot": false

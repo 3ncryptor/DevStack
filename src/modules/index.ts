@@ -7,6 +7,7 @@ import formatterPrettier from './quality-prettier/index'
 import frameworkExpress from './framework-express/index'
 import frameworkNest from './framework-nest/index'
 import languageNode from './language-node/index'
+import layoutMonorepo from './layout-monorepo/index'
 import linterEslint from './quality-eslint/index'
 import middlewareAsyncHandler from './middleware-async-handler/index'
 import middlewareCompression from './middleware-compression/index'
@@ -24,6 +25,7 @@ import securityOriginChecks from './security-origin-checks/index'
  */
 export const BUILTIN_MODULES: readonly DevstackModule[] = [
   languageNode,
+  layoutMonorepo,
   coreBackend,
   frameworkExpress,
   frameworkNest,

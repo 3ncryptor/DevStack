@@ -18,6 +18,8 @@ export interface GenerateProjectInput {
   depth?: 'bare' | 'wired'
   registry: Map<string, DevstackModule>
   packageManager: PackageManager
+  /** Installed version (from the pre-flight), for a monorepo's `packageManager` field. */
+  packageManagerVersion?: string
   options: GeneratorOptions
   logger: Logger
   prompter: Prompter
@@ -51,6 +53,7 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
     depth: input.depth,
     registry: input.registry,
     packageManager: input.packageManager,
+    packageManagerVersion: input.packageManagerVersion,
     options: { skipInstall: input.options.skipInstall, skipGit: input.options.skipGit }
   })
 

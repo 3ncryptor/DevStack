@@ -31,6 +31,8 @@ export interface PlannedCommand {
   description: string
   /** Skip the command at apply time when this project-relative path already exists. */
   skipIfExists?: string
+  /** Project-relative directory to run in, e.g. `apps/api`; default the project root. */
+  cwd?: string
 }
 
 /** An environment variable of the generated project, merged across the modules declaring it. */

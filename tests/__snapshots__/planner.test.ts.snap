@@ -75,7 +75,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".prettierignore",
-      "sha256": "4b9b1146850f85c1",
+      "sha256": "24de9722cca2405c",
       "strategy": "create",
     },
     {

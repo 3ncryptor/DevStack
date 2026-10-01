@@ -10,9 +10,25 @@ export interface PackageJson {
   dependencies?: DependencyMap
   devDependencies?: DependencyMap
   engines?: Record<string, string>
+  /** `<manager>@<version>`; Turborepo and corepack read it (monorepo root). */
+  packageManager?: string
+  /** npm, yarn and bun workspaces (pnpm reads pnpm-workspace.yaml). */
+  workspaces?: string[]
+  /** DevStack settings, e.g. the monorepo ports (D-30). */
+  devstack?: { ports: Record<string, number> }
 }
 
 /** Module fragments cannot declare dependencies: versions come only from the catalog (D-08). */
 export type PackageJsonFragment = Partial<
-  Omit<PackageJson, 'name' | 'version' | 'private' | 'dependencies' | 'devDependencies'>
+  Omit<
+    PackageJson,
+    | 'name'
+    | 'version'
+    | 'private'
+    | 'dependencies'
+    | 'devDependencies'
+    | 'packageManager'
+    | 'workspaces'
+    | 'devstack'
+  >
 >

@@ -9,6 +9,7 @@ import type { ModuleCategory } from '../src/types/module'
 /** Id prefixes allowed for each category in use (buildPlan B4: ids are category-prefixed). */
 const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   language: ['language-'],
+  layout: ['layout-'],
   framework: ['framework-'],
   orm: ['orm-'],
   architecture: ['arch-'],
