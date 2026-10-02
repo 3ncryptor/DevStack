@@ -23,6 +23,7 @@ export interface WizardAnswers {
   auth?: string
   oauthProviders?: string[]
   template?: string
+  logger?: string
   packageManager?: PackageManagerId
   architecture?: string
   preCommit?: boolean
@@ -104,6 +105,13 @@ const AUTHS: Choice<string>[] = [
     label: 'Better Auth',
     hint: 'email + password, optional GitHub and Google sign-in, database sessions'
   }
+]
+
+/** Question 16b (D-72, D-76): pino by default; Winston or plain JSON lines instead. */
+const LOGGERS: Choice<string>[] = [
+  { value: NONE, label: 'pino', hint: 'fast JSON logs (recommended)' },
+  { value: 'obs-winston', label: 'Winston' },
+  { value: 'obs-json-logs', label: 'Plain JSON logs', hint: 'no logging library' }
 ]
 
 /** Question 10 (D-39): one domain end to end; Weather comes with M4. */
@@ -248,6 +256,7 @@ interface SelectStepDefinition {
     | 'orm'
     | 'auth'
     | 'template'
+    | 'logger'
     | 'architecture'
     | 'rateLimitAlgorithm'
     | 'tests'
@@ -475,6 +484,15 @@ export const STEPS: readonly WizardStep[] = [
   }),
   oauthProvidersStep,
   selectStep({
+    key: 'logger',
+    label: 'Logger',
+    message: 'Logger',
+    choices: LOGGERS,
+    defaultValue: NONE,
+    applies: (answers) => isModule(answers.framework),
+    addsModule: true
+  }),
+  selectStep({
     key: 'template',
     label: 'App template',
     message: 'App template',
@@ -617,6 +635,7 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     // a module list carries no options: providers start unselected
     oauthProviders: [],
     template: firstOf(modules, TEMPLATES) ?? NONE,
+    logger: firstOf(modules, LOGGERS) ?? NONE,
     repoExtras: REPO_EXTRAS.map((choice) => choice.value).filter((id) => modules.includes(id)),
     architecture: firstOf(modules, ARCHITECTURES) ?? 'arch-flat',
     preCommit: modules.includes('quality-husky'),

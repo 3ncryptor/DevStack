@@ -1759,6 +1759,14 @@ details? } }` (`ApiError` and its subclasses, renamed from `AppError`). Express 
   metadata for Nest) and a mapper from `.js` specifiers to `.ts` sources; `watchman: false`, so
   a test run never starts a background daemon. Jest covers the API; web apps keep Vitest (they
   get no tests with Jest or node:test). Conflicts with `testing-vitest`.
+- **D-76 (2026-10-02)** — Logger choices (task 4.3 widened, D-72). pino stays the default;
+  `obs-winston` (Winston, JSON format) and `obs-json-logs` (no library: one JSON object per line on
+  stdout) each replace `lib/logger.ts` and drop pino. Both implement pino's shape (`info(fields,
+msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, Fastify's
+  `loggerInstance` and Nest's logger adapter work unchanged. A shared `log-fields.ts` does what
+  pino's serializers do: `req`/`res`/`err` become plain fields, `authorization` and `cookie`
+  headers are redacted, circular references are cut (Fastify logs its request objects). Wizard
+  question 16b.
 
 # §8. Open questions
 

@@ -59,6 +59,7 @@ export const NODE_CATALOG = {
 
   // backend baseline (B17.2)
   pino: { version: '^10.3.1' },
+  winston: { version: '^3.19.0' },
   zod: { version: '^4.6.5' },
   supertest: { version: '^7.3.0' },
   vitest: { version: '^5.0.3' },

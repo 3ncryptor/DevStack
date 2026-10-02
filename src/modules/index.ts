@@ -27,6 +27,8 @@ import middlewareAsyncHandler from './middleware-async-handler/index'
 import middlewareCompression from './middleware-compression/index'
 import middlewareCors from './middleware-cors/index'
 import middlewareMorgan from './middleware-request-logger/index'
+import obsJsonLogs from './obs-json-logs/index'
+import obsWinston from './obs-winston/index'
 import ormPrisma from './orm-prisma/index'
 import qualityHusky from './quality-husky/index'
 import rateLimit from './security-rate-limit/index'
@@ -64,6 +66,8 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   testingVitestWeb,
   sharedApi,
   ormPrisma,
+  obsWinston,
+  obsJsonLogs,
   authJwt,
   authBetterAuth,
   templateTodo,

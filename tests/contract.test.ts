@@ -15,6 +15,7 @@ const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   auth: ['auth-'],
   repo: ['repo-'],
   template: ['template-'],
+  observability: ['obs-'],
   architecture: ['arch-'],
   quality: ['quality-'],
   middleware: ['middleware-'],
