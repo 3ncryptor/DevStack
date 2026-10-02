@@ -7,6 +7,13 @@ import type {
   UserRecord
 } from '../../src/<%= it.domainsDir %>/auth/auth.repository.js'
 import { createAuthService, type AuthService } from '../../src/<%= it.domainsDir %>/auth/auth.service.js'
+<% if (it.modules.includes('auth-session')) { %>
+import {
+  createSessionTokens,
+  type SessionStore
+} from '../../src/<%= it.domainsDir %>/auth/session-tokens.js'
+import type { AccessClaims } from '../../src/<%= it.domainsDir %>/auth/tokens.js'
+<% } %>
 import { ConflictError } from '../../src/lib/errors.js'
 
 export const TEST_AUTH_CONFIG: AuthConfig = {
@@ -73,5 +80,38 @@ export function testAuthService(
   config: Partial<AuthConfig> = {},
   repositories: AuthRepositories = memoryAuthRepositories()
 ): AuthService {
+<% if (it.modules.includes('auth-session')) { %>
+  const resolved = { ...TEST_AUTH_CONFIG, ...config }
+  return createAuthService({
+    ...repositories,
+    config: resolved,
+    accessTokens: createSessionTokens(memorySessionStore(), resolved.accessTokenTtlMinutes)
+  })
+<% } else { %>
   return createAuthService({ ...repositories, config: { ...TEST_AUTH_CONFIG, ...config } })
+<% } %>
 }
+<% if (it.modules.includes('auth-session')) { %>
+
+/** Sessions in a Map, standing in for Redis (D-78); expiry is not simulated. */
+export function memorySessionStore(): SessionStore {
+  const sessions = new Map<string, AccessClaims>()
+  return {
+    save(idHash, claims) {
+      sessions.set(idHash, claims)
+      return Promise.resolve()
+    },
+    find: (idHash) => Promise.resolve(sessions.get(idHash) ?? null),
+    remove(idHash) {
+      sessions.delete(idHash)
+      return Promise.resolve()
+    },
+    removeAllForUser(userId) {
+      for (const [idHash, claims] of sessions) {
+        if (claims.userId === userId) sessions.delete(idHash)
+      }
+      return Promise.resolve()
+    }
+  }
+}
+<% } %>

@@ -115,3 +115,37 @@ describe('auth-jwt (B17.5, D-66)', () => {
     ).toMatchSnapshot()
   })
 })
+
+describe('auth-session (D-78)', () => {
+  const SESSION = [...BACKEND, 'auth-session']
+
+  it('brings auth-jwt and Redis, and swaps the access tokens for Redis sessions', async () => {
+    const generated = await plan(SESSION)
+    const index = contentOf(generated, 'src/index.ts')
+
+    expect(generated.files.map((file) => file.path)).toEqual(
+      expect.arrayContaining([
+        'src/cache/redis.ts',
+        'src/cache/session-store.redis.ts',
+        'src/modules/auth/session-tokens.ts',
+        'tests/auth.session.test.ts'
+      ])
+    )
+    expect(index).toContain('accessTokens: createSessionTokens(redisSessionStore')
+    expect(index.match(/auth: createAuthService/g)).toHaveLength(1)
+  })
+
+  it('runs the generated auth tests on in-memory sessions', async () => {
+    const helper = contentOf(await plan(SESSION), 'tests/helpers/auth.ts')
+
+    expect(helper).toContain('export function memorySessionStore(): SessionStore')
+    expect(helper).toContain('accessTokens: createSessionTokens(memorySessionStore()')
+  })
+
+  it('keeps stateless JWTs without it', async () => {
+    const generated = await plan(BACKEND)
+
+    expect(contentOf(generated, 'src/index.ts')).not.toContain('createSessionTokens')
+    expect(contentOf(generated, 'tests/helpers/auth.ts')).not.toContain('memorySessionStore')
+  })
+})

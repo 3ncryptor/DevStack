@@ -6,6 +6,7 @@ import { ApiError, UnauthorizedError } from '../../lib/errors.js'
 import { createLimiter, rateLimitHook } from '../../plugins/rate-limit.js'
 import { validate } from '../../plugins/validate.js'
 import {
+  ACCESS_COOKIE,
   clearSessionCookies,
   readCookie,
   REFRESH_COOKIE,
@@ -72,7 +73,7 @@ export function createAuthRoutes(auth: AuthService): FastifyPluginCallback {
 
     app.post('/logout', async (request, reply) => {
       assertTrustedOrigin(request, auth.config)
-      await auth.logout(readCookie(request, REFRESH_COOKIE))
+      await auth.logout(readCookie(request, REFRESH_COOKIE), readCookie(request, ACCESS_COOKIE))
       clearSessionCookies(reply, auth.config)
       return reply.send(new ApiSuccess(null))
     })
@@ -94,6 +95,7 @@ import { ApiError, UnauthorizedError } from '../../lib/errors.js'
 import { createLimiter, rateLimit } from '../../middlewares/rate-limit.js'
 import { validate } from '../../middlewares/validate.js'
 import {
+  ACCESS_COOKIE,
   clearSessionCookies,
   readCookie,
   REFRESH_COOKIE,
@@ -197,7 +199,7 @@ export function createAuthRouter(auth: AuthService): Router {
     '/logout',
     handle(async (request, response) => {
       assertTrustedOrigin(request, auth.config)
-      await auth.logout(readCookie(request, REFRESH_COOKIE))
+      await auth.logout(readCookie(request, REFRESH_COOKIE), readCookie(request, ACCESS_COOKIE))
       clearSessionCookies(response, auth.config)
       response.json(new ApiSuccess(null))
     })

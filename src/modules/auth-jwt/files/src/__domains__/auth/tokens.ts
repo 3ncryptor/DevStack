@@ -18,10 +18,15 @@ export interface SignedToken {
   expiresAt: Date
 }
 
+/** Issues and checks access tokens: stateless JWTs here, server-side sessions with auth-session. */
 export interface AccessTokens {
   sign(claims: AccessClaims, now: Date): Promise<SignedToken>
-  /** null for an invalid, expired or tampered token. */
+  /** null for an invalid, expired, revoked or tampered token. */
   verify(token: string): Promise<AccessClaims | null>
+  /** Ends one access token now, where the store allows it (a JWT simply expires). */
+  revoke(token: string): Promise<void>
+  /** Ends every access token of a user now, where the store allows it. */
+  revokeAllForUser(userId: string): Promise<void>
 }
 
 const isRole = (value: unknown): value is Role => ROLES.includes(value as Role)
@@ -50,7 +55,10 @@ export function createAccessTokens(secret: string, ttlMinutes: number): AccessTo
         if (error instanceof errors.JOSEError) return null
         throw error
       }
-    }
+    },
+    // stateless: a JWT stays valid until it expires, which is why its lifetime is short
+    revoke: () => Promise.resolve(),
+    revokeAllForUser: () => Promise.resolve()
   }
 }
 

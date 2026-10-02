@@ -4,6 +4,7 @@ import type { Request, Response } from 'express'
 import { ApiError, UnauthorizedError } from '../../lib/errors.js'
 import { ZodValidationPipe } from '../../pipes/zod-validation.pipe.js'
 import {
+  ACCESS_COOKIE,
   clearSessionCookies,
   readCookie,
   REFRESH_COOKIE,
@@ -66,7 +67,7 @@ export class AuthController {
   @HttpCode(200)
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     assertTrustedOrigin(request, this.auth.config)
-    await this.auth.logout(readCookie(request, REFRESH_COOKIE))
+    await this.auth.logout(readCookie(request, REFRESH_COOKIE), readCookie(request, ACCESS_COOKIE))
     clearSessionCookies(response, this.auth.config)
     return null
   }

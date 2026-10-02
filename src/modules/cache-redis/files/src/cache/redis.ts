@@ -5,6 +5,8 @@ const MAX_RECONNECT_DELAY_MS = 2_000
 /** One client per process. While Redis is away it reconnects on its own, backing off. */
 export const redis = createClient({
   url: process.env.REDIS_URL,
+  // commands fail at once while disconnected instead of queueing until Redis is back
+  disableOfflineQueue: true,
   socket: {
     reconnectStrategy: (retries: number) => Math.min(retries * 100, MAX_RECONNECT_DELAY_MS)
   }

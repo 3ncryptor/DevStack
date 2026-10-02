@@ -7,6 +7,7 @@ import {
   hashToken,
   newRefreshToken,
   type AccessClaims,
+  type AccessTokens,
   type SignedToken
 } from './tokens.js'
 
@@ -36,13 +37,16 @@ export interface AuthService {
   login(input: LoginInput): Promise<Session>
   /** Rotates the refresh token; a token used twice revokes every session of its user. */
   refresh(refreshToken: string): Promise<Session>
-  logout(refreshToken: string | undefined): Promise<void>
+  /** Revokes the refresh token, and the access token where its store allows it. */
+  logout(refreshToken: string | undefined, accessToken?: string): Promise<void>
   verifyAccessToken(token: string): Promise<AccessClaims | null>
   currentUser(userId: string): Promise<User>
 }
 
 export interface AuthServiceDeps extends AuthRepositories {
   config: AuthConfig
+  /** Default: stateless JWTs signed with `config.jwtSecret`. */
+  accessTokens?: AccessTokens
   /** Injected in tests to move time forward. */
   now?: () => Date
 }
@@ -54,7 +58,8 @@ const SESSION_ENDED = 'Your session has ended; log in again'
 export function createAuthService(deps: AuthServiceDeps): AuthService {
   const { users, refreshTokens, config } = deps
   const now = deps.now ?? (() => new Date())
-  const accessTokens = createAccessTokens(config.jwtSecret, config.accessTokenTtlMinutes)
+  const accessTokens =
+    deps.accessTokens ?? createAccessTokens(config.jwtSecret, config.accessTokenTtlMinutes)
   prepareTimingHash()
 
   async function startSession(record: UserRecord): Promise<Session> {
@@ -98,13 +103,15 @@ export function createAuthService(deps: AuthServiceDeps): AuthService {
       // a revoked token presented again was stolen or replayed: end every session of the user
       if (stored.revokedAt !== null || !(await refreshTokens.revoke(stored.id, at))) {
         await refreshTokens.revokeAllForUser(stored.userId, at)
+        await accessTokens.revokeAllForUser(stored.userId)
         throw new UnauthorizedError(SESSION_ENDED)
       }
       if (stored.expiresAt <= at) throw new UnauthorizedError(SESSION_ENDED)
       return startSession(record)
     },
 
-    async logout(refreshToken) {
+    async logout(refreshToken, accessToken) {
+      if (accessToken !== undefined) await accessTokens.revoke(accessToken)
       if (refreshToken === undefined) return
       const stored = await refreshTokens.findByHash(hashToken(refreshToken))
       if (stored !== null && stored.revokedAt === null) await refreshTokens.revoke(stored.id, now())

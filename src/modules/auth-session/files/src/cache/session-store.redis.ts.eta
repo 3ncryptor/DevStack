@@ -1,0 +1,56 @@
+import { ROLES, type Role } from '../<%= it.domainsDir %>/auth/auth.repository.js'
+import type { SessionStore } from '../<%= it.domainsDir %>/auth/session-tokens.js'
+import type { AccessClaims } from '../<%= it.domainsDir %>/auth/tokens.js'
+import { ApiError } from '../lib/errors.js'
+import { connectRedis, redis } from './redis.js'
+
+const sessionKey = (idHash: string): string => `session:${idHash}`
+/** The session hashes of one user, so all of them can be ended at once. */
+const userKey = (userId: string): string => `user-sessions:${userId}`
+
+/** Requests fail fast with a 503 while Redis is away, instead of waiting on a reconnect. */
+function ensureReady(): void {
+  void connectRedis()
+  if (!redis.isReady) {
+    throw new ApiError(503, 'SERVICE_UNAVAILABLE', 'Sessions are unavailable, try again shortly')
+  }
+}
+
+function parseClaims(value: string | null): AccessClaims | null {
+  if (value === null) return null
+  const claims = JSON.parse(value) as Partial<AccessClaims>
+  return typeof claims.userId === 'string' && ROLES.includes(claims.role as Role)
+    ? { userId: claims.userId, role: claims.role as Role }
+    : null
+}
+
+/** Sessions in Redis (D-78): each key expires on its own, the per-user index with the latest. */
+export const redisSessionStore: SessionStore = {
+  async save(idHash, claims, ttlSeconds) {
+    ensureReady()
+    await redis
+      .multi()
+      .set(sessionKey(idHash), JSON.stringify(claims), {
+        expiration: { type: 'EX', value: ttlSeconds }
+      })
+      .sAdd(userKey(claims.userId), idHash)
+      .expire(userKey(claims.userId), ttlSeconds)
+      .exec()
+  },
+
+  async find(idHash) {
+    ensureReady()
+    return parseClaims(await redis.get(sessionKey(idHash)))
+  },
+
+  async remove(idHash) {
+    ensureReady()
+    await redis.del(sessionKey(idHash))
+  },
+
+  async removeAllForUser(userId) {
+    ensureReady()
+    const hashes = await redis.sMembers(userKey(userId))
+    await redis.del([...hashes.map(sessionKey), userKey(userId)])
+  }
+}

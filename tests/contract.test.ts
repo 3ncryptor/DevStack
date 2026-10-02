@@ -21,7 +21,8 @@ const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   architecture: ['arch-'],
   quality: ['quality-'],
   middleware: ['middleware-'],
-  security: ['security-'],
+  // auth-session layers on auth-jwt, so it cannot be in the single-select auth category (D-78)
+  security: ['security-', 'auth-'],
   devops: ['devops-'],
   // baselines every framework requires; never selected on their own
   misc: ['core-', 'shared-', 'app-'],

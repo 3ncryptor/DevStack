@@ -36,7 +36,7 @@ exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack pr
   },
   {
     "path": "apps/api/src/features/auth/auth.routes.ts",
-    "sha256": "17faf35739e56a1a",
+    "sha256": "3f73a79839b9f698",
   },
   {
     "path": "apps/api/src/features/auth/auth.schemas.ts",
@@ -44,7 +44,7 @@ exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack pr
   },
   {
     "path": "apps/api/src/features/auth/auth.service.ts",
-    "sha256": "6db774f2d09d7447",
+    "sha256": "3349bb229b33a7fb",
   },
   {
     "path": "apps/api/src/features/auth/password.ts",
@@ -56,7 +56,7 @@ exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack pr
   },
   {
     "path": "apps/api/src/features/auth/tokens.ts",
-    "sha256": "26ab8db818eae341",
+    "sha256": "be6e11f1f0905697",
   },
   {
     "path": "apps/api/src/index.ts",
@@ -80,7 +80,7 @@ exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack pr
   },
   {
     "path": "apps/api/tests/helpers/auth.ts",
-    "sha256": "26f47bb9bbd71efb",
+    "sha256": "88ea9afae94fe1d2",
   },
   {
     "path": "apps/web/.env",

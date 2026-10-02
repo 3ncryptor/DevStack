@@ -1781,6 +1781,15 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   byte-identical to before. The e2e harness points every service URL at a closed port unless
   `E2E_DATABASE_URL`/`E2E_REDIS_URL` name a real server, so a developer's local databases are
   never reached and `/ready` expectations do not depend on the machine.
+- **D-78 (2026-10-02)** — Session auth (task 4.1 `auth-session`) builds on `auth-jwt` instead of
+  duplicating it: register, login, rotating refresh tokens, cookies, routes and frontend pages
+  stay `auth-jwt`'s, and `auth-session` (requires `auth-jwt` and `cache-redis`) replaces the
+  stateless JWT access token with an opaque session id whose hash is a Redis key
+  (`AccessTokens` became injectable, with `revoke`/`revokeAllForUser`). Logout deletes the
+  session, and a reused refresh token ends every session of the user, at once. Redis down: the
+  session routes answer 503 instead of hanging (`disableOfflineQueue`). Generated tests run on an
+  in-memory session store. It sits in the `security` category since `auth` is single select.
+  `JWT_SECRET` stays required though sessions do not sign anything; dropping it is a cleanup.
 
 # §8. Open questions
 

@@ -524,5 +524,47 @@
     "id": "node-mongoose",
     "modules": ["language-node", "orm-mongoose", "quality-eslint", "quality-prettier"],
     "boot": false
+  },
+  {
+    "id": "express-session",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "security-helmet",
+      "database-postgres",
+      "orm-prisma",
+      "auth-session",
+      "testing-vitest",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "fastify-session",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "security-helmet",
+      "database-postgres",
+      "orm-prisma",
+      "auth-session",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "nest-session",
+    "modules": [
+      "language-node",
+      "framework-nest",
+      "security-helmet",
+      "database-postgres",
+      "orm-prisma",
+      "auth-session",
+      "testing-jest",
+      "quality-eslint",
+      "quality-prettier"
+    ]
   }
 ]

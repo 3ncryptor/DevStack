@@ -1,0 +1,47 @@
+<% const runner = it.modules.includes('testing-vitest') ? 'vitest' : it.modules.includes('testing-jest') ? '@jest/globals' : 'node:test' %>
+<% const awaitTest = runner === 'node:test' ? 'await ' : '' %>
+import assert from 'node:assert/strict'
+import { test } from '<%= runner %>'
+
+import { createAuthService } from '../src/<%= it.domainsDir %>/auth/auth.service.js'
+import { createSessionTokens } from '../src/<%= it.domainsDir %>/auth/session-tokens.js'
+import { memoryAuthRepositories, memorySessionStore, TEST_AUTH_CONFIG } from './helpers/auth.js'
+
+const ada = { email: 'ada@example.com', password: 'correct horse battery staple' }
+
+function sessionAuth() {
+  return createAuthService({
+    ...memoryAuthRepositories(),
+    config: TEST_AUTH_CONFIG,
+    accessTokens: createSessionTokens(memorySessionStore(), TEST_AUTH_CONFIG.accessTokenTtlMinutes)
+  })
+}
+
+<%= awaitTest %>test('a session id is accepted until logout ends it', async () => {
+  const auth = sessionAuth()
+  const session = await auth.register(ada)
+
+  const before = await auth.verifyAccessToken(session.accessToken.token)
+  await auth.logout(session.refreshToken.token, session.accessToken.token)
+
+  assert.deepEqual(before, { userId: session.user.id, role: 'USER' })
+  assert.equal(await auth.verifyAccessToken(session.accessToken.token), null)
+})
+
+<%= awaitTest %>test('a reused refresh token ends every session of the user at once', async () => {
+  const auth = sessionAuth()
+  const first = await auth.register(ada)
+  const second = await auth.login(ada)
+  await auth.refresh(first.refreshToken.token)
+
+  await assert.rejects(auth.refresh(first.refreshToken.token), { status: 401 })
+
+  assert.equal(await auth.verifyAccessToken(first.accessToken.token), null)
+  assert.equal(await auth.verifyAccessToken(second.accessToken.token), null)
+})
+
+<%= awaitTest %>test('a made-up session id is refused', async () => {
+  const auth = sessionAuth()
+
+  assert.equal(await auth.verifyAccessToken('not-a-session'), null)
+})

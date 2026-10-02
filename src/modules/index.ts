@@ -4,6 +4,7 @@ import apiVersioning from './api-versioning/index'
 import appAdmin from './app-admin/index'
 import authBetterAuth from './auth-better-auth/index'
 import authJwt from './auth-jwt/index'
+import authSession from './auth-session/index'
 import cacheRedis from './cache-redis/index'
 import databaseMongodb from './database-mongodb/index'
 import databaseMysql from './database-mysql/index'
@@ -84,6 +85,7 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   obsJsonLogs,
   authJwt,
   authBetterAuth,
+  authSession,
   templateTodo,
   folderFeature,
   folderClean,

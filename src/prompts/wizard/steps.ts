@@ -111,6 +111,11 @@ const AUTHS: Choice<string>[] = [
     hint: 'httpOnly cookies, rotating refresh tokens, admin role'
   },
   {
+    value: 'auth-session',
+    label: 'Email + password (sessions in Redis)',
+    hint: 'like JWT, but logout ends the session at once; adds Redis'
+  },
+  {
     value: 'auth-better-auth',
     label: 'Better Auth',
     hint: 'email + password, optional GitHub and Google sign-in, database sessions'
@@ -662,7 +667,8 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     database: firstOf(modules, DATABASES) ?? NONE,
     orm: firstOf(modules, ORMS),
     redis: modules.includes('cache-redis'),
-    auth: firstOf(modules, AUTHS) ?? NONE,
+    // auth-session comes with auth-jwt, which it builds on
+    auth: modules.includes('auth-session') ? 'auth-session' : (firstOf(modules, AUTHS) ?? NONE),
     // a module list carries no options: providers start unselected
     oauthProviders: [],
     template: firstOf(modules, TEMPLATES) ?? NONE,

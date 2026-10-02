@@ -149,7 +149,9 @@ const moduleDefinition: DevstackModule = {
     },
     {
       slot: 'index.deps',
-      code: 'auth: createAuthService({ ...prismaAuthRepositories, config: authConfig(env) }),'
+      code: 'auth: createAuthService({ ...prismaAuthRepositories, config: authConfig(env) }),',
+      // auth-session adds the same line with its session store
+      when: { not: { has: 'auth-session' } }
     },
     { slot: 'test.imports', code: "import { testAuthService } from './auth.js'" },
     { slot: 'test.deps', code: 'auth: testAuthService(),' },
