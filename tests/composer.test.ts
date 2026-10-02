@@ -66,7 +66,7 @@ describe('composer', () => {
     const registry = loadModules()
 
     const result = composeModules(
-      ['framework-express', 'orm-prisma', 'quality-prettier'],
+      ['framework-express', 'database-postgres', 'orm-prisma', 'quality-prettier'],
       registry,
       'api-app'
     )
@@ -111,7 +111,11 @@ describe('composer', () => {
   })
 
   it('lists the install scripts pnpm has to approve for the selected stack', () => {
-    const result = composeModules(['framework-express', 'orm-prisma'], loadModules(), 'build-app')
+    const result = composeModules(
+      ['framework-express', 'database-postgres', 'orm-prisma'],
+      loadModules(),
+      'build-app'
+    )
 
     expect(result.buildApprovals).toEqual([
       '@prisma/client',

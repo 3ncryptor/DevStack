@@ -26,6 +26,7 @@ const content = (result: GenerationPlan, file: string): string =>
 const FULLSTACK = [
   'layout-monorepo',
   'framework-express',
+  'database-postgres',
   'orm-prisma',
   'framework-nextjs',
   'app-admin',
@@ -99,6 +100,7 @@ describe('GitHub Actions (task 3.7)', () => {
     const workflow = content(
       await plan([
         'framework-express',
+        'database-postgres',
         'orm-prisma',
         'quality-eslint',
         'quality-prettier',

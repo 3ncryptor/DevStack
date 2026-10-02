@@ -9,7 +9,7 @@
  * enough for every change. full: every combination, all four package managers, plus the
  * post-build lint; for nightly runs and releases.
  */
-import { existsSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { access, mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -221,10 +221,10 @@ async function checkCombination(
         versioned: manifest.modules.some(
           (entry) => (typeof entry === 'string' ? entry : entry.id) === 'api-versioning'
         ),
-        env: await bootEnv(appDir),
+        env: bootEnv(appDir),
         timeoutMs: BOOT_TIMEOUT_MS,
         hasDatabase: existsSync(path.join(appDir, 'src', 'db', 'client.ts')),
-        databaseUp: process.env.E2E_DATABASE_URL !== undefined
+        databaseUp: serviceUp(readEnvFile(appDir), 'DATABASE_URL')
       })
       const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
       steps.push(
@@ -238,7 +238,7 @@ async function checkCombination(
     const [command, ...args] = await startCommand(appDir)
     const boot = await bootAndProbe(appDir, command, args, {
       timeoutMs: BOOT_TIMEOUT_MS,
-      env: await bootEnv(appDir),
+      env: bootEnv(appDir),
       ready: readyExpectation(appDir)
     })
     const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
@@ -285,27 +285,82 @@ function localBinary(dir: string, binary: string): string {
   return binary
 }
 
-/**
- * The project's .env, as a deployment would provide it. E2E_DATABASE_URL points the app at a
- * real database (CI service container, or one you started yourself); otherwise none is reachable.
- */
-async function bootEnv(projectDir: string): Promise<Record<string, string>> {
+/** The project's .env, as a deployment would provide it. */
+function readEnvFile(projectDir: string): Record<string, string | undefined> {
   const file = path.join(projectDir, '.env')
-  const fromFile = existsSync(file) ? parseEnv(await readFile(file, 'utf8')) : {}
-  const databaseUrl = process.env.E2E_DATABASE_URL
+  return existsSync(file) ? parseEnv(readFileSync(file, 'utf8')) : {}
+}
+
+const scheme = (url: string | undefined): string | undefined =>
+  url?.split(':')[0]?.replace(/^postgres$/, 'postgresql')
+
+/** The same URL on a port nothing listens on, so a server on this machine is never reached. */
+function unreachable(url: string): string {
+  const parsed = new URL(url)
+  parsed.hostname = '127.0.0.1'
+  parsed.port = '1'
+  return parsed.toString()
+}
+
+/**
+ * Real servers for the app (CI service containers, or ones you started yourself):
+ * E2E_DATABASE_URL replaces DATABASE_URL when it is for the same kind of database, E2E_REDIS_URL
+ * replaces REDIS_URL. Without them the URLs point at a closed port: a developer's local
+ * databases are never touched, and /ready must report them unreachable.
+ */
+function realServer(
+  fromFile: Record<string, string | undefined>,
+  name: string
+): string | undefined {
+  if (name === 'REDIS_URL') return process.env.E2E_REDIS_URL
+  const database = process.env.E2E_DATABASE_URL
+  return database !== undefined && scheme(database) === scheme(fromFile.DATABASE_URL)
+    ? database
+    : undefined
+}
+
+function serviceOverrides(fromFile: Record<string, string | undefined>): Record<string, string> {
   return Object.fromEntries(
-    Object.entries({ ...fromFile, ...(databaseUrl ? { DATABASE_URL: databaseUrl } : {}) }).filter(
+    ['DATABASE_URL', 'REDIS_URL'].flatMap((name) => {
+      const url = fromFile[name]
+      if (url === undefined || url.startsWith('file:')) return []
+      return [[name, realServer(fromFile, name) ?? unreachable(url)]]
+    })
+  )
+}
+
+/** Whether the app gets a real server for this variable. */
+const serviceUp = (fromFile: Record<string, string | undefined>, name: string): boolean =>
+  realServer(fromFile, name) !== undefined
+
+function bootEnv(projectDir: string): Record<string, string> {
+  const fromFile = readEnvFile(projectDir)
+  return Object.fromEntries(
+    Object.entries({ ...fromFile, ...serviceOverrides(fromFile) }).filter(
       (entry): entry is [string, string] => entry[1] !== undefined
     )
   )
 }
 
-/** With a database module and no reachable database, /ready must say so with a 503. */
+/**
+ * /ready answers 503 naming each service the app cannot reach: the database (a SQLite file is
+ * always there) and Redis.
+ */
 function readyExpectation(projectDir: string): ReadyExpectation {
-  const hasDatabase = existsSync(path.join(projectDir, 'src', 'db', 'client.ts'))
-  return hasDatabase && process.env.E2E_DATABASE_URL === undefined
-    ? { status: 503, failing: ['db'] }
-    : { status: 200, failing: [] }
+  const fromFile = readEnvFile(projectDir)
+  const sqlite = fromFile.DATABASE_URL?.startsWith('file:') === true
+  const failing = [
+    ...(existsSync(path.join(projectDir, 'src', 'db', 'client.ts')) &&
+    !sqlite &&
+    !serviceUp(fromFile, 'DATABASE_URL')
+      ? ['db']
+      : []),
+    ...(existsSync(path.join(projectDir, 'src', 'cache', 'redis.ts')) &&
+    !serviceUp(fromFile, 'REDIS_URL')
+      ? ['redis']
+      : [])
+  ]
+  return { status: failing.length > 0 ? 503 : 200, failing }
 }
 
 const INITIAL_COMMIT = 'chore: initial project setup (devstack)'

@@ -20,6 +20,7 @@ export interface WizardAnswers {
   frontendArchitecture?: string
   database?: string
   orm?: string
+  redis?: boolean
   auth?: string
   oauthProviders?: string[]
   template?: string
@@ -87,11 +88,20 @@ const FRAMEWORKS: Choice<string>[] = [
   { value: 'framework-fastify', label: 'Fastify' },
   { value: 'framework-nest', label: 'NestJS' }
 ]
+/** Questions 5 and 6 (M4, D-77): SQL databases take Prisma or Drizzle, MongoDB takes Mongoose. */
 const DATABASES: Choice<string>[] = [
-  { value: 'postgres', label: 'PostgreSQL' },
+  { value: 'database-postgres', label: 'PostgreSQL' },
+  { value: 'database-mysql', label: 'MySQL' },
+  { value: 'database-sqlite', label: 'SQLite', hint: 'a local file, no server' },
+  { value: 'database-mongodb', label: 'MongoDB' },
   { value: NONE, label: 'None' }
 ]
-const ORMS: Choice<string>[] = [{ value: 'orm-prisma', label: 'Prisma' }]
+const ORMS: Choice<string>[] = [
+  { value: 'orm-prisma', label: 'Prisma' },
+  { value: 'orm-drizzle', label: 'Drizzle' },
+  { value: 'orm-mongoose', label: 'Mongoose' }
+]
+const MONGODB = 'database-mongodb'
 /** Question 7: auth needs a database; Better Auth and sessions follow (M3, M4). */
 const AUTHS: Choice<string>[] = [
   { value: NONE, label: 'None' },
@@ -269,14 +279,22 @@ interface SelectStepDefinition {
   addsModule: boolean
   /** Show each choice's folder tree before asking (task 3.8). */
   preview?: boolean
+  /** Narrows the choices by earlier answers, e.g. the ORMs that fit the database. */
+  fits?: (value: string, answers: WizardAnswers) => boolean
 }
 
 function selectStep(definition: SelectStepDefinition): WizardStep {
   // only module-valued choices depend on what the registry holds
-  const options = (_answers: WizardAnswers, environment: StepEnvironment): Choice<string>[] =>
-    definition.addsModule
+  const options = (answers: WizardAnswers, environment: StepEnvironment): Choice<string>[] =>
+    (definition.addsModule
       ? availableIn(environment.registry, definition.choices)
       : definition.choices
+    ).filter((choice) => definition.fits?.(choice.value, answers) ?? true)
+  // an earlier answer may rule out the previous or the default value (e.g. Prisma on MongoDB)
+  const initialValue = (choices: Choice<string>[], answers: WizardAnswers): string | undefined =>
+    [answers[definition.key], definition.defaultValue].find((value) =>
+      choices.some((choice) => choice.value === value)
+    ) ?? choices[0]?.value
   return {
     key: definition.key,
     label: definition.label,
@@ -288,7 +306,7 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
       const value = await prompter.select({
         message: definition.message,
         choices,
-        initialValue: answers[definition.key] ?? definition.defaultValue
+        initialValue: initialValue(choices, answers)
       })
       return { ...answers, [definition.key]: value }
     },
@@ -301,7 +319,8 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
 }
 
 interface ConfirmStepDefinition {
-  key: 'preCommit' | 'docker' | 'asyncHandler' | 'admin' | 'apiVersioning' | 'apiDocs' | 'ci'
+  key:
+    'preCommit' | 'docker' | 'asyncHandler' | 'admin' | 'apiVersioning' | 'apiDocs' | 'ci' | 'redis'
   label: string
   message: string
   moduleId: string
@@ -334,6 +353,9 @@ function confirmStep({
 const isBackend = (answers: WizardAnswers): boolean =>
   answers.appType === 'backend' || answers.appType === FULLSTACK
 const isFullstack = (answers: WizardAnswers): boolean => answers.appType === FULLSTACK
+/** Auth and the Todo template are written for Prisma on Postgres so far (D-77). */
+const onPostgresPrisma = (answers: WizardAnswers): boolean =>
+  answers.database === 'database-postgres' && answers.orm === 'orm-prisma'
 
 const packageManagerStep: WizardStep = {
   key: 'packageManager',
@@ -459,9 +481,9 @@ export const STEPS: readonly WizardStep[] = [
     label: 'Database',
     message: 'Database',
     choices: DATABASES,
-    defaultValue: 'postgres',
+    defaultValue: 'database-postgres',
     applies: isBackend,
-    addsModule: false
+    addsModule: true
   }),
   selectStep({
     key: 'orm',
@@ -470,7 +492,16 @@ export const STEPS: readonly WizardStep[] = [
     choices: ORMS,
     defaultValue: 'orm-prisma',
     applies: (answers) => isModule(answers.database),
-    addsModule: true
+    addsModule: true,
+    fits: (value, answers) => (value === 'orm-mongoose') === (answers.database === MONGODB)
+  }),
+  confirmStep({
+    key: 'redis',
+    label: 'Redis',
+    message: 'Add Redis (cache, sessions)?',
+    moduleId: 'cache-redis',
+    defaultValue: false,
+    applies: (answers) => isModule(answers.framework)
   }),
   selectStep({
     key: 'auth',
@@ -478,8 +509,8 @@ export const STEPS: readonly WizardStep[] = [
     message: 'Authentication',
     choices: AUTHS,
     defaultValue: NONE,
-    // auth modules: Express, Fastify or Nest, with Prisma (M3, M4)
-    applies: (answers) => isModule(answers.framework) && answers.orm === 'orm-prisma',
+    // auth modules: Express, Fastify or Nest, with Prisma on Postgres (M3, M4, D-77)
+    applies: (answers) => isModule(answers.framework) && onPostgresPrisma(answers),
     addsModule: true
   }),
   oauthProvidersStep,
@@ -498,8 +529,8 @@ export const STEPS: readonly WizardStep[] = [
     message: 'App template',
     choices: TEMPLATES,
     defaultValue: NONE,
-    // Todo needs a database; Express + Prisma for now (M3)
-    applies: (answers) => answers.framework === 'framework-express' && answers.orm === 'orm-prisma',
+    // Todo needs a database; Express + Prisma on Postgres for now (M3, D-77)
+    applies: (answers) => answers.framework === 'framework-express' && onPostgresPrisma(answers),
     addsModule: true
   }),
   packageManagerStep,
@@ -614,7 +645,6 @@ const firstOf = (modules: readonly string[], choices: Choice<string>[]): string 
 
 /** Pre-fills every answer from a module list, e.g. a preset (A0.2 #0). */
 export function answersFromModules(modules: readonly string[]): WizardAnswers {
-  const orm = firstOf(modules, ORMS)
   const frontend = firstOf(modules, FRONTENDS)
   return {
     appType: frontend === undefined ? 'backend' : FULLSTACK,
@@ -629,8 +659,9 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     ci: modules.includes('devops-github-actions'),
     // a module list carries no options: a preset with rate limiting starts from the default
     rateLimitAlgorithm: modules.includes('security-rate-limit') ? 'fixed-window' : undefined,
-    database: orm === undefined ? NONE : 'postgres',
-    orm,
+    database: firstOf(modules, DATABASES) ?? NONE,
+    orm: firstOf(modules, ORMS),
+    redis: modules.includes('cache-redis'),
     auth: firstOf(modules, AUTHS) ?? NONE,
     // a module list carries no options: providers start unselected
     oauthProviders: [],

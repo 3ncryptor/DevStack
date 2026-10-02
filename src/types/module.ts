@@ -94,6 +94,7 @@ export const MODULE_CATEGORIES = [
   'api-style',
   'database',
   'orm',
+  'cache',
   'auth',
   'architecture',
   'env',

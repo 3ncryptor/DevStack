@@ -1767,6 +1767,20 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   pino's serializers do: `req`/`res`/`err` become plain fields, `authorization` and `cookie`
   headers are redacted, circular references are cut (Fastify logs its request objects). Wizard
   question 16b.
+- **D-77 (2026-10-02)** — Databases as their own category (M4). `database-postgres`,
+  `database-mysql`, `database-sqlite` and `database-mongodb` (single select) own `DATABASE_URL`,
+  the compose `db` service and `db:up`/`db:down`, and provide `db:<engine>` (+ `db:sql`). ORMs
+  pick the driver from those tags: Prisma (`requiresAny` SQL; `adapter-pg`, `adapter-mariadb`,
+  `adapter-better-sqlite3`), `orm-drizzle` (pg, mysql2, better-sqlite3; drizzle-kit migrations,
+  `drizzle.config.mjs`), `orm-mongoose` (requires MongoDB; the readiness check opens the
+  connection and retries after a failure). `cache-redis` is separate: one client with backoff
+  reconnects, a `redis` readiness check that reports the latest connection error instead of
+  logging every retry, a compose service. SQLite in Docker lives on a volume at `/app/data`.
+  Auth and the Todo template stay on Prisma + Postgres (their schema and raw SQL are written for
+  it) and pull `database-postgres` in; porting them is later work. Postgres + Prisma output is
+  byte-identical to before. The e2e harness points every service URL at a closed port unless
+  `E2E_DATABASE_URL`/`E2E_REDIS_URL` name a real server, so a developer's local databases are
+  never reached and `/ready` expectations do not depend on the machine.
 
 # §8. Open questions
 

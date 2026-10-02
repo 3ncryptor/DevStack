@@ -18,6 +18,7 @@
       "security-helmet",
       "middleware-cors",
       "security-rate-limit",
+      "database-postgres",
       "orm-prisma",
       "quality-eslint",
       "quality-prettier",
@@ -32,6 +33,7 @@
     "modules": [
       "language-node",
       "framework-nest",
+      "database-postgres",
       "orm-prisma",
       "middleware-cors",
       "security-helmet",
@@ -50,6 +52,7 @@
     "modules": [
       "language-node",
       "framework-nest",
+      "database-postgres",
       "orm-prisma",
       "middleware-cors",
       "security-helmet",
@@ -70,6 +73,7 @@
       "language-node",
       "framework-fastify",
       "arch-feature",
+      "database-postgres",
       "orm-prisma",
       "middleware-cors",
       "security-helmet",
@@ -104,6 +108,7 @@
       "language-node",
       "framework-fastify",
       "arch-feature",
+      "database-postgres",
       "orm-prisma",
       "middleware-cors",
       "security-helmet",
@@ -141,6 +146,7 @@
     "modules": [
       "layout-monorepo",
       "framework-express",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "quality-eslint",
@@ -153,6 +159,7 @@
     "modules": [
       "layout-monorepo",
       "framework-express",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "middleware-cors",
@@ -170,6 +177,7 @@
       "layout-monorepo",
       "framework-express",
       "arch-feature",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "middleware-cors",
@@ -209,6 +217,7 @@
     "modules": [
       "layout-monorepo",
       "framework-express",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "middleware-cors",
@@ -254,6 +263,7 @@
       "security-rate-limit",
       "middleware-request-logger",
       "middleware-compression",
+      "database-postgres",
       "orm-prisma",
       "quality-eslint",
       "quality-prettier",
@@ -271,6 +281,7 @@
       "layout-monorepo",
       "framework-express",
       "arch-feature",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "middleware-cors",
@@ -305,6 +316,7 @@
       "security-rate-limit",
       "middleware-request-logger",
       "middleware-compression",
+      "database-postgres",
       "orm-prisma",
       "quality-eslint",
       "quality-prettier",
@@ -326,6 +338,7 @@
       "layout-monorepo",
       "framework-express",
       "arch-feature",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "middleware-cors",
@@ -355,8 +368,14 @@
     ]
   },
   {
-    "id": "node-prisma",
-    "modules": ["language-node", "orm-prisma", "quality-eslint", "quality-prettier"],
+    "id": "node-sqlite-prisma",
+    "modules": [
+      "language-node",
+      "database-sqlite",
+      "orm-prisma",
+      "quality-eslint",
+      "quality-prettier"
+    ],
     "boot": false
   },
   {
@@ -370,6 +389,7 @@
       "language-node",
       "framework-express",
       "arch-feature",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "security-rate-limit",
@@ -400,6 +420,7 @@
     "modules": [
       "language-node",
       "framework-nest",
+      "database-postgres",
       "orm-prisma",
       "security-helmet",
       "security-rate-limit",
@@ -414,5 +435,94 @@
       "quality-eslint",
       "quality-prettier"
     ]
+  },
+  {
+    "id": "express-mysql-prisma",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "security-helmet",
+      "database-mysql",
+      "orm-prisma",
+      "cache-redis",
+      "testing-vitest",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "express-postgres-drizzle",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "security-helmet",
+      "database-postgres",
+      "orm-drizzle",
+      "testing-vitest",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "fastify-sqlite-drizzle",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "security-helmet",
+      "database-sqlite",
+      "orm-drizzle",
+      "testing-vitest",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "fastify-mysql-drizzle",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "security-helmet",
+      "database-mysql",
+      "orm-drizzle",
+      "cache-redis",
+      "testing-jest",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "nest-mongoose",
+    "modules": [
+      "language-node",
+      "framework-nest",
+      "security-helmet",
+      "database-mongodb",
+      "orm-mongoose",
+      "cache-redis",
+      "testing-jest",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "node-data",
+    "modules": [
+      "language-node",
+      "database-postgres",
+      "orm-drizzle",
+      "cache-redis",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "boot": false
+  },
+  {
+    "id": "node-mongoose",
+    "modules": ["language-node", "orm-mongoose", "quality-eslint", "quality-prettier"],
+    "boot": false
   }
 ]

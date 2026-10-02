@@ -55,7 +55,8 @@ const moduleDefinition: DevstackModule = {
     'Register, login, refresh and logout with argon2 password hashing, JWT access tokens and rotating refresh tokens',
   // login and register always get a strict per-IP limit (brute force, argon2 cost)
   requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
-  requires: ['orm-prisma', 'core-backend', 'security-rate-limit'],
+  // written and tested on Postgres; other databases are a later port (D-77)
+  requires: ['orm-prisma', 'database-postgres', 'core-backend', 'security-rate-limit'],
   dependencies: [
     'argon2',
     'jose',

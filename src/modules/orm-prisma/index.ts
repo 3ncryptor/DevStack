@@ -1,18 +1,27 @@
 import { moduleFilesPath } from '../../paths'
 import type { DevstackModule } from '../../types/module'
 
+/** The driver adapter Prisma 7 connects through, per database (D-77). */
+const ADAPTERS = [
+  { name: '@prisma/adapter-pg', when: { has: 'db:postgres' } },
+  { name: 'pg', when: { has: 'db:postgres' } },
+  { name: '@prisma/adapter-mariadb', when: { has: 'db:mysql' } },
+  { name: '@prisma/adapter-better-sqlite3', when: { has: 'db:sqlite' } }
+] as const
+
 const moduleDefinition: DevstackModule = {
   id: 'orm-prisma',
-  title: 'Prisma + PostgreSQL',
+  title: 'Prisma',
   category: 'orm',
   language: 'node',
   depth: 'bare',
   // schema and config are tooling; the client wrapper is integration code
   files: [{ path: 'src/db/client.ts', depth: 'wired' }],
-  provides: ['orm', 'db:postgres'],
-  description: 'Prisma ORM with starter schema and client setup',
+  provides: ['orm'],
+  description: 'Prisma ORM with starter schema and client setup, on PostgreSQL, MySQL or SQLite',
   requires: ['language-node'],
-  dependencies: ['@prisma/client', '@prisma/adapter-pg', 'pg', 'dotenv'],
+  requiresAny: ['db:postgres', 'db:mysql', 'db:sqlite'],
+  dependencies: ['@prisma/client', ...ADAPTERS, 'dotenv'],
   devDependencies: ['prisma'],
   filesPath: moduleFilesPath('orm-prisma'),
   packageJson: {
@@ -23,11 +32,6 @@ const moduleDefinition: DevstackModule = {
       'db:studio': 'prisma studio'
     }
   },
-  // the compose file has a database service only when Prisma is selected (devops-docker)
-  scripts: [
-    { name: 'db:up', run: 'docker compose up -d db', when: { has: 'devops-docker' } },
-    { name: 'db:down', run: 'docker compose down', when: { has: 'devops-docker' } }
-  ],
   // readiness and shutdown through the baseline's lifecycle slots (B17.3); without a framework
   // there is no lifecycle, and the client is used directly
   slots: [
@@ -48,16 +52,6 @@ const moduleDefinition: DevstackModule = {
       code: "{ name: 'db', dispose: disconnectDatabase },",
       when: { has: 'core-backend' },
       depth: 'wired'
-    }
-  ],
-  env: [
-    {
-      name: 'DATABASE_URL',
-      description: 'PostgreSQL connection string',
-      example: '"postgresql://postgres:postgres@localhost:5432/devstack"',
-      required: true,
-      secret: true,
-      schema: 'z.url()'
     }
   ],
   exposesSlots: ['prisma.models'],

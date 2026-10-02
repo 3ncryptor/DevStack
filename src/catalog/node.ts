@@ -53,8 +53,19 @@ export const NODE_CATALOG = {
   prisma: { version: '^7.10.0', allowBuilds: ['prisma', '@prisma/engines'] },
   '@prisma/client': { version: '^7.10.0', allowBuilds: ['@prisma/client'] },
   '@prisma/adapter-pg': { version: '^7.10.0' },
+  '@prisma/adapter-mariadb': { version: '^7.10.0' },
+  '@prisma/adapter-better-sqlite3': { version: '^7.10.0' },
   pg: { version: '^8.23.0' },
   '@types/pg': { version: '^8.23.1' },
+  // databases and ORMs beyond Postgres + Prisma (M4, D-77); verified 2026-10-02
+  mysql2: { version: '^3.24.5' },
+  // ships prebuilt binaries (glibc, musl, macOS, Windows), no install script
+  'better-sqlite3': { version: '^13.0.3' },
+  '@types/better-sqlite3': { version: '^9.6.0' },
+  'drizzle-orm': { version: '^0.45.3' },
+  'drizzle-kit': { version: '^0.31.11', allowBuilds: ['esbuild'] },
+  mongoose: { version: '^9.10.3' },
+  redis: { version: '^6.3.0' },
   dotenv: { version: '^18.0.4' },
 
   // backend baseline (B17.2)

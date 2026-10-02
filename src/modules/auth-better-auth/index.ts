@@ -127,7 +127,8 @@ const moduleDefinition: DevstackModule = {
   description:
     'Better Auth: email + password, optional GitHub and Google sign-in, database sessions and admin roles',
   requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
-  requires: ['orm-prisma', 'core-backend'],
+  // written and tested on Postgres; other databases are a later port (D-77)
+  requires: ['orm-prisma', 'database-postgres', 'core-backend'],
   dependencies: ['better-auth'],
   options: z.object({
     github: z.boolean().default(false),

@@ -24,7 +24,9 @@ WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --chown=node:node package.json ./
-# never run as root
+<% if (it.modules.includes('database-sqlite')) { %># the SQLite file lives on a volume mounted here (docker-compose.yml)
+RUN mkdir -p /app/data && chown node:node /app/data
+<% } %># never run as root
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \

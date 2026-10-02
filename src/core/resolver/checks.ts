@@ -9,6 +9,7 @@ export const SINGLE_SELECT_CATEGORIES: ReadonlySet<ModuleCategory> = new Set([
   'layout',
   'framework',
   'api-style',
+  'database',
   'orm',
   'auth',
   'architecture',

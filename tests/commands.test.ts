@@ -27,17 +27,17 @@ describe('modules list', () => {
   })
 
   it('prints JSON for scripts and agents', () => {
-    const parsed = JSON.parse(listModules(registry, { category: 'orm', json: true })) as unknown
+    const parsed = JSON.parse(
+      listModules(registry, { category: 'database', json: true })
+    ) as unknown
 
-    expect(parsed).toEqual([
-      {
-        id: 'orm-prisma',
-        title: 'Prisma + PostgreSQL',
-        description: expect.any(String) as string,
-        category: 'orm',
-        provides: ['orm', 'db:postgres']
-      }
-    ])
+    expect(parsed).toContainEqual({
+      id: 'database-postgres',
+      title: 'PostgreSQL',
+      description: expect.any(String) as string,
+      category: 'database',
+      provides: ['db:postgres', 'db:sql']
+    })
   })
 
   it('rejects an unknown category and lists the valid ones', () => {

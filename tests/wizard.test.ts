@@ -40,6 +40,7 @@ const Q = {
   frontendArchitecture: 'Frontend architecture',
   database: 'Database',
   orm: 'ORM',
+  redis: 'Add Redis (cache, sessions)?',
   auth: 'Authentication',
   template: 'App template',
   logger: 'Logger',
@@ -121,6 +122,8 @@ describe('guided wizard (A0.2 order)', () => {
       Q.appType,
       Q.framework,
       Q.database,
+      Q.orm,
+      Q.redis,
       Q.auth,
       Q.logger,
       Q.template,
@@ -142,6 +145,7 @@ describe('guided wizard (A0.2 order)', () => {
     expect(result.modules).toEqual(
       expect.arrayContaining([
         'framework-express',
+        'database-postgres',
         'orm-prisma',
         'arch-feature',
         'quality-husky',
@@ -200,17 +204,19 @@ describe('guided wizard (A0.2 order)', () => {
     expect(answersFromModules(['framework-express', 'orm-prisma', 'auth-jwt']).auth).toBe(
       'auth-jwt'
     )
-    expect(answersFromModules(['framework-express', 'orm-prisma']).auth).toBe('none')
+    expect(answersFromModules(['framework-express', 'database-postgres', 'orm-prisma']).auth).toBe(
+      'none'
+    )
   })
 
   it('picks a step with a single compatible option without asking (ORM)', async () => {
-    const prompter = new AnswerPrompter([[Q.database, 'postgres']])
+    const prompter = new AnswerPrompter([[Q.database, 'database-mongodb']])
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
     expect(prompter.asked).not.toContain(Q.orm)
-    expect(result.modules).toContain('orm-prisma')
-    expect(prompter.notes.join('\n')).toContain('ORM              Prisma')
+    expect(result.modules).toContain('orm-mongoose')
+    expect(prompter.notes.join('\n')).toContain('ORM              Mongoose')
   })
 
   it('skips the Express-only questions for NestJS', async () => {
@@ -552,7 +558,14 @@ describe('answers ↔ modules', () => {
       admin: [true, false],
       frontendArchitecture: ['arch-web-feature'],
       framework: ['framework-express', 'framework-nest'],
-      database: ['postgres', 'none'],
+      database: [
+        'database-postgres',
+        'database-mysql',
+        'database-sqlite',
+        'database-mongodb',
+        'none'
+      ],
+      orm: ['orm-prisma', 'orm-drizzle', 'orm-mongoose'],
       architecture: ['arch-feature', 'none'],
       tests: ['testing-vitest', 'none'],
       docker: [true, false],
@@ -563,14 +576,20 @@ describe('answers ↔ modules', () => {
       apiVersioning: [true, false]
     })
 
-    const failures = combinations
+    // the wizard offers Mongoose only on MongoDB, and Prisma or Drizzle only on SQL (D-77)
+    const offered = combinations.filter((answers) =>
+      answers.database === 'none'
+        ? answers.orm === 'orm-prisma'
+        : (answers.orm === 'orm-mongoose') === (answers.database === 'database-mongodb')
+    )
+    const failures = offered
       .filter(
         (answers) =>
           resolveStack(modulesFromAnswers(answers, registry), registry).diagnostics.length > 0
       )
       .map((answers) => JSON.stringify(answers))
 
-    expect(combinations).toHaveLength(2048)
+    expect(offered).toHaveLength(8192)
     expect(failures).toEqual([])
   })
 })

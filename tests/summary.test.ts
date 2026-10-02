@@ -33,7 +33,7 @@ describe('.env.example from module env declarations', () => {
     expect(example).toContain('DATABASE_URL=')
     expect(example).toContain('PORT=3000')
     expect(example.match(/^ALLOWED_ORIGINS=/gm)).toHaveLength(1)
-    expect(example).toMatch(/# orm-prisma\n# PostgreSQL connection string/)
+    expect(example).toMatch(/# database-postgres\n# PostgreSQL connection string/)
   })
 })
 
@@ -112,7 +112,7 @@ describe('docker-basic templates', () => {
   const dockerModules = (extra: string[]) => ['framework-express', 'devops-docker', ...extra]
 
   it('builds a multi-stage, non-root image with the project package manager', async () => {
-    const plan = await planFor(dockerModules(['orm-prisma']), 'pnpm')
+    const plan = await planFor(dockerModules(['database-postgres', 'orm-prisma']), 'pnpm')
     const dockerfile = plan.files.find((file) => file.path === 'Dockerfile')?.content ?? ''
 
     expect(dockerfile.match(/^FROM /gm)?.length ?? 0).toBeGreaterThanOrEqual(3)
@@ -124,7 +124,7 @@ describe('docker-basic templates', () => {
   })
 
   it('keeps .env, git data and host node_modules out of the build context', async () => {
-    const plan = await planFor(dockerModules(['orm-prisma']), 'pnpm')
+    const plan = await planFor(dockerModules(['database-postgres', 'orm-prisma']), 'pnpm')
     const ignore = plan.files.find((file) => file.path === '.dockerignore')?.content ?? ''
 
     for (const entry of [
@@ -150,7 +150,7 @@ describe('docker-basic templates', () => {
   })
 
   it('adds a database service to compose only when a database is selected', async () => {
-    const withDb = await planFor(dockerModules(['orm-prisma']))
+    const withDb = await planFor(dockerModules(['database-postgres', 'orm-prisma']))
     const withoutDb = await planFor(dockerModules([]))
     const compose = (plan: typeof withDb) =>
       plan.files.find((file) => file.path === 'docker-compose.yml')?.content ?? ''

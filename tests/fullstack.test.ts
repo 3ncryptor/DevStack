@@ -8,6 +8,7 @@ import type { GenerationPlan } from '../src/types/plan'
 const FULLSTACK = [
   'layout-monorepo',
   'framework-express',
+  'database-postgres',
   'orm-prisma',
   'middleware-cors',
   'framework-nextjs',

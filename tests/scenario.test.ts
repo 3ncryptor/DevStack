@@ -135,6 +135,7 @@ describe('process-level error handlers (D-64)', () => {
 const FULLSTACK = [
   'layout-monorepo',
   'framework-express',
+  'database-postgres',
   'orm-prisma',
   'middleware-cors',
   'framework-nextjs',

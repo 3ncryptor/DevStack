@@ -88,14 +88,22 @@ function conventions(input: AgentsMdInput): string[] {
   ]
 }
 
+function storageStep(input: AgentsMdInput): string {
+  if (has(input, 'orm-prisma'))
+    return '2. Add the model to `prisma/schema.prisma`, run `db:migrate`, and implement the repository in `db/repositories/`.'
+  if (has(input, 'orm-drizzle'))
+    return '2. Add the table to `src/db/schema.ts`, run `db:generate` then `db:migrate`, and implement the repository with `db` from `src/db/client.ts`.'
+  if (has(input, 'orm-mongoose'))
+    return '2. Define the schema and register the model on `connection` from `src/db/client.ts`, then implement the repository with it.'
+  return '2. Implement the repository interface for your storage.'
+}
+
 function addingAFeature(input: AgentsMdInput): string[] {
   return [
     '## Adding a feature',
     '',
     `1. Create \`${input.domainsDir}/<feature>/\` with a service and a repository interface.`,
-    has(input, 'orm-prisma')
-      ? '2. Add the model to `prisma/schema.prisma`, run `db:migrate`, and implement the repository in `db/repositories/`.'
-      : '2. Implement the repository interface for your storage.',
+    storageStep(input),
     '3. Add routes with Zod validation and mount them in `app.ts`; wire dependencies in `index.ts` (the composition root).',
     '4. Add tests next to the existing ones, building the app with `testApp()` from `tests/helpers/app.ts`.'
   ]

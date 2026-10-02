@@ -1,6 +1,25 @@
-<% const hasDatabase = it.modules.includes('orm-prisma') %>
-<% const monorepo = it.modules.includes('layout-monorepo') %>
-<% const webApps = monorepo && it.modules.includes('devops-docker-web') ? [['web', 3000], ...(it.modules.includes('app-admin') ? [['admin', 3002]] : [])] : [] %>
+<% const databases = {
+  'database-postgres': { url: 'postgresql://postgres:postgres@db:5432/devstack', volume: 'postgres_data' },
+  'database-mysql': { url: 'mysql://root:mysql@db:3306/devstack', volume: 'mysql_data' },
+  'database-mongodb': { url: 'mongodb://db:27017/devstack', volume: 'mongo_data' }
+} -%>
+<% const databaseId = Object.keys(databases).find((id) => it.modules.includes(id)) -%>
+<% const database = databaseId === undefined ? undefined : databases[databaseId] -%>
+<% const redis = it.modules.includes('cache-redis') -%>
+<% const sqlite = it.modules.includes('database-sqlite') -%>
+<% const dependsOn = [...(database ? ['db'] : []), ...(redis ? ['redis'] : [])] -%>
+<% const connections = () => [
+  ...(database ? [`      DATABASE_URL: ${database.url}`] : []),
+  ...(sqlite ? ['      DATABASE_URL: file:/app/data/dev.db'] : []),
+  ...(redis ? ['      REDIS_URL: redis://redis:6379'] : []),
+  ...(dependsOn.length > 0 ? ['    depends_on:'] : []),
+  ...dependsOn.flatMap((service) => [`      ${service}:`, '        condition: service_healthy']),
+  // the SQLite file outlives the container
+  ...(sqlite ? ['    volumes:', '      - sqlite_data:/app/data'] : [])
+].map((line) => `${line}\n`).join('') -%>
+<% const volumes = [...(database ? [database.volume] : []), ...(redis ? ['redis_data'] : []), ...(sqlite ? ['sqlite_data'] : [])] -%>
+<% const monorepo = it.modules.includes('layout-monorepo') -%>
+<% const webApps = monorepo && it.modules.includes('devops-docker-web') ? [['web', 3000], ...(it.modules.includes('app-admin') ? [['admin', 3002]] : [])] : [] -%>
 # Local stack (D-41): docker compose up runs everything, each service starting once the one it
 # needs is healthy. The database credentials below are for local use only.
 # Host ports are configurable when taken, e.g. PORT=4000 POSTGRES_PORT=5433 docker compose up
@@ -15,11 +34,7 @@ services:
     environment:
       PORT: 3001
 <% if (webApps.length > 0) { %>      ALLOWED_ORIGINS: <%= webApps.map(([name, port]) => `http://localhost:${port}`).join(',') %>
-<% } %><% if (hasDatabase) { %>      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
-    depends_on:
-      db:
-        condition: service_healthy
-<% } %>
+<% } %><%~ connections() -%>
 <% for (const [name, port] of webApps) { %>
   <%= name %>:
     build:
@@ -33,7 +48,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
-<% } %>
+<% } -%>
 <% } else { %>
   app:
     build: .
@@ -45,13 +60,10 @@ services:
     environment:
       # the container always listens on 3000 (EXPOSE, healthcheck); PORT only picks the host port
       PORT: 3000
-<% if (hasDatabase) { %>      DATABASE_URL: postgresql://postgres:postgres@db:5432/devstack
-    depends_on:
-      db:
-        condition: service_healthy
-<% } %>
-<% } %>
-<% if (hasDatabase) { %>
+<%~ connections() -%>
+<% } -%>
+<% if (databaseId === 'database-postgres') { -%>
+
   db:
     image: postgres:18-alpine
     environment:
@@ -67,7 +79,55 @@ services:
       retries: 10
     volumes:
       - postgres_data:/var/lib/postgresql
+<% } else if (databaseId === 'database-mysql') { -%>
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: devstack
+    ports:
+      - '${MYSQL_PORT:-3306}:3306'
+    healthcheck:
+      # over TCP: the server MySQL runs during first-start initialization listens on the socket only
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-pmysql']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - mysql_data:/var/lib/mysql
+<% } else if (databaseId === 'database-mongodb') { -%>
+
+  db:
+    image: mongo:8
+    ports:
+      - '${MONGO_PORT:-27017}:27017'
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - mongo_data:/data/db
+<% } -%>
+<% if (redis) { -%>
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - redis_data:/data
+<% } -%>
+<% if (volumes.length > 0) { -%>
 
 volumes:
-  postgres_data:
-<% } %>
+<% for (const volume of volumes) { -%>
+  <%= volume %>:
+<% } -%>
+<% } -%>

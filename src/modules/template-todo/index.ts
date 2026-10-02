@@ -33,7 +33,8 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   description:
     'Todos end to end: CRUD with filters and cursor pagination, per user with auth, seed data, tests and a page',
-  requires: ['framework-express', 'orm-prisma', 'core-backend'],
+  // written and tested on Postgres; other databases are a later port (D-77)
+  requires: ['framework-express', 'orm-prisma', 'database-postgres', 'core-backend'],
   scripts: [{ name: 'db:seed', run: 'tsx src/scripts/seed.ts' }],
   env: [
     {

@@ -7,6 +7,7 @@ import type { GenerationPlan } from '../src/types/plan'
 const API = [
   'layout-monorepo',
   'framework-express',
+  'database-postgres',
   'orm-prisma',
   'quality-eslint',
   'quality-prettier',

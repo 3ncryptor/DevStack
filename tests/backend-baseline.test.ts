@@ -9,7 +9,7 @@ import type { GenerationPlan } from '../src/types/plan'
 import { testModule } from './helpers/modules'
 
 const BACKEND = [...(getPreset('backend')?.modules ?? [])]
-const NEST = ['framework-nest', 'security-helmet', 'orm-prisma']
+const NEST = ['framework-nest', 'security-helmet', 'database-postgres', 'orm-prisma']
 
 function plan(modules: string[], depth: Depth = 'wired'): Promise<GenerationPlan> {
   return buildGenerationPlan({
@@ -174,7 +174,7 @@ describe('Prisma wiring (B17.3)', () => {
   })
 
   it('still plans Prisma without a framework, where nothing exposes the lifecycle slots', async () => {
-    const files = paths(await plan(['language-node', 'orm-prisma']))
+    const files = paths(await plan(['language-node', 'database-postgres', 'orm-prisma']))
 
     expect(files).toContain('src/db/client.ts')
     expect(files).not.toContain('src/lifecycle.ts')
@@ -219,7 +219,7 @@ describe('generated README', () => {
 
     expect(readme).toContain('# golden-app')
     expect(readme).toContain('Express')
-    expect(readme).toContain('Prisma + PostgreSQL')
+    expect(readme).toContain('- PostgreSQL\n- Prisma')
     expect(readme).toContain('pnpm run dev')
     expect(readme).toContain('`DATABASE_URL`')
   })

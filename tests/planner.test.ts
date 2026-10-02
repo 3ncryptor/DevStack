@@ -182,7 +182,16 @@ describe('framework slots (D-07)', () => {
 describe('ESM output (D-53)', () => {
   it.each([
     ['backend preset', BACKEND_MODULES],
-    ['nest', ['framework-nest', 'security-helmet', 'security-rate-limit', 'orm-prisma']]
+    [
+      'nest',
+      [
+        'framework-nest',
+        'security-helmet',
+        'security-rate-limit',
+        'database-postgres',
+        'orm-prisma'
+      ]
+    ]
   ])(
     'declares ESM and imports relative files with .js extensions (%s)',
     async (_label, modules) => {

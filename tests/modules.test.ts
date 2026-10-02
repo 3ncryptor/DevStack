@@ -103,7 +103,8 @@ describe.each(BUILTIN_MODULES.map((moduleDefinition) => [moduleDefinition.id, mo
 )
 
 /** What a module definition may import: data and types, nothing that touches the machine. */
-const ALLOWED_MODULE_IMPORTS = new Set(['../../paths', '../../types/module', 'zod'])
+// ../databases: the shared factory of the database modules, linted below with the same rule
+const ALLOWED_MODULE_IMPORTS = new Set(['../../paths', '../../types/module', 'zod', '../databases'])
 
 /**
  * Problems in one module source file: an import outside the allowed set, or dynamic loading. A
@@ -140,4 +141,12 @@ describe('module contract lint (task 1.7)', () => {
       ).toEqual([])
     }
   )
+
+  it('the shared database factory imports only types', async () => {
+    const source = await readFile(path.join(PACKAGE_ROOT, 'src', 'modules', 'databases.ts'), 'utf8')
+    const specifiers = [...source.matchAll(/^\s*import[^'"]*['"]([^'"]+)['"]/gm)].map(
+      (match) => match[1]
+    )
+    expect(specifiers).toEqual(['../types/module'])
+  })
 })

@@ -35,7 +35,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "0304bbffdcc2f85d",
+      "sha256": "fadc8ee1879254be",
       "strategy": "create",
     },
     {
@@ -47,7 +47,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".env.example",
-      "sha256": "dbfb81377f9567ad",
+      "sha256": "fd20e0569ef3ed7f",
       "strategy": "create",
     },
     {
@@ -125,7 +125,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "79551bca280cdec9",
+      "sha256": "0ab2ec0576b284af",
       "strategy": "skip-if-exists",
     },
     {
@@ -329,6 +329,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
   ],
   "modules": [
     "language-node",
+    "database-postgres",
     "orm-prisma",
     "arch-clean",
     "quality-eslint",
@@ -381,7 +382,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "803405b055aaea4b",
+      "sha256": "f8ec4b29dad3390d",
       "strategy": "create",
     },
     {
@@ -489,7 +490,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "AGENTS.md",
-      "sha256": "510670a594073ad5",
+      "sha256": "603c99e34ed09c63",
       "strategy": "skip-if-exists",
     },
     {
@@ -501,7 +502,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/.env.example",
-      "sha256": "4e34baba36e66ec8",
+      "sha256": "85d442bd645e7e27",
       "strategy": "create",
     },
     {
@@ -921,7 +922,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "48db84cdf58cd4f9",
+      "sha256": "9bca1dbbe1d42a67",
       "strategy": "skip-if-exists",
     },
     {
@@ -935,6 +936,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     "language-node",
     "layout-monorepo",
     "api-versioning",
+    "database-postgres",
     "orm-prisma",
     "arch-feature",
     "testing-vitest",

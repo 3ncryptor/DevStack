@@ -1,0 +1,66 @@
+<% if (it.modules.includes('database-mysql')) { %>
+import { sql } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/mysql2'
+import mysql from 'mysql2/promise'
+
+import * as schema from './schema.js'
+
+/** One pool per process. */
+const pool = mysql.createPool(process.env.DATABASE_URL ?? '')
+
+export const db = drizzle({ client: pool, schema, mode: 'default' })
+
+/** Readiness check: the database answers a trivial query. */
+export async function checkDatabase(): Promise<void> {
+  await db.execute(sql`SELECT 1`)
+}
+
+/** Shutdown: close the pool so the process does not wait on idle connections. */
+export async function disconnectDatabase(): Promise<void> {
+  await pool.end()
+}
+<% } else if (it.modules.includes('database-sqlite')) { %>
+import Database from 'better-sqlite3'
+import { sql } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+
+import * as schema from './schema.js'
+
+/** The database file, opened (and created) once per process. */
+const sqlite = new Database((process.env.DATABASE_URL ?? '').replace(/^file:/, ''))
+
+export const db = drizzle({ client: sqlite, schema })
+
+/** Readiness check: the file answers a trivial query. */
+export function checkDatabase(): Promise<void> {
+  db.run(sql`SELECT 1`)
+  return Promise.resolve()
+}
+
+/** Shutdown: close the file so pending writes are flushed. */
+export function disconnectDatabase(): Promise<void> {
+  sqlite.close()
+  return Promise.resolve()
+}
+<% } else { %>
+import { sql } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
+
+import * as schema from './schema.js'
+
+/** One pool per process. */
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+
+export const db = drizzle({ client: pool, schema })
+
+/** Readiness check: the database answers a trivial query. */
+export async function checkDatabase(): Promise<void> {
+  await db.execute(sql`SELECT 1`)
+}
+
+/** Shutdown: close the pool so the process does not wait on idle connections. */
+export async function disconnectDatabase(): Promise<void> {
+  await pool.end()
+}
+<% } %>

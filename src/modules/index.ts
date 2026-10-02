@@ -4,6 +4,11 @@ import apiVersioning from './api-versioning/index'
 import appAdmin from './app-admin/index'
 import authBetterAuth from './auth-better-auth/index'
 import authJwt from './auth-jwt/index'
+import cacheRedis from './cache-redis/index'
+import databaseMongodb from './database-mongodb/index'
+import databaseMysql from './database-mysql/index'
+import databasePostgres from './database-postgres/index'
+import databaseSqlite from './database-sqlite/index'
 import archWebAtomic from './arch-web-atomic/index'
 import archWebFeature from './arch-web-feature/index'
 import archWebLayer from './arch-web-layer/index'
@@ -29,6 +34,8 @@ import middlewareCors from './middleware-cors/index'
 import middlewareMorgan from './middleware-request-logger/index'
 import obsJsonLogs from './obs-json-logs/index'
 import obsWinston from './obs-winston/index'
+import ormDrizzle from './orm-drizzle/index'
+import ormMongoose from './orm-mongoose/index'
 import ormPrisma from './orm-prisma/index'
 import qualityHusky from './quality-husky/index'
 import rateLimit from './security-rate-limit/index'
@@ -65,7 +72,14 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   testingJest,
   testingVitestWeb,
   sharedApi,
+  databasePostgres,
+  databaseMysql,
+  databaseSqlite,
+  databaseMongodb,
   ormPrisma,
+  ormDrizzle,
+  ormMongoose,
+  cacheRedis,
   obsWinston,
   obsJsonLogs,
   authJwt,
