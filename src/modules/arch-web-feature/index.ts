@@ -10,7 +10,7 @@ const moduleDefinition: DevstackModule = {
   target: 'frontend',
   depth: 'bare',
   description: 'features/<name> per feature, plus shared components/, hooks/ and types/',
-  requires: ['framework-nextjs'],
+  requiresAny: ['framework-nextjs', 'framework-react-vite'],
   filesPath: moduleFilesPath('arch-web-feature')
 }
 

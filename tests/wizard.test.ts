@@ -322,9 +322,8 @@ describe('questions added for D-64 and M2', () => {
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
     expect(prompter.asked).toEqual(
-      expect.arrayContaining([Q.styling, Q.admin, Q.frontendArchitecture])
+      expect.arrayContaining([Q.frontend, Q.styling, Q.admin, Q.frontendArchitecture])
     )
-    expect(prompter.asked).not.toContain(Q.frontend)
     expect(result.modules).toEqual(
       expect.arrayContaining([
         'layout-monorepo',
@@ -591,5 +590,23 @@ describe('answers ↔ modules', () => {
 
     expect(offered).toHaveLength(8192)
     expect(failures).toEqual([])
+  })
+})
+
+describe('React + Vite and CSS Modules (D-79)', () => {
+  it('offers React + Vite and CSS Modules, and no admin app with Vite', async () => {
+    const prompter = new AnswerPrompter([
+      [Q.appType, 'fullstack'],
+      [Q.frontend, 'framework-react-vite'],
+      [Q.styling, 'ui-css-modules']
+    ])
+
+    const result = await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(prompter.asked).not.toContain(Q.admin)
+    expect(result.modules).toEqual(
+      expect.arrayContaining(['framework-react-vite', 'ui-css-modules', 'layout-monorepo'])
+    )
+    expect(result.modules).not.toContain('app-admin')
   })
 })

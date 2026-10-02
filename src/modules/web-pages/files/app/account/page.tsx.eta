@@ -1,12 +1,11 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
 <% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
-'use client'
-
-import { useRouter } from 'next/navigation'
-
+<% const next = it.modules.includes('framework-nextjs') %>
+<% const cssModules = it.modules.includes('ui-css-modules') %>
+<%~ next ? "'use client'\n\n" : '' %><%~ next ? "import { useRouter } from 'next/navigation'\n" : '' %>
 import { auth } from '../../lib/auth'
 import { RequireAuth, useSessionUser } from '../../lib/auth/require-auth'
-
+<%~ next ? '' : "import { useRouter } from '../../lib/navigation'\n" %><%~ cssModules ? "import ui from '../ui.module.css'\n" : '' %>
 function Account() {
   const user = useSessionUser()
   const router = useRouter()
@@ -20,7 +19,7 @@ function Account() {
   }
 
   return (
-    <main<%~ cls('mx-auto grid min-h-screen max-w-sm content-center gap-4 p-6') %>>
+    <main<%~ cssModules ? ' className={ui.page}' : cls('mx-auto grid min-h-screen max-w-sm content-center gap-4 p-6') %>>
       <h1<%~ cls('text-2xl font-semibold') %>>Your account</h1>
       <p data-testid="account-email">{user.email}</p>
       <button type="button" onClick={logout}<%~ cls('rounded border px-3 py-2') %>>

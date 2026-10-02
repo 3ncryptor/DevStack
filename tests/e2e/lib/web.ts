@@ -63,6 +63,8 @@ export interface WebApp {
   command: string[]
   /** The home page needs a login, so the login page is checked instead of the status line. */
   guarded?: boolean
+  /** A single-page app (React + Vite): the page renders in the browser, the proxy is checked. */
+  spa?: boolean
 }
 
 export interface FullstackOptions {
@@ -103,6 +105,33 @@ async function statusProblems(
     .map((part) => `${name}: status page says "${line}", expected "${part}"`)
 }
 
+/**
+ * A single-page app renders its status line in the browser, so the server side is checked: the
+ * app shell, and /api/ready through the proxy with the expected database state.
+ */
+async function spaProblems(
+  app: RunningApp,
+  options: FullstackOptions,
+  name: string
+): Promise<string[]> {
+  const shell = await fetch(`http://127.0.0.1:${app.port}/login`)
+  const html = await shell.text()
+  const ready = await fetch(`http://127.0.0.1:${app.port}/api/ready`)
+  const body = (await ready.json().catch(() => null)) as { checks?: Record<string, string> } | null
+  const db = body?.checks?.db
+  return [
+    ...(shell.status === 200 && html.includes('<div id="root">')
+      ? []
+      : [`${name}: GET /login returned ${shell.status} without the app shell`]),
+    ...(body?.checks === undefined
+      ? [`${name}: GET /api/ready returned ${ready.status} without readiness checks`]
+      : []),
+    ...(options.hasDatabase && db !== (options.databaseUp ? 'ok' : 'error')
+      ? [`${name}: /api/ready says db is ${db ?? 'missing'} through the proxy`]
+      : [])
+  ]
+}
+
 async function versionProblems(apiPort: number): Promise<string[]> {
   const response = await fetch(`http://127.0.0.1:${apiPort}/v1`)
   const body = (await response.json()) as { success?: unknown }
@@ -117,7 +146,7 @@ async function versionProblems(apiPort: number): Promise<string[]> {
  */
 export async function bootFullstack(options: FullstackOptions): Promise<BootResult> {
   const api = start(options.apiDir, options.apiCommand, options.env, await findFreePort())
-  const webs: Array<{ name: string; app: RunningApp; guarded: boolean }> = []
+  const webs: Array<{ name: string; app: RunningApp; guarded: boolean; spa: boolean }> = []
   for (const web of options.webApps) {
     const app = start(
       web.dir,
@@ -125,7 +154,7 @@ export async function bootFullstack(options: FullstackOptions): Promise<BootResu
       { API_URL: `http://127.0.0.1:${api.port}`, NEXT_TELEMETRY_DISABLED: '1' },
       await findFreePort()
     )
-    webs.push({ name: web.name, app, guarded: web.guarded === true })
+    webs.push({ name: web.name, app, guarded: web.guarded === true, spa: web.spa === true })
   }
   const problems: string[] = []
   const deadline = Date.now() + options.timeoutMs
@@ -137,7 +166,7 @@ export async function bootFullstack(options: FullstackOptions): Promise<BootResu
   if (apiUp === undefined) problems.push('the API did not become healthy')
   if (apiUp !== undefined && options.versioned) problems.push(...(await versionProblems(api.port)))
 
-  for (const { name, app, guarded } of webs) {
+  for (const { name, app, guarded, spa } of webs) {
     const up = await pollUntilHealthy(
       `http://127.0.0.1:${app.port}/health`,
       deadline,
@@ -147,7 +176,11 @@ export async function bootFullstack(options: FullstackOptions): Promise<BootResu
       problems.push(`${name} did not answer GET /health`)
     } else if (apiUp !== undefined) {
       problems.push(
-        ...(guarded ? await loginProblems(app, name) : await statusProblems(app, options, name))
+        ...(spa
+          ? await spaProblems(app, options, name)
+          : guarded
+            ? await loginProblems(app, name)
+            : await statusProblems(app, options, name))
       )
     }
   }

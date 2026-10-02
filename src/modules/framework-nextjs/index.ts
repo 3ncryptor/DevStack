@@ -1,12 +1,5 @@
 import { moduleFilesPath } from '../../paths'
-import type { Condition, DevstackModule } from '../../types/module'
-
-/** Any auth module on the API: the web apps get login pages (D-43). */
-const AUTH: Condition = { has: 'auth' }
-/** Registration and the account page are for the web app; admins are promoted (D-67). */
-const WEB_AUTH: Condition = { all: [AUTH, { target: 'frontend' }] }
-/** The Todo template's page lives in the web app (B17.8). */
-const WEB_TODO: Condition = { all: [{ has: 'template-todo' }, { target: 'frontend' }] }
+import type { DevstackModule } from '../../types/module'
 
 const moduleDefinition: DevstackModule = {
   id: 'framework-nextjs',
@@ -18,20 +11,15 @@ const moduleDefinition: DevstackModule = {
   description:
     'Next.js 16 (App Router) web app with a status page and a development proxy to the API',
   // fullstack for now (apps/web next to apps/api); a frontend-only app type comes later
-  requires: ['layout:monorepo', 'shared-api'],
+  requires: ['layout:monorepo', 'shared-api', 'web-pages'],
   dependencies: ['next', 'react', 'react-dom', 'zod'],
   devDependencies: ['@types/node', '@types/react', '@types/react-dom', 'typescript'],
   files: [
-    { path: 'app/globals.css', when: { not: { has: 'ui-tailwind' } } },
-    { path: 'lib/auth/index.ts', when: AUTH },
-    { path: 'lib/auth/session.ts', when: AUTH },
-    { path: 'lib/auth/form.ts', when: AUTH },
-    { path: 'lib/auth/require-auth.tsx', when: AUTH },
-    { path: 'app/login/page.tsx', when: AUTH },
-    { path: 'app/register/page.tsx', when: WEB_AUTH },
-    { path: 'app/account/page.tsx', when: WEB_AUTH },
-    { path: 'lib/todos.ts', when: WEB_TODO },
-    { path: 'app/todos/page.tsx', when: WEB_TODO }
+    {
+      path: 'app/globals.css',
+      // Tailwind and CSS Modules bring their own
+      when: { not: { any: [{ has: 'ui-tailwind' }, { has: 'ui-css-modules' }] } }
+    }
   ],
   env: [
     {

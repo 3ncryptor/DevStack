@@ -1,0 +1,9 @@
+/* Page styles live in ui.module.css (CSS Modules); only document-wide defaults here. */
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+}

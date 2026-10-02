@@ -1,0 +1,42 @@
+<% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
+<% const todos = it.modules.includes('template-todo') %>
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Route, Routes } from 'react-router'
+
+<% if (authed) { %>
+import AccountPage from './app/account/page'
+import LoginPage from './app/login/page'
+<% } %>
+import HomePage from './app/page'
+<% if (authed) { %>
+import RegisterPage from './app/register/page'
+<% } %>
+<% if (todos) { %>
+import TodosPage from './app/todos/page'
+<% } %>
+
+import './app/globals.css'
+
+const root = document.getElementById('root')
+if (root === null) throw new Error('index.html has no #root element')
+
+// one route per page in app/, the same layout as the Next.js app
+createRoot(root).render(
+  <StrictMode>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+<% if (authed) { %>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/account" element={<AccountPage />} />
+<% } %>
+<% if (todos) { %>
+        <Route path="/todos" element={<TodosPage />} />
+<% } %>
+        <Route path="*" element={<p>Page not found.</p>} />
+      </Routes>
+    </BrowserRouter>
+  </StrictMode>
+)

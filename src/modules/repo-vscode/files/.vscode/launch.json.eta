@@ -23,6 +23,16 @@
         console: 'integratedTerminal',
         skipFiles: ['<node_internals>/**']
       }]
+    : []),
+  // a single-page app runs in the browser: start its dev script, then debug it in Chrome
+  ...(it.modules.includes('framework-react-vite')
+    ? [{
+        name: 'Debug the web app (browser)',
+        type: 'chrome',
+        request: 'launch',
+        url: 'http://localhost:3000',
+        webRoot: '${workspaceFolder}/apps/web'
+      }]
     : [])
 ] %>
 <%~ JSON.stringify({ version: '0.2.0', configurations }, null, 2) %>

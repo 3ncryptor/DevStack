@@ -1,0 +1,44 @@
+import react from '@vitejs/plugin-react'
+import { defineConfig, loadEnv, type Connect, type Plugin } from 'vite'
+
+/** GET /health answers 200 on the dev and preview servers, for Docker and boot checks. */
+function health(): Plugin {
+  const handler: Connect.NextHandleFunction = (request, response, next) => {
+    if (request.url !== '/health') {
+      next()
+      return
+    }
+    response.setHeader('content-type', 'application/json')
+    response.end(JSON.stringify({ status: 'ok' }))
+  }
+  return {
+    name: 'health',
+    configureServer: (server) => {
+      server.middlewares.use(handler)
+    },
+    configurePreviewServer: (server) => {
+      server.middlewares.use(handler)
+    }
+  }
+}
+
+export default defineConfig(({ mode }) => {
+  // .env, then the real environment (which wins), like the API reads its settings
+  const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env }
+  const port = Number(env.PORT ?? <%= it.port %>)
+  // Development proxy (B17.4): the browser only talks to this origin, so CORS never arises.
+  // In production the browser uses VITE_API_URL, or the Docker image's nginx serves /api.
+  const proxy = {
+    '/api': {
+      target: env.API_URL ?? 'http://localhost:3001',
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(/^\/api/, '')
+    }
+  }
+  return {
+    plugins: [react(), health()],
+    server: { port, strictPort: true, proxy },
+    // the preview server stands in for production: every interface, like `next start`
+    preview: { port, strictPort: true, host: true, proxy }
+  }
+})

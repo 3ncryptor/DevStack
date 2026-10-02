@@ -20,6 +20,17 @@ COPY --from=prune /app/out/full/ ./
 WORKDIR /app/apps/<%= app %>
 RUN <%= it.pm.run %> build
 
+<% if (it.modules.includes('framework-react-vite')) { -%>
+# a static build: unprivileged nginx serves it, falls back to index.html for client routes and
+# proxies /api to the API (nginx.conf.template, filled from API_URL and PORT at start)
+FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
+ENV PORT=<%= it.port %> API_URL=http://api:3001
+COPY --from=build /app/apps/<%= app %>/dist /usr/share/nginx/html
+COPY apps/<%= app %>/nginx.conf.template /etc/nginx/templates/default.conf.template
+EXPOSE <%= it.port %>
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
+  CMD ["wget", "-q", "-O", "/dev/null", "http://127.0.0.1:<%= it.port %>/health"]
+<% } else { -%>
 # Next.js standalone output carries only the files the server needs
 FROM <%= it.language.dockerBaseImage %> AS runtime
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=<%= it.port %> HOSTNAME=0.0.0.0
@@ -32,3 +43,4 @@ EXPOSE <%= it.port %>
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:<%= it.port %>/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
 CMD ["node", "apps/<%= app %>/server.js"]
+<% } -%>

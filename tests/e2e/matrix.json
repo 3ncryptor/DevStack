@@ -449,7 +449,8 @@
       "devops-docker",
       "quality-eslint",
       "quality-prettier"
-    ]
+    ],
+    "compose": true
   },
   {
     "id": "express-postgres-drizzle",
@@ -477,7 +478,8 @@
       "devops-docker",
       "quality-eslint",
       "quality-prettier"
-    ]
+    ],
+    "compose": true
   },
   {
     "id": "fastify-mysql-drizzle",
@@ -506,7 +508,8 @@
       "devops-docker",
       "quality-eslint",
       "quality-prettier"
-    ]
+    ],
+    "compose": true
   },
   {
     "id": "node-data",
@@ -566,5 +569,83 @@
       "quality-eslint",
       "quality-prettier"
     ]
+  },
+  {
+    "id": "fullstack-vite",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "security-helmet",
+      "framework-react-vite",
+      "ui-tailwind",
+      "arch-web-feature",
+      "database-postgres",
+      "orm-prisma",
+      "auth-jwt",
+      "template-todo",
+      "api-versioning",
+      "testing-vitest",
+      "testing-vitest-web",
+      "devops-docker",
+      "devops-docker-web",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "compose": true
+  },
+  {
+    "id": "fullstack-vite-css-modules",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-fastify",
+      "security-helmet",
+      "framework-react-vite",
+      "ui-css-modules",
+      "database-postgres",
+      "orm-prisma",
+      "auth-better-auth",
+      "testing-vitest",
+      "testing-vitest-web",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "fullstack-next-css-modules",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "security-helmet",
+      "framework-nextjs",
+      "ui-css-modules",
+      "app-admin",
+      "database-postgres",
+      "orm-prisma",
+      "auth-jwt",
+      "template-todo",
+      "testing-vitest",
+      "testing-vitest-web",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "backend-fastify-preset",
+    "preset": "backend-fastify"
+  },
+  {
+    "id": "backend-nest-preset",
+    "preset": "backend-nest"
+  },
+  {
+    "id": "api-mongo-preset",
+    "preset": "api-mongo"
+  },
+  {
+    "id": "fullstack-vite-preset",
+    "preset": "fullstack-vite-express"
   }
 ]

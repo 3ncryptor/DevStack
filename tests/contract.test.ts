@@ -25,7 +25,7 @@ const PREFIXES: Partial<Record<ModuleCategory, readonly string[]>> = {
   security: ['security-', 'auth-'],
   devops: ['devops-'],
   // baselines every framework requires; never selected on their own
-  misc: ['core-', 'shared-', 'app-'],
+  misc: ['core-', 'shared-', 'app-', 'web-'],
   styling: ['ui-'],
   'api-style': ['api-'],
   testing: ['testing-'],

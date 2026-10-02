@@ -31,6 +31,10 @@ services:
       dockerfile: apps/api/Dockerfile
     ports:
       - '${API_PORT:-3001}:3001'
+    # secrets such as JWT_SECRET come from the API's local .env; compose overrides the rest
+    env_file:
+      - path: apps/api/.env
+        required: false
     environment:
       PORT: 3001
 <% if (webApps.length > 0) { %>      ALLOWED_ORIGINS: <%= webApps.map(([name, port]) => `http://localhost:${port}`).join(',') %>

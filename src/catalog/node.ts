@@ -48,6 +48,9 @@ export const NODE_CATALOG = {
   tailwindcss: { version: '^4.3.3' },
   '@tailwindcss/postcss': { version: '^4.3.3' },
   postcss: { version: '^8.5.28' },
+  // React + Vite (M4, D-79); verified 2026-10-02
+  'react-router': { version: '^8.4.0' },
+  '@vitejs/plugin-react': { version: '^6.1.1' },
 
   // data
   prisma: { version: '^7.10.0', allowBuilds: ['prisma', '@prisma/engines'] },

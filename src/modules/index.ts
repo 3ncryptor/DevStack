@@ -26,6 +26,7 @@ import frameworkExpress from './framework-express/index'
 import frameworkFastify from './framework-fastify/index'
 import frameworkNest from './framework-nest/index'
 import frameworkNextjs from './framework-nextjs/index'
+import frameworkReactVite from './framework-react-vite/index'
 import languageNode from './language-node/index'
 import layoutMonorepo from './layout-monorepo/index'
 import linterEslint from './quality-eslint/index'
@@ -50,7 +51,9 @@ import templateTodo from './template-todo/index'
 import testingJest from './testing-jest/index'
 import testingVitest from './testing-vitest/index'
 import testingVitestWeb from './testing-vitest-web/index'
+import uiCssModules from './ui-css-modules/index'
 import uiTailwind from './ui-tailwind/index'
+import webPages from './web-pages/index'
 
 /**
  * The built-in module registry. Explicit imports (instead of scanning the directory at
@@ -64,7 +67,10 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   frameworkFastify,
   frameworkNest,
   frameworkNextjs,
+  frameworkReactVite,
+  webPages,
   uiTailwind,
+  uiCssModules,
   archWebFeature,
   archWebLayer,
   archWebAtomic,

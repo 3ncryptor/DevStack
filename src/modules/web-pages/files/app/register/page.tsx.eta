@@ -1,15 +1,14 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
 <% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useState, type FormEvent } from 'react'
+<% const next = it.modules.includes('framework-nextjs') %>
+<% const cssModules = it.modules.includes('ui-css-modules') %>
+<%~ next ? "'use client'\n\n" : '' %><%~ next ? "import { useRouter } from 'next/navigation'\n" : '' %>import { useState, type FormEvent } from 'react'
 
 import { ApiClientError } from '<%= it.packageNames.shared %>'
 
 import { auth } from '../../lib/auth'
 import { formText } from '../../lib/auth/form'
-
+<%~ next ? '' : "import { useRouter } from '../../lib/navigation'\n" %><%~ cssModules ? "import ui from '../ui.module.css'\n" : '' %>
 /** The API's validation details, one line per field, e.g. "password: Too small". */
 function describe(failure: unknown): string {
   if (!(failure instanceof ApiClientError)) return 'Could not register'
@@ -50,7 +49,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <main<%~ cls('mx-auto grid min-h-screen max-w-sm content-center gap-4 p-6') %>>
+    <main<%~ cssModules ? ' className={ui.page}' : cls('mx-auto grid min-h-screen max-w-sm content-center gap-4 p-6') %>>
       <h1<%~ cls('text-2xl font-semibold') %>>Create an account</h1>
       <form onSubmit={submit}<%~ cls('grid gap-3') %>>
         <label<%~ cls('grid gap-1') %>>

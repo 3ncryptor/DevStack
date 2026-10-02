@@ -13,7 +13,8 @@ const POLL_INTERVAL_MS = 500
 
 /** The page worth opening: the status page of a web app, the API docs, or /health. */
 export function startUrl(plan: GenerationPlan): string {
-  if (plan.modules.includes('framework-nextjs')) return 'http://localhost:3000/'
+  const web = ['framework-nextjs', 'framework-react-vite']
+  if (web.some((id) => plan.modules.includes(id))) return 'http://localhost:3000/'
   const port = plan.modules.includes('layout-monorepo') ? 3001 : 3000
   return plan.modules.includes('api-docs-scalar')
     ? `http://localhost:${port}/docs`

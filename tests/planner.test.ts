@@ -19,6 +19,8 @@ function planInput(overrides: Partial<PlanInput> = {}): PlanInput {
     registry: loadModules(),
     packageManager: 'npm',
     options: { skipInstall: false, skipGit: false },
+    // generated secrets (JWT_SECRET) are random; a fixed one keeps the snapshots stable
+    secret: () => 'fixed-snapshot-secret-0123456789abcdefghijklmn',
     ...overrides
   }
 }

@@ -1,12 +1,11 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
 <% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
-'use client'
-
-import { usePathname, useRouter } from 'next/navigation'
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+<% const next = it.modules.includes('framework-nextjs') %>
+<% const cssModules = it.modules.includes('ui-css-modules') %>
+<%~ next ? "'use client'\n\n" : '' %><%~ next ? "import { usePathname, useRouter } from 'next/navigation'\n" : '' %>import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 import { auth, type SessionUser } from './index'
-
+<%~ next ? '' : "import { usePathname, useRouter } from '../navigation'\n" %><%~ cssModules ? "import ui from '../../app/ui.module.css'\n" : '' %>
 const SessionContext = createContext<SessionUser | null>(null)
 
 /** The logged-in user, inside <RequireAuth>. */
@@ -58,7 +57,7 @@ export function RequireAuth({ children, role }: RequireAuthProps) {
   }
   if (role !== undefined && user.role !== role) {
     return (
-      <main<%~ cls('grid min-h-screen place-content-center gap-2 text-center') %>>
+      <main<%~ cssModules ? ' className={ui.page}' : cls('grid min-h-screen place-content-center gap-2 text-center') %>>
         <h1<%~ cls('text-xl font-semibold') %>>Not allowed</h1>
         <p>{user.email} does not have the {role} role.</p>
       </main>

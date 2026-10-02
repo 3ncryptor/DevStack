@@ -23,6 +23,7 @@
     "prepare": "husky",
     "e2e": "tsx tests/e2e/harness.ts --tier smoke",
     "e2e:full": "tsx tests/e2e/harness.ts --tier full",
+    "e2e:sample": "tsx tests/e2e/harness.ts --tier full --pm pnpm --sample 5",
     "prepack": "npm run build",
     "test:coverage": "vitest run --coverage",
     "graph": "bash scripts/graphify.sh"

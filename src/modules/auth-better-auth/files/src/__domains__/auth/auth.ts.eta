@@ -15,11 +15,13 @@ export type AuthDatabase = ReturnType<typeof prismaAdapter>
 /** Where Better Auth's routes live; the app mounts its handler there. */
 export const AUTH_BASE_PATH = '<%= prefix %>/auth'
 
+<% if (github || google) { %>
 interface OAuthApp {
   clientId: string
   clientSecret: string
 }
 
+<% } %>
 export interface AuthSettings {
   secret: string
   /** The API's public URL: OAuth providers call back to `${baseURL}${AUTH_BASE_PATH}/callback/...`. */

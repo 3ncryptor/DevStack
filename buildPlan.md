@@ -1790,6 +1790,27 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   session routes answer 503 instead of hanging (`disableOfflineQueue`). Generated tests run on an
   in-memory session store. It sits in the `security` category since `auth` is single select.
   `JWT_SECRET` stays required though sessions do not sign anything; dropping it is a cleanup.
+- **D-79 (2026-10-02)** — React + Vite and CSS Modules (M4). `framework-react-vite` is a
+  single-page app with React Router in the same `app/` + `lib/` layout as the Next.js app, so
+  the pages are written once: `web-pages` (required by both frameworks) holds the API client,
+  the auth client and pages and the Todo page; the few framework calls branch in the templates
+  (`'use client'`, `next/navigation` vs a `lib/navigation.ts` on React Router, the public env
+  variable). The web folder architectures, Tailwind (PostCSS works in both) and the web Vitest
+  setup apply unchanged. The status page asks `/ready` from the browser through the `/api`
+  proxy (dev and `vite preview`, which also answer `/health`); the Docker image is a static
+  build on unprivileged nginx with SPA fallback and `/api` proxied to the API. The admin app
+  stays Next.js-only for now. `ui-css-modules` (styling, both frameworks) gives each page root a
+  class from `app/ui.module.css` and styles the elements under it, so there is no per-element
+  class mapping to maintain. The e2e compose check now also covers Vite (through nginx) and
+  API-only stacks (`/ready` with MySQL, MongoDB, SQLite and Redis), on free host ports.
+- **D-80 (2026-10-03)** — Presets and sampling (M4). New presets `backend-fastify` (Fastify +
+  Drizzle), `backend-nest` (Nest + Prisma + JWT + Jest), `api-mongo` (Express + Mongoose + Redis)
+  and `fullstack-vite-express`; every preset must resolve without diagnostics and round-trip
+  through the wizard (unit tests), and each has an e2e combination. Nightly sampling (B13) is
+  `npm run e2e:sample` (`--sample n --seed s`): the real wizard answered by a seeded random
+  prompter, so every sample is a stack a user can build and a failure replays from its seed.
+  It runs locally for now (no new CI workflow before the project is complete). The compose
+  `api` service in a monorepo reads `apps/api/.env`, so secrets such as `JWT_SECRET` reach it.
 
 # §8. Open questions
 

@@ -1,15 +1,15 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
 <% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
 <% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
-'use client'
-
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+<% const next = it.modules.includes('framework-nextjs') %>
+<% const cssModules = it.modules.includes('ui-css-modules') %>
+<%~ next ? "'use client'\n\n" : '' %>import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { ApiClientError } from '<%= it.packageNames.shared %>'
 
 <% if (authed) { %>
 import { RequireAuth } from '../../lib/auth/require-auth'
-<% } %>
+<%~ cssModules ? "import ui from '../ui.module.css'\n" : '' %><% } %>
 import {
   createTodo,
   deleteTodo,
@@ -84,7 +84,7 @@ function Todos() {
   }
 
   return (
-    <main<%~ cls('mx-auto grid max-w-xl gap-4 p-6') %>>
+    <main<%~ cssModules ? ' className={ui.list}' : cls('mx-auto grid max-w-xl gap-4 p-6') %>>
       <h1<%~ cls('text-2xl font-semibold') %>>Todos</h1>
       <form onSubmit={add}<%~ cls('flex gap-2') %>>
         <input

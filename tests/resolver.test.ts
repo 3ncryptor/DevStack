@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { composeModules } from '../src/core/composer'
 import { loadModules } from '../src/core/module-loader'
-import { getPreset } from '../src/core/presets'
+import { getPreset, PRESETS } from '../src/core/presets'
 import { applyFixAction, resolveStack, type Diagnostic } from '../src/core/resolver/index'
 import { ResolutionError } from '../src/errors'
 import type { DevstackModule } from '../src/types/module'
@@ -27,6 +27,10 @@ describe('resolveStack with the built-in modules', () => {
 
     expect(result.diagnostics).toEqual([])
     expect(ids(result.modules)[0]).toBe('language-node')
+  })
+
+  it.each(Object.keys(PRESETS))('resolves the %s preset without diagnostics', (name) => {
+    expect(resolveStack(PRESETS[name]?.modules ?? [], registry).diagnostics).toEqual([])
   })
 
   it('orders modules the same way whatever order they were selected in (principle 5)', () => {

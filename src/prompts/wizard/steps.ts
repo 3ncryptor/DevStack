@@ -78,9 +78,13 @@ const APP_TYPES: Choice<string>[] = [
   { value: 'backend', label: 'Backend' },
   { value: FULLSTACK, label: 'Fullstack', hint: 'API + Next.js web app in a monorepo' }
 ]
-const FRONTENDS: Choice<string>[] = [{ value: 'framework-nextjs', label: 'Next.js' }]
+const FRONTENDS: Choice<string>[] = [
+  { value: 'framework-nextjs', label: 'Next.js' },
+  { value: 'framework-react-vite', label: 'React + Vite', hint: 'a single-page app' }
+]
 const STYLINGS: Choice<string>[] = [
   { value: 'ui-tailwind', label: 'Tailwind CSS' },
+  { value: 'ui-css-modules', label: 'CSS Modules' },
   { value: 'none', label: 'Plain CSS' }
 ]
 const FRAMEWORKS: Choice<string>[] = [
@@ -469,7 +473,8 @@ export const STEPS: readonly WizardStep[] = [
     message: 'Add an admin frontend? (apps/admin on port 3002, same API)',
     moduleId: 'app-admin',
     defaultValue: false,
-    applies: isFullstack
+    // the admin app is a second Next.js app for now (D-64, D-79)
+    applies: (answers) => isFullstack(answers) && answers.frontend === 'framework-nextjs'
   }),
   selectStep({
     key: 'frontendArchitecture',

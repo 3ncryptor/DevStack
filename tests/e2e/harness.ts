@@ -4,10 +4,12 @@
  *
  *   npx tsx tests/e2e/harness.ts [--tier smoke|full] [--pm npm|pnpm|yarn|bun|all]
  *                                [--concurrency <n>] [--only <id>] [--keep] [--report <file>]
+ *                                [--sample <n> [--seed <s>]]
  *
  * smoke (default): the combinations marked `smoke`, on one package manager, in parallel; fast
  * enough for every change. full: every combination, all four package managers, plus the
- * post-build lint; for nightly runs and releases.
+ * post-build lint; for nightly runs and releases. --sample: n random stacks drawn through the
+ * wizard instead of the matrix (nightly sampling, B13); the seed is printed to replay a failure.
  */
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { access, mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises'
@@ -20,6 +22,7 @@ import { composeCheck } from './lib/compose'
 import { bootFullstack } from './lib/web'
 import { parseMatrix, type Combination, type ReadyExpectation } from './lib/checks'
 import { killAllGroups, run } from './lib/process'
+import { sampleCombinations } from './lib/sample'
 
 const PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const
 type PackageManager = (typeof PACKAGE_MANAGERS)[number]
@@ -36,6 +39,8 @@ interface HarnessArgs {
   only?: string
   keep: boolean
   report?: string
+  sample?: number
+  seed?: number
 }
 
 interface StepResult {
@@ -67,6 +72,15 @@ const INSTALL_TIMEOUT_MS = 10 * MINUTE_MS
 const STEP_TIMEOUT_MS = 5 * MINUTE_MS
 const BOOT_TIMEOUT_MS = 30_000
 
+function positiveInt(value: string | undefined, flag: string): number | undefined {
+  if (value === undefined) return undefined
+  const parsed = Number.parseInt(value, 10)
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error(`${flag} must be a non-negative integer, got "${value}"`)
+  }
+  return parsed
+}
+
 function parseArgs(argv: string[]): HarnessArgs {
   const valueOf = (flag: string): string | undefined => {
     const index = argv.indexOf(flag)
@@ -87,7 +101,9 @@ function parseArgs(argv: string[]): HarnessArgs {
     concurrency: concurrency === undefined ? undefined : Number.parseInt(concurrency, 10),
     only: valueOf('--only'),
     keep: argv.includes('--keep'),
-    report: valueOf('--report')
+    report: valueOf('--report'),
+    sample: positiveInt(valueOf('--sample'), '--sample'),
+    seed: positiveInt(valueOf('--seed'), '--seed')
   }
 }
 
@@ -208,7 +224,8 @@ async function checkCombination(
             ...app,
             command: await startCommand(app.dir),
             // with auth, the admin home page is behind a login (D-67): its login page answers
-            guarded: app.name === 'admin' && existsSync(path.join(app.dir, 'app', 'login'))
+            guarded: app.name === 'admin' && existsSync(path.join(app.dir, 'app', 'login')),
+            spa: existsSync(path.join(app.dir, 'vite.config.ts'))
           }))
       )
       const manifest = (await readJson(path.join(projectDir, '.devstack', 'stack.json'))) as {
@@ -550,11 +567,20 @@ function skipReason(pm: PackageManager): string | undefined {
     : undefined
 }
 
-async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2))
-  const matrix = parseMatrix(await readJson(path.join(import.meta.dirname, 'matrix.json')))
+async function selectCombinations(args: HarnessArgs): Promise<Combination[]> {
+  if (args.sample !== undefined) {
+    const seed = args.seed ?? Math.floor(Math.random() * 2 ** 31)
+    console.log(`sampling ${args.sample} stacks with --seed ${seed}`)
+    return sampleCombinations(args.sample, seed)
+  }
+  return parseMatrix(await readJson(path.join(import.meta.dirname, 'matrix.json')))
     .filter((combination) => args.tier === 'full' || combination.smoke === true)
     .filter((combination) => args.only === undefined || combination.id === args.only)
+}
+
+async function main(): Promise<void> {
+  const args = parseArgs(process.argv.slice(2))
+  const matrix = await selectCombinations(args)
   if (matrix.length === 0) {
     throw new Error(`--only "${args.only ?? ''}" matches no ${args.tier} combination`)
   }

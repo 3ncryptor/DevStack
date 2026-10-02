@@ -1,44 +1,48 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
-<% const title = it.target === 'admin' ? `${it.projectName} admin` : it.projectName %>
 <% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
-<% const guarded = authed && it.target === 'admin' %>
-<% const todos = it.modules.includes('template-todo') && it.target !== 'admin' %>
+<% const todos = it.modules.includes('template-todo') %>
 <% const cssModules = it.modules.includes('ui-css-modules') %>
-<% if (guarded) { %>
-import { RequireAuth } from '../lib/auth/require-auth'
-<% } %>
-import { getStatus } from '../lib/status'
-<%~ cssModules ? "import ui from './ui.module.css'\n" : '' %>
-// read the API on every request, never at build time
-export const dynamic = 'force-dynamic'
+import { useEffect, useState } from 'react'
 
+import { getStatus, type Status } from '../lib/status'
+<%~ cssModules ? "import ui from './ui.module.css'\n" : '' %>
 const mark = (ok: boolean): string => (ok ? '✓ connected' : '✗ unreachable')
 
-/** Status page (B17.1): is the API up, and is each of its dependencies ready. */
-export default async function Home() {
-  const status = await getStatus()
-  const line = [
+function describe(status: Status | undefined): string {
+  if (status === undefined) return 'Checking the API…'
+  return [
     `API ${mark(status.api)}`,
     ...Object.entries(status.checks).map(([name, value]) => `${name.toUpperCase()} ${mark(value === 'ok')}`)
   ].join(' · ')
+}
+
+/** Status page (B17.1): is the API up, and is each of its dependencies ready. */
+export default function Home() {
+  const [status, setStatus] = useState<Status>()
+
+  useEffect(() => {
+    let active = true
+    void getStatus().then((current) => {
+      if (active) setStatus(current)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
 
   return (
-<% if (guarded) { %>
-    // the admin app is for admins only (D-67); the API checks the role on its own routes too
-    <RequireAuth role="ADMIN">
-<% } %>
 <% if (tailwind) { %>
     <main className="grid min-h-screen place-content-center gap-2 text-center">
-      <h1 className="text-2xl font-semibold"><%= title %></h1>
+      <h1 className="text-2xl font-semibold"><%= it.projectName %></h1>
       <p data-testid="status" className="text-neutral-600">
-        {line}
+        {describe(status)}
       </p>
 <% if (todos) { %>
       <a href="/todos" className="underline">
         Todos
       </a>
 <% } %>
-<% if (authed && !guarded) { %>
+<% if (authed) { %>
       <nav className="flex justify-center gap-4 underline">
         <a href="/login">Log in</a>
         <a href="/register">Register</a>
@@ -48,20 +52,17 @@ export default async function Home() {
     </main>
 <% } else { %>
     <main<%~ cssModules ? ' className={ui.page}' : '' %>>
-      <h1><%= title %></h1>
-      <p data-testid="status">{line}</p>
+      <h1><%= it.projectName %></h1>
+      <p data-testid="status">{describe(status)}</p>
 <% if (todos) { %>
       <a href="/todos">Todos</a>
 <% } %>
-<% if (authed && !guarded) { %>
+<% if (authed) { %>
       <nav>
         <a href="/login">Log in</a> · <a href="/register">Register</a> · <a href="/account">Account</a>
       </nav>
 <% } %>
     </main>
-<% } %>
-<% if (guarded) { %>
-    </RequireAuth>
 <% } %>
   )
 }
