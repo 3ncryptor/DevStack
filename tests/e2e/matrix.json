@@ -28,6 +28,42 @@
     "smoke": true
   },
   {
+    "id": "nest-jwt",
+    "modules": [
+      "language-node",
+      "framework-nest",
+      "orm-prisma",
+      "middleware-cors",
+      "security-helmet",
+      "security-rate-limit",
+      "quality-eslint",
+      "quality-prettier",
+      "api-versioning",
+      "api-docs-scalar",
+      "testing-vitest",
+      "auth-jwt"
+    ]
+  },
+  {
+    "id": "nest-better-auth",
+    "modules": [
+      "language-node",
+      "framework-nest",
+      "orm-prisma",
+      "middleware-cors",
+      "security-helmet",
+      "security-rate-limit",
+      "quality-eslint",
+      "quality-prettier",
+      {
+        "id": "auth-better-auth",
+        "options": {
+          "github": true
+        }
+      }
+    ]
+  },
+  {
     "id": "fastify-full",
     "modules": [
       "language-node",

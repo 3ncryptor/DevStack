@@ -11,9 +11,12 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   description: 'OpenAPI document at /openapi.json and a Scalar API reference at /docs',
   // Nest uses @nestjs/swagger for its document; that variant comes later (task 4.4)
-  requiresAny: ['framework-express', 'framework-fastify'],
+  // Nest runs on Express, so it serves the same Scalar reference and OpenAPI document (D-74)
+  requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
   dependencies: [
     { name: '@scalar/express-api-reference', when: NOT_FASTIFY },
+    // the docs router imports express at runtime; in a Nest project it is otherwise only transitive
+    { name: 'express', when: { has: 'framework-nest' } },
     { name: '@scalar/fastify-api-reference', when: FASTIFY }
   ],
   // other modules document their routes here (e.g. auth-jwt)

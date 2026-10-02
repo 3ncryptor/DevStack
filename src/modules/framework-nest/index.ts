@@ -20,7 +20,17 @@ const moduleDefinition: DevstackModule = {
   // unplugin-swc: Vitest compiles Nest tests with SWC, which keeps decorator metadata
   devDependencies: ['@swc-node/register', '@swc/core', '@types/express', 'unplugin-swc'],
   files: [{ path: 'vitest.config.ts', when: { has: 'testing-vitest' }, depth: 'wired' }],
-  exposesSlots: ['app.imports', 'app.middleware'],
+  exposesSlots: [
+    'app.imports',
+    'app.middleware',
+    'app.deps',
+    'index.imports',
+    'index.deps',
+    'appModule.imports',
+    'appModule.modules',
+    'test.imports',
+    'test.deps'
+  ],
   env: [
     {
       name: 'PORT',

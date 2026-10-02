@@ -2,17 +2,20 @@
 <% const awaitTest = vitest ? '' : 'await ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
 <% const fastify = it.modules.includes('framework-fastify') %>
-<%/* Express builds the app synchronously; Supertest drives Fastify through its server once ready */%>
-<% const app = (args = '') => (fastify ? `(await testApp(${args})).server` : `testApp(${args})`) %>
-import assert from 'node:assert/strict'
+<% const nest = it.modules.includes('framework-nest') %>
+<%/* Express builds the app synchronously; Supertest drives Fastify and Nest through their servers */%>
+<% const app = (args = '') => (fastify ? `(await testApp(${args})).server` : nest ? `(await testApp(${args})).getHttpServer()` : `testApp(${args})`) %>
+<%~ nest ? "import 'reflect-metadata'\n\n" : '' %>import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
-<%~ fastify ? "import Fastify from 'fastify'" : "import express from 'express'" %>
+<%~ fastify ? "import Fastify from 'fastify'" : nest ? "import type { ExecutionContext } from '@nestjs/common'\nimport { Reflector } from '@nestjs/core'" : "import express from 'express'" %>
 import { SignJWT } from 'jose'
 import request, { type Response } from 'supertest'
 
-import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
-<%~ fastify ? "import { registerErrorHandlers } from '../src/plugins/errors.js'\n" : '' %>import { testApp } from './helpers/app.js'
+<% if (nest) { %>
+import { Roles, RolesGuard } from '../src/<%= it.domainsDir %>/auth/auth.guard.js'
+<% } else { %>import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
+<% } %><%~ fastify ? "import { registerErrorHandlers } from '../src/plugins/errors.js'\n" : '' %>import { testApp } from './helpers/app.js'
 import { memoryAuthRepositories, TEST_AUTH_CONFIG, testAuthService } from './helpers/auth.js'
 
 const AUTH = '<%= base %>/auth'
@@ -156,7 +159,29 @@ function cookie(response: Response, name: string): string {
   await auth.register({ email: 'admin@example.com', password: ada.password })
   await repositories.users.setRole('admin@example.com', 'ADMIN')
   const admin = await auth.login({ email: 'admin@example.com', password: ada.password })
-<% if (fastify) { %>
+<% if (nest) { %>
+  // the guard on its own: the role metadata of a handler, and the user AuthGuard has set
+  class Admin {
+    @Roles('ADMIN')
+    route(this: void): void {}
+  }
+  const guard = new RolesGuard(new Reflector())
+  const contextFor = (token: string) =>
+    auth.verifyAccessToken(token).then(
+      (user) =>
+        ({
+          getHandler: () => Admin.prototype.route,
+          getClass: () => Admin,
+          switchToHttp: () => ({ getRequest: () => ({ user }) })
+        }) as unknown as ExecutionContext
+    )
+
+  const asUser = await contextFor(user.accessToken.token)
+  const asAdmin = await contextFor(admin.accessToken.token)
+
+  assert.throws(() => guard.canActivate(asUser), { status: 403 })
+  assert.equal(guard.canActivate(asAdmin), true)
+<% } else if (fastify) { %>
   const guarded = Fastify()
   registerErrorHandlers(guarded)
   guarded.get('/admin', { preHandler: [requireAuth(auth), requireRole('ADMIN')] }, () => ({ ok: true }))
@@ -166,6 +191,7 @@ function cookie(response: Response, name: string): string {
     response.json({ ok: true })
   })
 <% } %>
+<% if (!nest) { %>
 
   const asUser = await request(app)
     .get('/admin')
@@ -176,6 +202,7 @@ function cookie(response: Response, name: string): string {
 
   assert.equal(asUser.status, 403)
   assert.equal(asAdmin.status, 200)
+<% } %>
 })
 
 <%= awaitTest %>test('forged, unsigned and expired access tokens are refused', async () => {

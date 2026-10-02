@@ -7,19 +7,15 @@ import type { Server } from 'node:http'
 
 import request from 'supertest'
 
-import { createApp } from '../src/app.js'
-import { createLogger } from '../src/lib/logger.js'
 import type { ReadinessCheck } from '../src/lib/readiness.js'
-
-const logger = createLogger('silent')
+import { testApp } from './helpers/app.js'
 
 /** Starts the app without listening on a port, runs the requests, then closes it. */
 async function withApp(
   readinessChecks: readonly ReadinessCheck[],
   run: (server: Server) => Promise<void>
 ): Promise<void> {
-  const app = await createApp({ logger, readinessChecks })
-  await app.init()
+  const app = await testApp({ readinessChecks })
   try {
     await run(app.getHttpServer())
   } finally {

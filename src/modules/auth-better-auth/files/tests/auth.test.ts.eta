@@ -3,15 +3,21 @@
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
 <% const { github } = it.options %>
 <% const fastify = it.modules.includes('framework-fastify') %>
-<% const awaitApp = fastify ? 'await ' : '' %>
-import assert from 'node:assert/strict'
+<% const nest = it.modules.includes('framework-nest') %>
+<% const awaitApp = fastify || nest ? 'await ' : '' %>
+<%~ nest ? "import 'reflect-metadata'\n\n" : '' %>import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
-<%~ fastify ? "import Fastify, { type FastifyInstance } from 'fastify'" : "import express from 'express'" %>
+<%~ fastify ? "import Fastify, { type FastifyInstance } from 'fastify'" : nest ? "import { Controller, Get, HttpCode, Module, Post, UseGuards } from '@nestjs/common'\nimport { NestFactory } from '@nestjs/core'\nimport type { NestExpressApplication } from '@nestjs/platform-express'" : "import express from 'express'" %>
 import request, { type Response } from 'supertest'
 
-import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
-<%~ fastify ? "import { registerErrorHandlers } from '../src/plugins/errors.js'\n" : '' %>import { testApp } from './helpers/app.js'
+<% if (nest) { %>
+import type { Auth } from '../src/<%= it.domainsDir %>/auth/auth.js'
+import { AUTH as AUTH_TOKEN, AuthGuard, Roles, RolesGuard } from '../src/<%= it.domainsDir %>/auth/auth.guard.js'
+import { ErrorFilter } from '../src/filters/error.filter.js'
+import { createLogger } from '../src/lib/logger.js'
+<% } else { %>import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
+<% } %><%~ fastify ? "import { registerErrorHandlers } from '../src/plugins/errors.js'\n" : '' %>import { testApp } from './helpers/app.js'
 import { testAuth, WEB_ORIGIN } from './helpers/auth.js'
 
 const AUTH = '<%= base %>/auth'
@@ -24,7 +30,43 @@ function cookies(response: Response): string {
   return set.map((cookie) => cookie.split(';')[0]).join('; ')
 }
 
-<% if (fastify) { %>
+<% if (nest) { %>
+/** Supertest drives Nest through its HTTP server once the app is initialised. */
+async function appWithAuth() {
+  const { auth, db } = testAuth()
+  return { app: (await testApp({ auth })).getHttpServer(), auth, db }
+}
+
+@Controller()
+class GuardedController {
+  @Get('admin')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  admin() {
+    return { ok: true }
+  }
+
+  @Post('notes')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  notes() {
+    return { ok: true }
+  }
+}
+
+/** A bare Nest app with only the guards on two routes, for testing them on their own. */
+async function guardedApp(auth: Auth) {
+  @Module({
+    controllers: [GuardedController],
+    providers: [{ provide: AUTH_TOKEN, useValue: auth }, AuthGuard, RolesGuard]
+  })
+  class GuardedModule {}
+  const app = await NestFactory.create<NestExpressApplication>(GuardedModule, { logger: false })
+  app.useGlobalFilters(new ErrorFilter(createLogger('silent')))
+  await app.init()
+  return app.getHttpServer()
+}
+<% } else if (fastify) { %>
 /** Supertest drives Fastify through its HTTP server once the app is ready. */
 async function appWithAuth() {
   const { auth, db } = testAuth()
@@ -103,7 +145,9 @@ function appWithAuth() {
 <%= awaitTest %>test('requireRole lets only admins through', async () => {
   const { app, auth, db } = <%= awaitApp %>appWithAuth()
   const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
-<% if (fastify) { %>
+<% if (nest) { %>
+  const guarded = await guardedApp(auth)
+<% } else if (fastify) { %>
   const guarded = await guardedApp((instance) => {
     instance.get('/admin', { preHandler: [requireAuth(auth), requireRole('ADMIN')] }, () => ({ ok: true }))
   })
@@ -123,7 +167,9 @@ function appWithAuth() {
 <%= awaitTest %>test("requireAuth refuses cookie-authenticated writes from an untrusted origin", async () => {
   const { app, auth } = <%= awaitApp %>appWithAuth()
   const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
-<% if (fastify) { %>
+<% if (nest) { %>
+  const guarded = await guardedApp(auth)
+<% } else if (fastify) { %>
   const guarded = await guardedApp((instance) => {
     instance.post('/notes', { preHandler: requireAuth(auth) }, () => ({ ok: true }))
   })

@@ -468,10 +468,8 @@ export const STEPS: readonly WizardStep[] = [
     message: 'Authentication',
     choices: AUTHS,
     defaultValue: NONE,
-    // auth modules: Express or Fastify, with Prisma (M3, M4)
-    applies: (answers) =>
-      (answers.framework === 'framework-express' || answers.framework === 'framework-fastify') &&
-      answers.orm === 'orm-prisma',
+    // auth modules: Express, Fastify or Nest, with Prisma (M3, M4)
+    applies: (answers) => isModule(answers.framework) && answers.orm === 'orm-prisma',
     addsModule: true
   }),
   oauthProvidersStep,
@@ -528,7 +526,7 @@ export const STEPS: readonly WizardStep[] = [
     moduleId: 'api-docs-scalar',
     defaultValue: true,
     // the Nest variant (@nestjs/swagger) comes later
-    applies: (answers) => answers.framework === 'framework-express'
+    applies: (answers) => isModule(answers.framework)
   }),
   appSetupStep,
   rateLimitAlgorithmStep(),

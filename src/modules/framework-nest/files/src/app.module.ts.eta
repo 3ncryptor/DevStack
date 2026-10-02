@@ -3,6 +3,7 @@ import { Module, type DynamicModule } from '@nestjs/common'
 import type { AppDeps } from './app.js'
 import { HealthModule } from './health/health.module.js'
 import { InfoController } from './info.controller.js'
+<%~ it.slots['appModule.imports'] %>
 
 @Module({})
 export class AppModule {
@@ -10,7 +11,10 @@ export class AppModule {
   static register(deps: AppDeps): DynamicModule {
     return {
       module: AppModule,
-      imports: [HealthModule.register(deps.readinessChecks)],
+      imports: [
+        HealthModule.register(deps.readinessChecks),
+        <%~ it.slots['appModule.modules'] %>
+      ],
       controllers: [InfoController]
     }
   }

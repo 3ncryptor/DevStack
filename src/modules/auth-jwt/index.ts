@@ -4,6 +4,8 @@ import { AUTH_OPENAPI_SLOTS } from './openapi'
 
 const FASTIFY: Condition = { has: 'framework-fastify' }
 const NOT_FASTIFY: Condition = { not: FASTIFY }
+const EXPRESS: Condition = { has: 'framework-express' }
+const NEST: Condition = { has: 'framework-nest' }
 
 const USER_MODELS_TEMPLATE = `enum Role {
   USER
@@ -52,7 +54,7 @@ const moduleDefinition: DevstackModule = {
   description:
     'Register, login, refresh and logout with argon2 password hashing, JWT access tokens and rotating refresh tokens',
   // login and register always get a strict per-IP limit (brute force, argon2 cost)
-  requiresAny: ['framework-express', 'framework-fastify'],
+  requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
   requires: ['orm-prisma', 'core-backend', 'security-rate-limit'],
   dependencies: [
     'argon2',
@@ -97,13 +99,11 @@ const moduleDefinition: DevstackModule = {
   slots: [
     { slot: 'prisma.models', code: USER_MODELS, when: { not: { has: 'template-todo' } } },
     { slot: 'prisma.models', code: USER_MODELS_WITH_TODOS, when: { has: 'template-todo' } },
+    { slot: 'app.imports', code: "import cookieParser from 'cookie-parser'", when: NOT_FASTIFY },
     {
       slot: 'app.imports',
-      code: [
-        "import cookieParser from 'cookie-parser'",
-        "import { createAuthRouter } from './__domains__/auth/auth.routes.js'"
-      ].join('\n'),
-      when: NOT_FASTIFY
+      code: "import { createAuthRouter } from './__domains__/auth/auth.routes.js'",
+      when: EXPRESS
     },
     {
       slot: 'app.imports',
@@ -124,8 +124,15 @@ const moduleDefinition: DevstackModule = {
     {
       slot: 'app.routes',
       code: "api.use('/auth', createAuthRouter(deps.auth))",
-      when: NOT_FASTIFY
+      when: EXPRESS
     },
+    // Nest: the auth module brings the controller and the guards (D-74)
+    {
+      slot: 'appModule.imports',
+      code: "import { AuthModule } from './__domains__/auth/auth.module.js'",
+      when: NEST
+    },
+    { slot: 'appModule.modules', code: 'AuthModule.register(deps.auth),', when: NEST },
     {
       slot: 'app.routes',
       code: "void api.register(createAuthRoutes(deps.auth), { prefix: '/auth' })",
@@ -146,6 +153,12 @@ const moduleDefinition: DevstackModule = {
     { slot: 'test.imports', code: "import { testAuthService } from './auth.js'" },
     { slot: 'test.deps', code: 'auth: testAuthService(),' },
     ...AUTH_OPENAPI_SLOTS
+  ],
+  files: [
+    { path: 'src/__domains__/auth/auth.routes.ts', when: { not: NEST } },
+    { path: 'src/__domains__/auth/auth.controller.ts', when: NEST },
+    { path: 'src/__domains__/auth/auth.guard.ts', when: NEST },
+    { path: 'src/__domains__/auth/auth.module.ts', when: NEST }
   ],
   filesPath: moduleFilesPath('auth-jwt')
 }

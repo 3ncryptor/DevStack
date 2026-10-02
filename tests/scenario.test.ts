@@ -98,10 +98,16 @@ describe('API versioning (D-64)', () => {
     expect(app).toContain("app.use('/', api)")
   })
 
-  it('sets a global prefix that excludes the health routes (Nest)', async () => {
-    const app = content(await plan(['framework-nest', 'api-versioning']), 'src/app.ts')
+  it('versions Nest routes by URI and keeps the probes version-neutral (Nest)', async () => {
+    const result = await plan(['framework-nest', 'api-versioning'])
 
-    expect(app).toContain("app.setGlobalPrefix('v1', { exclude: ['health', 'ready'] })")
+    // URI versioning, unlike a global prefix, keeps Nest's 404 envelope on every path
+    expect(content(result, 'src/app.ts')).toContain(
+      "app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' })"
+    )
+    expect(content(result, 'src/health/health.controller.ts')).toContain(
+      '@Controller({ version: VERSION_NEUTRAL })'
+    )
   })
 })
 

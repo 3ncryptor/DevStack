@@ -102,6 +102,7 @@ const NEST: ReadonlyArray<readonly [string, unknown]> = [
   [Q.preCommit, false],
   [Q.tests, 'none'],
   [Q.docker, false],
+  [Q.apiDocs, false],
   [Q.appSetup, []],
   [Q.versioning, false],
   [Q.ci, false],
@@ -215,7 +216,7 @@ describe('guided wizard (A0.2 order)', () => {
 
     const result = await runWizard(prompter, CONTEXT, fakeServices())
 
-    for (const skipped of [Q.architecture, Q.orm, Q.apiDocs, Q.asyncHandler]) {
+    for (const skipped of [Q.architecture, Q.orm, Q.asyncHandler]) {
       expect(prompter.asked).not.toContain(skipped)
     }
     expect(sorted(result.modules)).toEqual(
@@ -361,7 +362,6 @@ describe('review screen', () => {
       [Q.which, 'framework'],
       [Q.framework, 'framework-express'],
       [Q.architecture, 'arch-clean'],
-      [Q.apiDocs, false],
       [Q.asyncHandler, true]
     ])
 
@@ -371,7 +371,6 @@ describe('review screen', () => {
       Q.which,
       Q.framework,
       Q.architecture,
-      Q.apiDocs,
       Q.asyncHandler,
       Q.next
     ])

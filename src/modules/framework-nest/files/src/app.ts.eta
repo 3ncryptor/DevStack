@@ -1,4 +1,7 @@
 <% const versioned = it.modules.includes('api-versioning') %>
+<% if (versioned) { %>
+import { VersioningType } from '@nestjs/common'
+<% } %>
 import { NestFactory, Reflector } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 
@@ -15,6 +18,7 @@ import { requestId } from './middlewares/request-id.js'
 export interface AppDeps {
   logger: Logger
   readinessChecks: readonly ReadinessCheck[]
+  <%~ it.slots['app.deps'] %>
 }
 
 /** Builds the app without listening, so tests use it directly (B17.2). */
@@ -31,8 +35,9 @@ export async function createApp(deps: AppDeps): Promise<NestExpressApplication> 
   <%~ it.slots['app.middleware'] %>
 
 <% if (versioned) { %>
-  // application routes under /v1 (D-64); probes keep their unversioned paths
-  app.setGlobalPrefix('v1', { exclude: ['health', 'ready'] })
+  // application routes under /v1 (D-64); probes are VERSION_NEUTRAL. URI versioning, unlike a
+  // global prefix, keeps Nest's 404 (the error envelope) on every path, not only under /v1
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' })
 <% } %>
   app.useGlobalFilters(new ErrorFilter(deps.logger))
   app.useGlobalInterceptors(new EnvelopeInterceptor(app.get(Reflector)))

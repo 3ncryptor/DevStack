@@ -7,10 +7,16 @@ import { disposers, readinessChecks } from './lifecycle.js'
 import { createLogger } from './lib/logger.js'
 import { reportReadiness } from './lib/readiness.js'
 import { handleShutdownSignals } from './lib/shutdown.js'
+<%~ it.slots['index.imports'] %>
 
 const env = loadEnvOrExit()
 const logger = createLogger(env.LOG_LEVEL)
-const app = await createApp({ logger, readinessChecks })
+// composition root (B17.6): concrete adapters are chosen here, so tests can pass in-memory ones
+const app = await createApp({
+  logger,
+  readinessChecks,
+  <%~ it.slots['index.deps'] %>
+})
 
 await app.listen(env.PORT)
 logger.info(`listening on http://localhost:${env.PORT}`)

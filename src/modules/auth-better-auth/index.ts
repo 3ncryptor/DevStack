@@ -6,6 +6,8 @@ import type { Condition, DevstackModule, SlotContribution } from '../../types/mo
 const VERSIONED: Condition = { has: 'api-versioning' }
 const FASTIFY: Condition = { has: 'framework-fastify' }
 const NOT_FASTIFY: Condition = { not: FASTIFY }
+const EXPRESS: Condition = { has: 'framework-express' }
+const NEST: Condition = { has: 'framework-nest' }
 const GITHUB: Condition = { option: 'github', equals: true }
 const GOOGLE: Condition = { option: 'google', equals: true }
 
@@ -86,7 +88,15 @@ const mount = (prefix: string, when: Condition): SlotContribution => ({
   slot: 'app.middleware',
   code: `app.all('${prefix}/auth/*splat', toNodeHandler(deps.auth))`,
   order: 95,
-  when: { all: [when, NOT_FASTIFY] }
+  when: { all: [when, EXPRESS] }
+})
+
+/** Nest: on its Express instance, before Nest's body parser (added when the app initialises). */
+const nestMount = (prefix: string, when: Condition): SlotContribution => ({
+  slot: 'app.middleware',
+  code: `app.getHttpAdapter().getInstance().all('${prefix}/auth/*splat', toNodeHandler(deps.auth))`,
+  order: 95,
+  when: { all: [when, NEST] }
 })
 
 const providerEnv = (provider: 'GITHUB' | 'GOOGLE', label: string, when: Condition) =>
@@ -116,7 +126,7 @@ const moduleDefinition: DevstackModule = {
   provides: ['auth'],
   description:
     'Better Auth: email + password, optional GitHub and Google sign-in, database sessions and admin roles',
-  requiresAny: ['framework-express', 'framework-fastify'],
+  requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
   requires: ['orm-prisma', 'core-backend'],
   dependencies: ['better-auth'],
   options: z.object({
@@ -158,11 +168,13 @@ const moduleDefinition: DevstackModule = {
     { slot: 'prisma.models', code: MODELS_WITH_TODOS, when: { has: 'template-todo' } },
     {
       slot: 'app.imports',
-      code: [
-        "import { toNodeHandler } from 'better-auth/node'",
-        "import { createAuthRouter } from './__domains__/auth/auth.routes.js'"
-      ].join('\n'),
+      code: "import { toNodeHandler } from 'better-auth/node'",
       when: NOT_FASTIFY
+    },
+    {
+      slot: 'app.imports',
+      code: "import { createAuthRouter } from './__domains__/auth/auth.routes.js'",
+      when: EXPRESS
     },
     {
       slot: 'app.imports',
@@ -177,9 +189,18 @@ const moduleDefinition: DevstackModule = {
     { slot: 'app.plugins', code: 'registerBetterAuth(app, deps.auth)', order: 95, when: FASTIFY },
     mount('/v1', VERSIONED),
     mount('', { not: VERSIONED }),
+    nestMount('/v1', VERSIONED),
+    nestMount('', { not: VERSIONED }),
     { slot: 'app.deps', code: 'auth: Auth' },
     // GET /me through requireAuth: the session as the rest of the API sees it
-    { slot: 'app.routes', code: 'api.use(createAuthRouter(deps.auth))', when: NOT_FASTIFY },
+    { slot: 'app.routes', code: 'api.use(createAuthRouter(deps.auth))', when: EXPRESS },
+    // Nest: GET /me and the guards come with the auth module (D-74)
+    {
+      slot: 'appModule.imports',
+      code: "import { AuthModule } from './__domains__/auth/auth.module.js'",
+      when: NEST
+    },
+    { slot: 'appModule.modules', code: 'AuthModule.register(deps.auth),', when: NEST },
     { slot: 'app.routes', code: 'void api.register(createAuthRoutes(deps.auth))', when: FASTIFY },
     {
       slot: 'index.imports',
@@ -196,7 +217,13 @@ const moduleDefinition: DevstackModule = {
     { slot: 'test.imports', code: "import { testAuth } from './auth.js'" },
     { slot: 'test.deps', code: 'auth: testAuth().auth,' }
   ],
-  files: [{ path: 'src/__domains__/auth/auth.handler.ts', when: FASTIFY }],
+  files: [
+    { path: 'src/__domains__/auth/auth.handler.ts', when: FASTIFY },
+    { path: 'src/__domains__/auth/auth.routes.ts', when: { not: NEST } },
+    { path: 'src/__domains__/auth/auth.guard.ts', when: NEST },
+    { path: 'src/__domains__/auth/me.controller.ts', when: NEST },
+    { path: 'src/__domains__/auth/auth.module.ts', when: NEST }
+  ],
   filesPath: moduleFilesPath('auth-better-auth')
 }
 

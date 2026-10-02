@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Inject, Res } from '@nestjs/common'
+import { Controller, Get, HttpStatus, Inject, Res, VERSION_NEUTRAL } from '@nestjs/common'
 import type { Response } from 'express'
 
 import { RawResponse } from '../interceptors/envelope.interceptor.js'
@@ -11,7 +11,8 @@ export const READINESS_CHECKS = Symbol('READINESS_CHECKS')
  * outside the success envelope: orchestrators expect these shapes.
  */
 @RawResponse()
-@Controller()
+// probes keep their unversioned paths when the API is versioned (D-64)
+@Controller({ version: VERSION_NEUTRAL })
 export class HealthController {
   constructor(@Inject(READINESS_CHECKS) private readonly checks: readonly ReadinessCheck[]) {}
 
