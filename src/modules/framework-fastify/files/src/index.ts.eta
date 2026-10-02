@@ -1,0 +1,28 @@
+// config/env.js comes first: importing it loads .env before other modules read process.env
+import { loadEnvOrExit } from './config/env.js'
+import { createApp } from './app.js'
+import { disposers, readinessChecks } from './lifecycle.js'
+import { createLogger } from './lib/logger.js'
+import { reportReadiness } from './lib/readiness.js'
+import { handleShutdownSignals } from './lib/shutdown.js'
+<%~ it.slots['index.imports'] %>
+
+const env = loadEnvOrExit()
+const logger = createLogger(env.LOG_LEVEL)
+// composition root (B17.6): concrete adapters are chosen here, so tests can pass in-memory ones
+const app = await createApp({
+  logger,
+  readinessChecks,
+  <%~ it.slots['index.deps'] %>
+})
+
+try {
+  // every interface, so the app is reachable inside a container too
+  await app.listen({ port: env.PORT, host: '0.0.0.0' })
+} catch (error: unknown) {
+  logger.fatal({ err: error }, `could not listen on port ${env.PORT}`)
+  process.exit(1)
+}
+void reportReadiness(readinessChecks, logger)
+
+handleShutdownSignals({ logger, disposers, close: () => app.close() })

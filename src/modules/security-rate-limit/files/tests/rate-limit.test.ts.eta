@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
-import { createLimiter } from '../src/middlewares/rate-limit.js'
+import { createLimiter } from '../src/lib/rate-limiter.js'
 
 const LIMIT = 3
 const WINDOW_MS = 1000

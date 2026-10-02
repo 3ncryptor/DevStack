@@ -1,0 +1,52 @@
+<% const versioned = it.modules.includes('api-versioning') %>
+<% const requestLogging = it.modules.includes('middleware-request-logger') %>
+import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance } from 'fastify'
+
+<%~ it.slots['app.imports'] %>
+
+import { ApiSuccess } from './lib/api-response.js'
+import type { Logger } from './lib/logger.js'
+import type { ReadinessCheck } from './lib/readiness.js'
+import { registerErrorHandlers } from './plugins/errors.js'
+import { requestIdOptions, echoRequestId } from './plugins/request-id.js'
+import { healthRoutes } from './routes/health.js'
+
+export interface AppDeps {
+  logger: Logger
+  readinessChecks: readonly ReadinessCheck[]
+  <%~ it.slots['app.deps'] %>
+}
+
+/** Builds the app without listening, so tests use `app.inject()` (B17.2). */
+export async function createApp(deps: AppDeps): Promise<FastifyInstance> {
+  // pino's Logger is Fastify's base logger; typed as such so the app is a plain FastifyInstance
+  const loggerInstance: FastifyBaseLogger = deps.logger
+  const app = Fastify({
+    loggerInstance,
+    ...requestIdOptions,
+    logController: new LogController({
+      requestIdLogLabel: 'requestId',
+      // one line per request comes from the request-logger module when it is selected
+      disableRequestLogging: <%= requestLogging ? 'false' : 'true' %>
+    })
+  })
+
+  // Order (B17.2): request id, security plugins, error handlers, routes.
+  echoRequestId(app)
+  <%~ it.slots['app.plugins'] %>
+  registerErrorHandlers(app)
+
+  await app.register(healthRoutes(deps.readinessChecks))
+
+  // application routes (slot `app.routes`)<% if (versioned) { %>, under /v1 (D-64)<% } %>
+  await app.register(
+    (api, _options, done) => {
+      api.get('/', () => new ApiSuccess({ name: '<%= it.projectName %>'<% if (versioned) { %>, version: 'v1'<% } %> }))
+      <%~ it.slots['app.routes'] %>
+      done()
+    },
+    { prefix: '<%= versioned ? '/v1' : '' %>' }
+  )
+
+  return app
+}

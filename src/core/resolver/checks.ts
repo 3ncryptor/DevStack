@@ -1,6 +1,6 @@
 import { isCatalogName } from '../../catalog/node'
 import type { Diagnostic, FixAction } from '../../types/diagnostics'
-import type { DevstackModule, ModuleCategory } from '../../types/module'
+import { dependencyName, type DevstackModule, type ModuleCategory } from '../../types/module'
 
 /** Categories that allow one module per project (buildPlan B4); more than one is an error. */
 export const SINGLE_SELECT_CATEGORIES: ReadonlySet<ModuleCategory> = new Set([
@@ -152,10 +152,9 @@ export function checkSlots(context: CheckContext): Diagnostic[] {
 export function checkCatalog(context: CheckContext): Diagnostic[] {
   return [...context.selected.values()].flatMap((moduleDefinition) =>
     (
-      [
-        ...(moduleDefinition.dependencies ?? []),
-        ...(moduleDefinition.devDependencies ?? [])
-      ] as string[]
+      [...(moduleDefinition.dependencies ?? []), ...(moduleDefinition.devDependencies ?? [])].map(
+        dependencyName
+      ) as string[]
     )
       .filter((name) => !isCatalogName(name))
       .map((name) => ({

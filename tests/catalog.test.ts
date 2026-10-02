@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { NODE_CATALOG, buildApprovalsFor } from '../src/catalog/node'
 import { TYPE_PAIRS } from '../src/catalog/pairs'
 import { BUILTIN_MODULES } from '../src/modules/index'
+import { dependencyName } from '../src/types/module'
 import { PACKAGE_ROOT } from '../src/paths'
 
 function major(range: string): number {
@@ -39,6 +40,7 @@ describe('module contract', () => {
   it('references only catalog packages', () => {
     const unknown = BUILTIN_MODULES.flatMap((moduleDefinition) =>
       [...(moduleDefinition.dependencies ?? []), ...(moduleDefinition.devDependencies ?? [])]
+        .map(dependencyName)
         .filter((name) => !(name in NODE_CATALOG))
         .map((name) => `${moduleDefinition.id}: ${name}`)
     )

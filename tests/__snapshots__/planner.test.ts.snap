@@ -196,6 +196,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     },
     {
       "mode": "644",
+      "path": "src/lib/rate-limiter.ts",
+      "sha256": "0b873be6ce9c5f74",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
       "path": "src/lib/readiness.ts",
       "sha256": "2213ff0b93c82d9f",
       "strategy": "create",
@@ -251,7 +257,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "src/middlewares/rate-limit.ts",
-      "sha256": "76e7528247bfdf5b",
+      "sha256": "efd30ceb843e4348",
       "strategy": "create",
     },
     {
@@ -305,7 +311,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "tests/rate-limit.test.ts",
-      "sha256": "9f7b37a3a0447967",
+      "sha256": "684a56e818aca9e7",
       "strategy": "create",
     },
     {
@@ -375,7 +381,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "a4d2e9c724d58635",
+      "sha256": "803405b055aaea4b",
       "strategy": "create",
     },
     {
@@ -483,19 +489,19 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "AGENTS.md",
-      "sha256": "0e0cebef7d734f9d",
+      "sha256": "510670a594073ad5",
       "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
       "path": "apps/api/.env",
-      "sha256": "8bc6858836718b96",
+      "sha256": "5f2c3bdc2509c639",
       "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
       "path": "apps/api/.env.example",
-      "sha256": "da2bada554b8e638",
+      "sha256": "4e34baba36e66ec8",
       "strategy": "create",
     },
     {
@@ -537,7 +543,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/src/config/env.ts",
-      "sha256": "584b3498a521d985",
+      "sha256": "59c71f4fc7ec70b2",
       "strategy": "create",
     },
     {
@@ -580,6 +586,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
       "mode": "644",
       "path": "apps/api/src/lib/logger.ts",
       "sha256": "b4d54bb2e3d882fc",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "apps/api/src/lib/rate-limiter.ts",
+      "sha256": "0b873be6ce9c5f74",
       "strategy": "create",
     },
     {
@@ -627,7 +639,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/src/middlewares/rate-limit.ts",
-      "sha256": "76e7528247bfdf5b",
+      "sha256": "efd30ceb843e4348",
       "strategy": "create",
     },
     {
@@ -705,7 +717,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/tests/rate-limit.test.ts",
-      "sha256": "f1aecd60a6d6223a",
+      "sha256": "9becf304f2911888",
       "strategy": "create",
     },
     {
@@ -909,7 +921,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "ddf5ec0c0e8da4c7",
+      "sha256": "48db84cdf58cd4f9",
       "strategy": "skip-if-exists",
     },
     {
@@ -935,12 +947,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     "security-rate-limit",
     "devops-docker",
     "devops-github-actions",
+    "api-docs-scalar",
     "repo-agents-md",
     "repo-github-hygiene",
     "repo-vscode",
     "core-backend",
     "framework-express",
-    "api-docs-scalar",
     "shared-api",
     "framework-nextjs",
     "arch-web-feature",

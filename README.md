@@ -22,7 +22,7 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
 
 ## What you get
 
-- **Express 5 or NestJS 12** on ESM TypeScript (NodeNext), built around `createApp(deps)` so tests
+- **Express 5, Fastify 5 or NestJS 12** on ESM TypeScript (NodeNext), built around `createApp(deps)` so tests
   need no open port:
   - environment validated with Zod at startup, every missing or invalid variable listed at once;
   - pino JSON logs with a request id per request (echoed in `x-request-id`);

@@ -28,6 +28,38 @@
     "smoke": true
   },
   {
+    "id": "fastify-full",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "arch-feature",
+      "orm-prisma",
+      "middleware-cors",
+      "security-helmet",
+      "security-rate-limit",
+      "security-origin-checks",
+      "middleware-request-logger",
+      "middleware-compression",
+      "api-versioning",
+      "api-docs-scalar",
+      "testing-vitest",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "fastify-plain",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "arch-flat",
+      "security-helmet",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
     "id": "express-docker",
     "modules": [
       "framework-express",

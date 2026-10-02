@@ -1,5 +1,8 @@
 import { moduleFilesPath } from '../../paths'
-import type { DevstackModule } from '../../types/module'
+import type { Condition, DevstackModule } from '../../types/module'
+
+const FASTIFY: Condition = { has: 'framework-fastify' }
+const NOT_FASTIFY: Condition = { not: FASTIFY }
 
 const moduleDefinition: DevstackModule = {
   id: 'security-origin-checks',
@@ -9,7 +12,7 @@ const moduleDefinition: DevstackModule = {
   description: 'Strict origin allowlist checks for Express or NestJS requests',
   requiresAny: ['http-framework'],
   // the middleware imports express types, which Nest does not bring in on its own
-  devDependencies: ['@types/express'],
+  devDependencies: [{ name: '@types/express', when: NOT_FASTIFY }],
   env: [
     {
       name: 'ALLOWED_ORIGINS',
@@ -22,9 +25,25 @@ const moduleDefinition: DevstackModule = {
   slots: [
     {
       slot: 'app.imports',
-      code: "import { originCheckMiddleware } from './middlewares/origin-check.js'"
+      code: "import { originCheckMiddleware } from './middlewares/origin-check.js'",
+      when: NOT_FASTIFY
     },
-    { slot: 'app.middleware', code: 'app.use(originCheckMiddleware)', order: 50 }
+    {
+      slot: 'app.middleware',
+      code: 'app.use(originCheckMiddleware)',
+      order: 50,
+      when: NOT_FASTIFY
+    },
+    {
+      slot: 'app.imports',
+      code: "import { registerOriginCheck } from './plugins/origin-check.js'",
+      when: FASTIFY
+    },
+    { slot: 'app.plugins', code: 'registerOriginCheck(app)', order: 50, when: FASTIFY }
+  ],
+  files: [
+    { path: 'src/middlewares/origin-check.ts', when: NOT_FASTIFY },
+    { path: 'src/plugins/origin-check.ts', when: FASTIFY }
   ],
   filesPath: moduleFilesPath('security-origin-checks')
 }

@@ -1,0 +1,43 @@
+<% const { algorithm, limit, windowMs } = it.options %>
+import type { FastifyInstance, FastifyReply, FastifyRequest, HookHandlerDoneFunction } from 'fastify'
+
+import { toErrorResponse, TooManyRequestsError } from '../lib/errors.js'
+import { createLimiter, type Limiter } from '../lib/rate-limiter.js'
+
+export { createLimiter, type Decision, type Limiter } from '../lib/rate-limiter.js'
+
+const LIMIT = <%= limit %>
+const WINDOW_MS = <%= windowMs %>
+const PRUNE_INTERVAL_MS = 60_000
+
+// In memory, per process: behind several instances, use a shared store (Redis) instead.
+const limiter = createLimiter(LIMIT, WINDOW_MS)
+setInterval(() => {
+  limiter.prune()
+}, PRUNE_INTERVAL_MS).unref()
+
+/**
+ * An onRequest hook that limits each client by IP with `limiter`. Behind a proxy, create the app
+ * with `trustProxy` so request.ip is the client. Over the limit: 429 with the error envelope,
+ * `RateLimit-*` and `Retry-After` headers.
+ */
+export function rateLimitHook(limiter: Limiter) {
+  return (request: FastifyRequest, reply: FastifyReply, done: HookHandlerDoneFunction): void => {
+    const decision = limiter.consume(request.ip)
+    void reply
+      .header('RateLimit-Limit', decision.limit)
+      .header('RateLimit-Remaining', decision.remaining)
+      .header('RateLimit-Reset', Math.ceil(decision.resetMs / 1000))
+    if (decision.allowed) {
+      done()
+      return
+    }
+    const { status, body } = toErrorResponse(new TooManyRequestsError(), request.id)
+    void reply.header('Retry-After', Math.ceil(decision.retryAfterMs / 1000)).status(status).send(body)
+  }
+}
+
+/** Every request (<%= algorithm %>, <%= limit %> per <%= windowMs %> ms). */
+export function registerRateLimit(app: FastifyInstance): void {
+  app.addHook('onRequest', rateLimitHook(limiter))
+}

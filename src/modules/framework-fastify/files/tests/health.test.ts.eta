@@ -1,0 +1,70 @@
+<% const vitest = it.modules.includes('testing-vitest') %>
+import assert from 'node:assert/strict'
+<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+
+import { createApp } from '../src/app.js'
+import { createLogger } from '../src/lib/logger.js'
+import type { ReadinessCheck } from '../src/lib/readiness.js'
+import { testApp } from './helpers/app.js'
+
+<%= vitest ? '' : 'await ' %>test('GET /health reports the process is alive', async () => {
+  const app = await testApp()
+
+  const response = await app.inject({ method: 'GET', url: '/health' })
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(response.json<{ status: string }>().status, 'ok')
+})
+
+<%= vitest ? '' : 'await ' %>test('GET /ready is 200 when every check passes', async () => {
+  const healthy: ReadinessCheck = { name: 'db', check: () => Promise.resolve() }
+  const app = await testApp({ readinessChecks: [healthy] })
+
+  const response = await app.inject({ method: 'GET', url: '/ready' })
+
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(response.json(), { status: 'ok', checks: { db: 'ok' } })
+})
+
+<%= vitest ? '' : 'await ' %>test('GET /ready is 503 with per-check status when a check fails', async () => {
+  const failing: ReadinessCheck = { name: 'db', check: () => Promise.reject(new Error('down')) }
+  const app = await testApp({ readinessChecks: [failing] })
+
+  const response = await app.inject({ method: 'GET', url: '/ready' })
+
+  assert.equal(response.statusCode, 503)
+  assert.deepEqual(response.json(), { status: 'error', checks: { db: 'error' } })
+})
+
+<%= vitest ? '' : 'await ' %>test('unknown routes get the error envelope with the request id', async () => {
+  const app = await testApp()
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/missing?x=1',
+    headers: { 'x-request-id': 'test-id' }
+  })
+
+  assert.equal(response.statusCode, 404)
+  assert.equal(response.headers['x-request-id'], 'test-id')
+  assert.deepEqual(response.json(), {
+    success: false,
+    error: { code: 'NOT_FOUND', message: 'Route GET /missing not found', requestId: 'test-id' }
+  })
+})
+
+<%= vitest ? '' : 'await ' %>test('malformed JSON is a 400 in the envelope, not a 500', async () => {
+  const app = await createApp({ logger: createLogger('silent'), readinessChecks: [] })
+  app.post('/echo', (request) => request.body)
+  await app.ready()
+
+  const response = await app.inject({
+    method: 'POST',
+    url: '/echo',
+    headers: { 'content-type': 'application/json' },
+    payload: '{"broken"'
+  })
+
+  assert.equal(response.statusCode, 400)
+  assert.equal(response.json<{ success: boolean }>().success, false)
+})

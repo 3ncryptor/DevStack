@@ -48,6 +48,16 @@ export type Condition =
   | { any: readonly Condition[] }
   | { not: Condition }
 
+/**
+ * A catalog package, or one that is installed only when a condition holds, e.g. `@fastify/cors`
+ * only with Fastify (M4): `{ name: '@fastify/cors', when: { has: 'framework-fastify' } }`.
+ */
+export type DependencyEntry = CatalogName | { name: CatalogName; when: Condition }
+
+/** The package name of a dependency entry. */
+export const dependencyName = (entry: DependencyEntry): CatalogName =>
+  typeof entry === 'string' ? entry : entry.name
+
 /** Narrows when one of a module's template files is generated, by its project-relative path. */
 export interface FileRule {
   path: string
@@ -131,8 +141,8 @@ export interface DevstackModule {
   /** Per-file `when`/`depth` overrides for templates under `filesPath`. */
   files?: readonly FileRule[]
   /** Catalog package names; versions come from src/catalog (D-08). */
-  dependencies?: readonly CatalogName[]
-  devDependencies?: readonly CatalogName[]
+  dependencies?: readonly DependencyEntry[]
+  devDependencies?: readonly DependencyEntry[]
   requires?: string[]
   requiresAny?: string[]
   conflictsWith?: string[]
@@ -170,6 +180,10 @@ const conditionSchema: z.ZodType<Condition> = z.lazy(() =>
   ])
 )
 
+function dependencyEntrySchema() {
+  return z.union([z.string(), z.strictObject({ name: z.string(), when: conditionSchema })])
+}
+
 export const moduleDefinitionSchema = z.object({
   id: z.string().regex(MODULE_ID, 'Module ids are kebab-case, e.g. framework-express.'),
   title: z.string().min(1),
@@ -188,8 +202,8 @@ export const moduleDefinitionSchema = z.object({
       })
     )
     .optional(),
-  dependencies: z.array(z.string()).optional(),
-  devDependencies: z.array(z.string()).optional(),
+  dependencies: z.array(dependencyEntrySchema()).optional(),
+  devDependencies: z.array(dependencyEntrySchema()).optional(),
   requires: z.array(z.string()).optional(),
   requiresAny: z.array(z.string()).optional(),
   conflictsWith: z.array(z.string()).optional(),

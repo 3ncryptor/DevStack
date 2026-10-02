@@ -4,11 +4,11 @@ exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack pr
 [
   {
     "path": "apps/api/.env",
-    "sha256": "a49bfa1bc2957316",
+    "sha256": "9e0189716babf784",
   },
   {
     "path": "apps/api/.env.example",
-    "sha256": "ed97fa18f1367226",
+    "sha256": "631dfa9164084e52",
   },
   {
     "path": "apps/api/prisma/schema.prisma",
@@ -16,7 +16,7 @@ exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack pr
   },
   {
     "path": "apps/api/src/app.ts",
-    "sha256": "20ff9992ee715a0b",
+    "sha256": "7d53e29dc78e5e36",
   },
   {
     "path": "apps/api/src/db/repositories/auth.repository.prisma.ts",

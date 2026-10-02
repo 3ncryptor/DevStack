@@ -1,0 +1,17 @@
+import type { FastifyInstance } from 'fastify'
+
+import { createApp, type AppDeps } from '../../src/app.js'
+import { createLogger } from '../../src/lib/logger.js'
+<%~ it.slots['test.imports'] %>
+
+/** The app with test doubles for every dependency (slot `test.deps`), ready for `inject()`. */
+export async function testApp(overrides: Partial<AppDeps> = {}): Promise<FastifyInstance> {
+  const app = await createApp({
+    logger: createLogger('silent'),
+    readinessChecks: [],
+    <%~ it.slots['test.deps'] %>
+    ...overrides
+  })
+  await app.ready()
+  return app
+}

@@ -1,4 +1,5 @@
 <% const vitest = it.modules.includes('testing-vitest') %>
+<% const fastify = it.modules.includes('framework-fastify') %>
 import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
@@ -6,7 +7,10 @@ import request from 'supertest'
 
 import { testApp } from './helpers/app.js'
 
-const app = testApp()
+<% if (fastify) { %>
+// Supertest drives Fastify through its HTTP server once the app is ready
+<% } %>
+const app = <%= fastify ? '(await testApp()).server' : 'testApp()' %>
 
 <%= vitest ? '' : 'await ' %>test('GET /openapi.json serves the OpenAPI document', async () => {
   const response = await request(app).get('/openapi.json')
@@ -16,7 +20,7 @@ const app = testApp()
 })
 
 <%= vitest ? '' : 'await ' %>test('GET /docs serves the API reference', async () => {
-  const response = await request(app).get('/docs')
+<%~ fastify ? "  // Fastify's Scalar plugin serves the reference at /docs/ and redirects /docs there\n" : '' %>  const response = await request(app).get('<%= fastify ? '/docs/' : '/docs' %>')
 
   assert.equal(response.status, 200)
   assert.match(response.text, /openapi\.json/)

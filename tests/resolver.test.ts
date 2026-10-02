@@ -186,6 +186,7 @@ describe('diagnostic fix actions', () => {
 
     expect(diagnostic?.actions).toEqual([
       { label: 'Add framework-express', add: ['framework-express'], remove: [] },
+      { label: 'Add framework-fastify', add: ['framework-fastify'], remove: [] },
       { label: 'Add framework-nest', add: ['framework-nest'], remove: [] }
     ])
   })

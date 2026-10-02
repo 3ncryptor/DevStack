@@ -124,7 +124,7 @@ const WORKSPACE_GLOBS = ['apps/*', 'packages/*']
 function targetPackageJson(input: PlanInput, target: Target, context: PlanContext): PackageJson {
   const composed = withPorts(
     withScriptRules(
-      composeProjectPackageJson(target.packageName, target.modules),
+      composeProjectPackageJson(target.packageName, target.modules, context.modules),
       context.modules,
       target.modules,
       context.moduleOptions,

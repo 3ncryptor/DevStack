@@ -62,7 +62,7 @@ describe('rate-limit algorithms (D-64)', () => {
     ['leaky-bucket', 'class LeakyBucket']
   ])('%s renders only its own algorithm, with a test', async (algorithm, className) => {
     const result = await limiter(algorithm)
-    const source = content(result, 'src/middlewares/rate-limit.ts')
+    const source = content(result, 'src/lib/rate-limiter.ts')
 
     expect(source).toContain(className)
     expect(source.match(/^class /gm)).toHaveLength(1)
@@ -75,7 +75,7 @@ describe('rate-limit algorithms (D-64)', () => {
       dependencies: Record<string, string>
     }
 
-    expect(content(result, 'src/middlewares/rate-limit.ts')).toContain('class FixedWindow')
+    expect(content(result, 'src/lib/rate-limiter.ts')).toContain('class FixedWindow')
     expect(manifest.dependencies['express-rate-limit']).toBeUndefined()
   })
 

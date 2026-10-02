@@ -1,0 +1,201 @@
+<% const { algorithm } = it.options %>
+/**
+ * The rate-limit algorithms (D-64), framework-agnostic: the Express middleware and the Fastify
+ * hook both count requests with these. State is in memory, per process.
+ */
+
+/** What one request is allowed (D-64). Times are in milliseconds. */
+export interface Decision {
+  allowed: boolean
+  limit: number
+  remaining: number
+  /** Until the client is back to its full allowance. */
+  resetMs: number
+  /** Until the next request would be allowed; 0 when allowed now. */
+  retryAfterMs: number
+}
+
+export interface Limiter {
+  consume(key: string, now?: number): Decision
+  /** Forgets clients that are back to a full allowance. */
+  prune(now?: number): void
+}
+
+<% if (algorithm === 'fixed-window') { %>
+/**
+ * Fixed window: up to `limit` requests per client in each `windowMs` window. Simple and cheap;
+ * a client can send up to 2 × limit around a window boundary.
+ */
+class FixedWindow implements Limiter {
+  private readonly windows = new Map<string, { count: number; startedAt: number }>()
+
+  constructor(
+    private readonly limit: number,
+    private readonly windowMs: number
+  ) {}
+
+  consume(key: string, now = Date.now()): Decision {
+    const current = this.windows.get(key)
+    const window =
+      current === undefined || now - current.startedAt >= this.windowMs
+        ? { count: 0, startedAt: now }
+        : current
+    const allowed = window.count < this.limit
+    const next = allowed ? { ...window, count: window.count + 1 } : window
+    this.windows.set(key, next)
+    const resetMs = next.startedAt + this.windowMs - now
+    return {
+      allowed,
+      limit: this.limit,
+      remaining: this.limit - next.count,
+      resetMs,
+      retryAfterMs: allowed ? 0 : resetMs
+    }
+  }
+
+  prune(now = Date.now()): void {
+    for (const [key, window] of this.windows) {
+      if (now - window.startedAt >= this.windowMs) this.windows.delete(key)
+    }
+  }
+}
+
+const createAlgorithm = (limit: number, windowMs: number): Limiter => new FixedWindow(limit, windowMs)
+<% } else if (algorithm === 'sliding-window') { %>
+/**
+ * Sliding window (counter): the previous window's count is weighted by how much of it still
+ * overlaps the last `windowMs`, which removes the boundary bursts of a fixed window.
+ */
+class SlidingWindow implements Limiter {
+  private readonly windows = new Map<
+    string,
+    { current: number; previous: number; startedAt: number }
+  >()
+
+  constructor(
+    private readonly limit: number,
+    private readonly windowMs: number
+  ) {}
+
+  private rolled(key: string, now: number): { current: number; previous: number; startedAt: number } {
+    const state = this.windows.get(key) ?? { current: 0, previous: 0, startedAt: now }
+    const elapsed = now - state.startedAt
+    if (elapsed >= 2 * this.windowMs) return { current: 0, previous: 0, startedAt: now }
+    if (elapsed >= this.windowMs) {
+      return { current: 0, previous: state.current, startedAt: state.startedAt + this.windowMs }
+    }
+    return state
+  }
+
+  consume(key: string, now = Date.now()): Decision {
+    const state = this.rolled(key, now)
+    const overlap = 1 - (now - state.startedAt) / this.windowMs
+    const estimated = state.previous * overlap + state.current
+    const allowed = estimated + 1 <= this.limit
+    const next = allowed ? { ...state, current: state.current + 1 } : state
+    this.windows.set(key, next)
+    const resetMs = next.startedAt + 2 * this.windowMs - now
+    return {
+      allowed,
+      limit: this.limit,
+      remaining: Math.max(0, Math.floor(this.limit - (estimated + (allowed ? 1 : 0)))),
+      resetMs,
+      retryAfterMs: allowed ? 0 : next.startedAt + this.windowMs - now
+    }
+  }
+
+  prune(now = Date.now()): void {
+    for (const [key, state] of this.windows) {
+      if (now - state.startedAt >= 2 * this.windowMs) this.windows.delete(key)
+    }
+  }
+}
+
+const createAlgorithm = (limit: number, windowMs: number): Limiter =>
+  new SlidingWindow(limit, windowMs)
+<% } else if (algorithm === 'token-bucket') { %>
+/**
+ * Token bucket: each client holds up to `limit` tokens, refilled at `limit` per `windowMs`; a
+ * request spends one. Allows short bursts up to `limit`, then a steady rate.
+ */
+class TokenBucket implements Limiter {
+  private readonly buckets = new Map<string, { tokens: number; updatedAt: number }>()
+  private readonly refillPerMs: number
+
+  constructor(
+    private readonly limit: number,
+    windowMs: number
+  ) {
+    this.refillPerMs = limit / windowMs
+  }
+
+  consume(key: string, now = Date.now()): Decision {
+    const state = this.buckets.get(key) ?? { tokens: this.limit, updatedAt: now }
+    const tokens = Math.min(this.limit, state.tokens + (now - state.updatedAt) * this.refillPerMs)
+    const allowed = tokens >= 1
+    const left = allowed ? tokens - 1 : tokens
+    this.buckets.set(key, { tokens: left, updatedAt: now })
+    return {
+      allowed,
+      limit: this.limit,
+      remaining: Math.floor(left),
+      resetMs: Math.ceil((this.limit - left) / this.refillPerMs),
+      retryAfterMs: allowed ? 0 : Math.ceil((1 - tokens) / this.refillPerMs)
+    }
+  }
+
+  prune(now = Date.now()): void {
+    for (const [key, state] of this.buckets) {
+      const tokens = state.tokens + (now - state.updatedAt) * this.refillPerMs
+      if (tokens >= this.limit) this.buckets.delete(key)
+    }
+  }
+}
+
+const createAlgorithm = (limit: number, windowMs: number): Limiter => new TokenBucket(limit, windowMs)
+<% } else { %>
+/**
+ * Leaky bucket (as a meter): each request adds one to the client's bucket, which drains at
+ * `limit` per `windowMs`; a request that would overflow `limit` is refused. Smooths traffic to a
+ * constant rate.
+ */
+class LeakyBucket implements Limiter {
+  private readonly buckets = new Map<string, { level: number; updatedAt: number }>()
+  private readonly leakPerMs: number
+
+  constructor(
+    private readonly limit: number,
+    windowMs: number
+  ) {
+    this.leakPerMs = limit / windowMs
+  }
+
+  consume(key: string, now = Date.now()): Decision {
+    const state = this.buckets.get(key) ?? { level: 0, updatedAt: now }
+    const level = Math.max(0, state.level - (now - state.updatedAt) * this.leakPerMs)
+    const allowed = level + 1 <= this.limit
+    const next = allowed ? level + 1 : level
+    this.buckets.set(key, { level: next, updatedAt: now })
+    return {
+      allowed,
+      limit: this.limit,
+      remaining: Math.floor(this.limit - next),
+      resetMs: Math.ceil(next / this.leakPerMs),
+      retryAfterMs: allowed ? 0 : Math.ceil((level + 1 - this.limit) / this.leakPerMs)
+    }
+  }
+
+  prune(now = Date.now()): void {
+    for (const [key, state] of this.buckets) {
+      if (state.level - (now - state.updatedAt) * this.leakPerMs <= 0) this.buckets.delete(key)
+    }
+  }
+}
+
+const createAlgorithm = (limit: number, windowMs: number): Limiter => new LeakyBucket(limit, windowMs)
+<% } %>
+
+/** A fresh limiter, e.g. with small numbers in tests. */
+export function createLimiter(limit: number, windowMs: number): Limiter {
+  return createAlgorithm(limit, windowMs)
+}

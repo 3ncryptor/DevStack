@@ -83,6 +83,7 @@ const STYLINGS: Choice<string>[] = [
 ]
 const FRAMEWORKS: Choice<string>[] = [
   { value: 'framework-express', label: 'Express' },
+  { value: 'framework-fastify', label: 'Fastify' },
   { value: 'framework-nest', label: 'NestJS' }
 ]
 const DATABASES: Choice<string>[] = [
@@ -491,7 +492,8 @@ export const STEPS: readonly WizardStep[] = [
     preview: true,
     defaultValue: 'arch-feature',
     // NestJS brings its own module layout
-    applies: (answers) => answers.framework === 'framework-express',
+    applies: (answers) =>
+      answers.framework === 'framework-express' || answers.framework === 'framework-fastify',
     addsModule: true
   }),
   confirmStep({

@@ -23,6 +23,12 @@ export const NODE_CATALOG = {
 
   // HTTP frameworks
   express: { version: '^5.2.1' },
+  // Fastify 5 and its plugins for that major (M4); verified 2026-10-02
+  fastify: { version: '^5.12.5' },
+  '@fastify/cors': { version: '^11.3.0' },
+  '@fastify/helmet': { version: '^13.1.1' },
+  '@fastify/compress': { version: '^9.2.0' },
+  '@scalar/fastify-api-reference': { version: '^1.72.4' },
   '@types/express': { version: '^5.0.6' },
   '@nestjs/common': { version: '^12.1.2' },
   '@nestjs/core': { version: '^12.1.2' },

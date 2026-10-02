@@ -17,6 +17,7 @@ import folderFeature from './arch-feature/index'
 import folderMvc from './arch-mvc/index'
 import formatterPrettier from './quality-prettier/index'
 import frameworkExpress from './framework-express/index'
+import frameworkFastify from './framework-fastify/index'
 import frameworkNest from './framework-nest/index'
 import frameworkNextjs from './framework-nextjs/index'
 import languageNode from './language-node/index'
@@ -49,6 +50,7 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   layoutMonorepo,
   coreBackend,
   frameworkExpress,
+  frameworkFastify,
   frameworkNest,
   frameworkNextjs,
   uiTailwind,

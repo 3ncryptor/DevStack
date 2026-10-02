@@ -4,7 +4,8 @@ import { buildApprovalsFor, isCatalogName, NODE_CATALOG } from '../catalog/node'
 import { TYPE_PAIRS } from '../catalog/pairs'
 import { ResolutionError } from '../errors'
 import { CLI_PACKAGE } from './manifest'
-import type { DevstackModule } from '../types/module'
+import { dependencyName, type DependencyEntry, type DevstackModule } from '../types/module'
+import { conditionContextFor, evaluateCondition } from './planner/conditions'
 import type { DependencyMap, PackageJson } from '../types/package-json'
 import { formatDiagnostics, resolveStack } from './resolver/index'
 
@@ -20,15 +21,26 @@ interface DependencyNames {
   devDependencies: Map<string, string>
 }
 
-/** Collects package names per dependency type, remembering the first module that asked for each. */
-function collectDependencyNames(modules: DevstackModule[]): DependencyNames {
+/**
+ * Collects package names per dependency type, remembering the first module that asked for each.
+ * A conditional entry counts only when its condition holds for the whole stack.
+ */
+function collectDependencyNames(
+  modules: readonly DevstackModule[],
+  stack: readonly DevstackModule[]
+): DependencyNames {
   const dependencies = new Map<string, string>()
   const devDependencies = new Map<string, string>()
+  const context = conditionContextFor(stack, {}, 'wired')
+  const applies = (entry: DependencyEntry): boolean =>
+    typeof entry === 'string' || evaluateCondition(entry.when, context)
   for (const moduleDefinition of modules) {
-    for (const name of moduleDefinition.dependencies ?? []) {
+    for (const entry of (moduleDefinition.dependencies ?? []).filter(applies)) {
+      const name = dependencyName(entry)
       if (!dependencies.has(name)) dependencies.set(name, moduleDefinition.id)
     }
-    for (const name of moduleDefinition.devDependencies ?? []) {
+    for (const entry of (moduleDefinition.devDependencies ?? []).filter(applies)) {
+      const name = dependencyName(entry)
       if (!devDependencies.has(name)) devDependencies.set(name, moduleDefinition.id)
     }
   }
@@ -57,7 +69,9 @@ function toVersionMap(names: Map<string, string>): DependencyMap {
 
 export function composeProjectPackageJson(
   projectName: string,
-  modules: DevstackModule[]
+  modules: DevstackModule[],
+  /** Every module of the project, for conditional dependencies; a target passes its own subset. */
+  stack: readonly DevstackModule[] = modules
 ): PackageJson {
   const basePackageJson: PackageJson = {
     name: projectName,
@@ -75,7 +89,7 @@ export function composeProjectPackageJson(
     basePackageJson
   )
 
-  const names = collectDependencyNames(modules)
+  const names = collectDependencyNames(modules, stack)
   return {
     ...withFragments,
     dependencies: toVersionMap(names.dependencies),
