@@ -1,15 +1,18 @@
 <% const vitest = it.modules.includes('testing-vitest') %>
 <% const awaitTest = vitest ? '' : 'await ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
+<% const fastify = it.modules.includes('framework-fastify') %>
+<%/* Express builds the app synchronously; Supertest drives Fastify through its server once ready */%>
+<% const app = (args = '') => (fastify ? `(await testApp(${args})).server` : `testApp(${args})`) %>
 import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
-import express from 'express'
+<%~ fastify ? "import Fastify from 'fastify'" : "import express from 'express'" %>
 import { SignJWT } from 'jose'
 import request, { type Response } from 'supertest'
 
 import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
-import { testApp } from './helpers/app.js'
+<%~ fastify ? "import { registerErrorHandlers } from '../src/plugins/errors.js'\n" : '' %>import { testApp } from './helpers/app.js'
 import { memoryAuthRepositories, TEST_AUTH_CONFIG, testAuthService } from './helpers/auth.js'
 
 const AUTH = '<%= base %>/auth'
@@ -28,7 +31,7 @@ function cookie(response: Response, name: string): string {
 }
 
 <%= awaitTest %>test('register creates the user and sets httpOnly session cookies', async () => {
-  const response = await request(testApp()).post(`${AUTH}/register`).send(ada)
+  const response = await request(<%~ app() %>).post(`${AUTH}/register`).send(ada)
 
   assert.equal(response.status, 201)
   const { user } = (response.body as SessionBody).data
@@ -43,7 +46,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('register refuses an email that is taken', async () => {
-  const app = testApp()
+  const app = <%~ app() %>
   await request(app).post(`${AUTH}/register`).send(ada)
 
   const response = await request(app).post(`${AUTH}/register`).send(ada)
@@ -53,7 +56,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('register reports invalid input with 400', async () => {
-  const response = await request(testApp())
+  const response = await request(<%~ app() %>)
     .post(`${AUTH}/register`)
     .send({ email: 'not-an-email', password: 'short' })
 
@@ -62,7 +65,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('login answers a wrong password and an unknown email the same way', async () => {
-  const app = testApp()
+  const app = <%~ app() %>
   await request(app).post(`${AUTH}/register`).send(ada)
 
   const wrongPassword = await request(app)
@@ -81,7 +84,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('GET /auth/me needs a session, from the cookie or a Bearer token', async () => {
-  const app = testApp()
+  const app = <%~ app() %>
   const registered = await request(app).post(`${AUTH}/register`).send(ada)
   // a native client reads the token from Set-Cookie and may send it as a Bearer header
   const accessToken = cookie(registered, 'access_token').split('=')[1] ?? ''
@@ -100,7 +103,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('refresh rotates the token; reusing an old one ends every session', async () => {
-  const app = testApp()
+  const app = <%~ app() %>
   const registered = await request(app).post(`${AUTH}/register`).send(ada)
   const first = cookie(registered, 'refresh_token')
 
@@ -116,7 +119,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('logout revokes the refresh token and clears the cookies', async () => {
-  const app = testApp()
+  const app = <%~ app() %>
   const registered = await request(app).post(`${AUTH}/register`).send(ada)
   const refresh = cookie(registered, 'refresh_token')
 
@@ -129,7 +132,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('cookie-authenticated writes from an untrusted origin are refused', async () => {
-  const app = testApp({ auth: testAuthService({ allowedOrigins: ['http://localhost:3000'] }) })
+  const app = <%~ app("{ auth: testAuthService({ allowedOrigins: ['http://localhost:3000'] }) }") %>
   const registered = await request(app).post(`${AUTH}/register`).send(ada)
   const refresh = cookie(registered, 'refresh_token')
 
@@ -153,9 +156,16 @@ function cookie(response: Response, name: string): string {
   await auth.register({ email: 'admin@example.com', password: ada.password })
   await repositories.users.setRole('admin@example.com', 'ADMIN')
   const admin = await auth.login({ email: 'admin@example.com', password: ada.password })
-  const app = express().get('/admin', requireAuth(auth), requireRole('ADMIN'), (_request, response) => {
+<% if (fastify) { %>
+  const guarded = Fastify()
+  registerErrorHandlers(guarded)
+  guarded.get('/admin', { preHandler: [requireAuth(auth), requireRole('ADMIN')] }, () => ({ ok: true }))
+  await guarded.ready()
+  const app = guarded.server
+<% } else { %>  const app = express().get('/admin', requireAuth(auth), requireRole('ADMIN'), (_request, response) => {
     response.json({ ok: true })
   })
+<% } %>
 
   const asUser = await request(app)
     .get('/admin')
@@ -169,7 +179,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('forged, unsigned and expired access tokens are refused', async () => {
-  const app = testApp()
+  const app = <%~ app() %>
   const registered = await request(app).post(`${AUTH}/register`).send(ada)
   const { id } = (registered.body as SessionBody).data.user as { id: string }
   const signed = (secret: string, expiresIn: string) =>
@@ -195,9 +205,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('production cookies are Secure and SameSite=None (split origin)', async () => {
-  const app = testApp({
-    auth: testAuthService({ production: true, allowedOrigins: ['https://app.example.com'] })
-  })
+  const app = <%~ app("{ auth: testAuthService({ production: true, allowedOrigins: ['https://app.example.com'] }) }") %>
 
   const response = await request(app).post(`${AUTH}/register`).send(ada)
 
@@ -207,7 +215,7 @@ function cookie(response: Response, name: string): string {
 })
 
 <%= awaitTest %>test('cross-site credential posts are refused, with or without Origin', async () => {
-  const app = testApp({ auth: testAuthService({ allowedOrigins: ['http://localhost:3000'] }) })
+  const app = <%~ app("{ auth: testAuthService({ allowedOrigins: ['http://localhost:3000'] }) }") %>
 
   const withOrigin = await request(app)
     .post(`${AUTH}/login`)

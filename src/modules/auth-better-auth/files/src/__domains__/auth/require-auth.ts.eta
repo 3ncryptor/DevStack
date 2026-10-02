@@ -1,0 +1,123 @@
+<% if (it.modules.includes('framework-fastify')) { %>
+import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify'
+import { fromNodeHeaders } from 'better-auth/node'
+
+import { ForbiddenError, UnauthorizedError } from '../../lib/errors.js'
+import type { Auth } from './auth.js'
+
+export type Role = 'USER' | 'ADMIN'
+
+/** Who is calling, as the rest of the API sees it (the same shape as with auth-jwt). */
+export interface SessionClaims {
+  userId: string
+  role: Role
+}
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+/**
+ * CSRF defence for the API's own routes (Better Auth guards only its /auth routes): with
+ * `SameSite=None` cookies in production, a write must come from a trusted origin, like
+ * Better Auth's: the API's own or ALLOWED_ORIGINS. No `Origin` passes unless the browser says
+ * the request is cross-site.
+ */
+function isTrustedOrigin(request: FastifyRequest, auth: Auth): boolean {
+  if (SAFE_METHODS.has(request.method)) return true
+  const origin = request.headers.origin
+  if (origin === undefined) return request.headers['sec-fetch-site'] !== 'cross-site'
+  const trusted = [
+    ...(Array.isArray(auth.options.trustedOrigins) ? auth.options.trustedOrigins : []),
+    ...(typeof auth.options.baseURL === 'string' ? [new URL(auth.options.baseURL).origin] : [])
+  ]
+  return trusted.includes(origin)
+}
+
+async function authenticate(request: FastifyRequest, auth: Auth): Promise<SessionClaims> {
+  if (!isTrustedOrigin(request, auth)) throw new ForbiddenError('Origin not allowed')
+  const session = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) })
+  if (session === null) throw new UnauthorizedError()
+  return { userId: session.user.id, role: session.user.role === 'admin' ? 'ADMIN' : 'USER' }
+}
+
+/**
+ * A preHandler that lets a request with a valid session cookie through and sets `request.user`:
+ * `app.get('/todos', { preHandler: requireAuth(deps.auth) }, handler)`.
+ */
+export function requireAuth(auth: Auth): preHandlerAsyncHookHandler {
+  return async (request) => {
+    request.user = await authenticate(request, auth)
+  }
+}
+
+/** After requireAuth: only users with this role, e.g. `requireRole('ADMIN')` (D-67). */
+export function requireRole(role: Role): preHandlerAsyncHookHandler {
+  return (request) => {
+    if (request.user === undefined) return Promise.reject(new UnauthorizedError())
+    return request.user.role === role ? Promise.resolve() : Promise.reject(new ForbiddenError())
+  }
+}
+<% } else { %>
+import type { Request, RequestHandler } from 'express'
+import { fromNodeHeaders } from 'better-auth/node'
+
+import { ForbiddenError, UnauthorizedError } from '../../lib/errors.js'
+import type { Auth } from './auth.js'
+
+export type Role = 'USER' | 'ADMIN'
+
+/** Who is calling, as the rest of the API sees it (the same shape as with auth-jwt). */
+export interface SessionClaims {
+  userId: string
+  role: Role
+}
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+/**
+ * CSRF defence for the API's own routes (Better Auth guards only its /auth routes): with
+ * `SameSite=None` cookies in production, a write must come from a trusted origin, like
+ * Better Auth's: the API's own or ALLOWED_ORIGINS. No `Origin` passes unless the browser says
+ * the request is cross-site.
+ */
+function isTrustedOrigin(request: Request, auth: Auth): boolean {
+  if (SAFE_METHODS.has(request.method)) return true
+  const origin = request.get('origin')
+  if (origin === undefined) return request.get('sec-fetch-site') !== 'cross-site'
+  const trusted = [
+    ...(Array.isArray(auth.options.trustedOrigins) ? auth.options.trustedOrigins : []),
+    ...(typeof auth.options.baseURL === 'string' ? [new URL(auth.options.baseURL).origin] : [])
+  ]
+  return trusted.includes(origin)
+}
+
+async function authenticate(request: Request, auth: Auth): Promise<SessionClaims> {
+  if (!isTrustedOrigin(request, auth)) throw new ForbiddenError('Origin not allowed')
+  const session = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) })
+  if (session === null) throw new UnauthorizedError()
+  return { userId: session.user.id, role: session.user.role === 'admin' ? 'ADMIN' : 'USER' }
+}
+
+/**
+ * Lets a request with a valid session cookie through and sets `request.user`:
+ * `router.get('/todos', requireAuth(deps.auth), handler)`.
+ */
+export function requireAuth(auth: Auth): RequestHandler {
+  return (request, _response, next) => {
+    authenticate(request, auth).then((claims) => {
+      request.user = claims
+      next()
+    }, next)
+  }
+}
+
+/** After requireAuth: only users with this role, e.g. `requireRole('ADMIN')` (D-67). */
+export function requireRole(role: Role): RequestHandler {
+  return (request, _response, next) => {
+    if (request.user === undefined) {
+      next(new UnauthorizedError())
+      return
+    }
+    next(request.user.role === role ? undefined : new ForbiddenError())
+  }
+}
+<% } %>

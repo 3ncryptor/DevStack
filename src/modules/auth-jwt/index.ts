@@ -1,6 +1,9 @@
 import { moduleFilesPath } from '../../paths'
-import type { DevstackModule } from '../../types/module'
+import type { Condition, DevstackModule } from '../../types/module'
 import { AUTH_OPENAPI_SLOTS } from './openapi'
+
+const FASTIFY: Condition = { has: 'framework-fastify' }
+const NOT_FASTIFY: Condition = { not: FASTIFY }
 
 const USER_MODELS_TEMPLATE = `enum Role {
   USER
@@ -49,8 +52,14 @@ const moduleDefinition: DevstackModule = {
   description:
     'Register, login, refresh and logout with argon2 password hashing, JWT access tokens and rotating refresh tokens',
   // login and register always get a strict per-IP limit (brute force, argon2 cost)
-  requires: ['framework-express', 'orm-prisma', 'core-backend', 'security-rate-limit'],
-  dependencies: ['argon2', 'jose', 'cookie-parser'],
+  requiresAny: ['framework-express', 'framework-fastify'],
+  requires: ['orm-prisma', 'core-backend', 'security-rate-limit'],
+  dependencies: [
+    'argon2',
+    'jose',
+    { name: 'cookie-parser', when: NOT_FASTIFY },
+    { name: '@fastify/cookie', when: FASTIFY }
+  ],
   scripts: [{ name: 'auth:make-admin', run: 'tsx src/scripts/make-admin.ts' }],
   env: [
     {
@@ -92,14 +101,36 @@ const moduleDefinition: DevstackModule = {
       slot: 'app.imports',
       code: [
         "import cookieParser from 'cookie-parser'",
-        "import { createAuthRouter } from './__domains__/auth/auth.routes.js'",
-        "import type { AuthService } from './__domains__/auth/auth.service.js'"
-      ].join('\n')
+        "import { createAuthRouter } from './__domains__/auth/auth.routes.js'"
+      ].join('\n'),
+      when: NOT_FASTIFY
+    },
+    {
+      slot: 'app.imports',
+      code: [
+        "import fastifyCookie from '@fastify/cookie'",
+        "import { createAuthRoutes } from './__domains__/auth/auth.routes.js'"
+      ].join('\n'),
+      when: FASTIFY
+    },
+    {
+      slot: 'app.imports',
+      code: "import type { AuthService } from './__domains__/auth/auth.service.js'"
     },
     // cookies are parsed after the security middleware, before any route
-    { slot: 'app.middleware', code: 'app.use(cookieParser())', order: 90 },
+    { slot: 'app.middleware', code: 'app.use(cookieParser())', order: 90, when: NOT_FASTIFY },
+    { slot: 'app.plugins', code: 'await app.register(fastifyCookie)', order: 90, when: FASTIFY },
     { slot: 'app.deps', code: 'auth: AuthService' },
-    { slot: 'app.routes', code: "api.use('/auth', createAuthRouter(deps.auth))" },
+    {
+      slot: 'app.routes',
+      code: "api.use('/auth', createAuthRouter(deps.auth))",
+      when: NOT_FASTIFY
+    },
+    {
+      slot: 'app.routes',
+      code: "void api.register(createAuthRoutes(deps.auth), { prefix: '/auth' })",
+      when: FASTIFY
+    },
     {
       slot: 'index.imports',
       code: [

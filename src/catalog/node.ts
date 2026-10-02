@@ -28,6 +28,7 @@ export const NODE_CATALOG = {
   '@fastify/cors': { version: '^11.3.0' },
   '@fastify/helmet': { version: '^13.1.1' },
   '@fastify/compress': { version: '^9.2.0' },
+  '@fastify/cookie': { version: '^11.1.2' },
   '@scalar/fastify-api-reference': { version: '^1.72.4' },
   '@types/express': { version: '^5.0.6' },
   '@nestjs/common': { version: '^12.1.2' },

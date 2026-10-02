@@ -2,14 +2,16 @@
 <% const awaitTest = vitest ? '' : 'await ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
 <% const { github } = it.options %>
+<% const fastify = it.modules.includes('framework-fastify') %>
+<% const awaitApp = fastify ? 'await ' : '' %>
 import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
 
-import express from 'express'
+<%~ fastify ? "import Fastify, { type FastifyInstance } from 'fastify'" : "import express from 'express'" %>
 import request, { type Response } from 'supertest'
 
 import { requireAuth, requireRole } from '../src/<%= it.domainsDir %>/auth/require-auth.js'
-import { testApp } from './helpers/app.js'
+<%~ fastify ? "import { registerErrorHandlers } from '../src/plugins/errors.js'\n" : '' %>import { testApp } from './helpers/app.js'
 import { testAuth, WEB_ORIGIN } from './helpers/auth.js'
 
 const AUTH = '<%= base %>/auth'
@@ -22,13 +24,30 @@ function cookies(response: Response): string {
   return set.map((cookie) => cookie.split(';')[0]).join('; ')
 }
 
+<% if (fastify) { %>
+/** Supertest drives Fastify through its HTTP server once the app is ready. */
+async function appWithAuth() {
+  const { auth, db } = testAuth()
+  return { app: (await testApp({ auth })).server, auth, db }
+}
+
+/** A bare Fastify app with the envelope error handler, for testing the guards on their own. */
+async function guardedApp(register: (app: FastifyInstance) => void) {
+  const app = Fastify()
+  registerErrorHandlers(app)
+  register(app)
+  await app.ready()
+  return app.server
+}
+<% } else { %>
 function appWithAuth() {
   const { auth, db } = testAuth()
   return { app: testApp({ auth }), auth, db }
 }
+<% } %>
 
 <%= awaitTest %>test('sign-up starts a session in an httpOnly cookie; GET /me returns the user', async () => {
-  const { app } = appWithAuth()
+  const { app } = <%= awaitApp %>appWithAuth()
 
   const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
   const me = await request(app).get(ME).set('cookie', cookies(signedUp))
@@ -41,7 +60,7 @@ function appWithAuth() {
 })
 
 <%= awaitTest %>test('a wrong password is refused, and GET /me needs a session', async () => {
-  const { app } = appWithAuth()
+  const { app } = <%= awaitApp %>appWithAuth()
   await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
 
   const wrong = await request(app)
@@ -55,7 +74,7 @@ function appWithAuth() {
 })
 
 <%= awaitTest %>test('sign-out ends the session', async () => {
-  const { app } = appWithAuth()
+  const { app } = <%= awaitApp %>appWithAuth()
   const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
   const session = cookies(signedUp)
 
@@ -70,7 +89,7 @@ function appWithAuth() {
 })
 
 <%= awaitTest %>test('writes with a session cookie from an untrusted origin are refused (CSRF)', async () => {
-  const { app } = appWithAuth()
+  const { app } = <%= awaitApp %>appWithAuth()
   const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
 
   const forged = await request(app)
@@ -82,11 +101,16 @@ function appWithAuth() {
 })
 
 <%= awaitTest %>test('requireRole lets only admins through', async () => {
-  const { app, auth, db } = appWithAuth()
+  const { app, auth, db } = <%= awaitApp %>appWithAuth()
   const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
-  const guarded = express().get('/admin', requireAuth(auth), requireRole('ADMIN'), (_request, response) => {
+<% if (fastify) { %>
+  const guarded = await guardedApp((instance) => {
+    instance.get('/admin', { preHandler: [requireAuth(auth), requireRole('ADMIN')] }, () => ({ ok: true }))
+  })
+<% } else { %>  const guarded = express().get('/admin', requireAuth(auth), requireRole('ADMIN'), (_request, response) => {
     response.json({ ok: true })
   })
+<% } %>
 
   const asUser = await request(guarded).get('/admin').set('cookie', cookies(signedUp))
   // what auth:make-admin does in the database
@@ -97,11 +121,16 @@ function appWithAuth() {
   assert.equal(asAdmin.status, 200)
 })
 <%= awaitTest %>test("requireAuth refuses cookie-authenticated writes from an untrusted origin", async () => {
-  const { app, auth } = appWithAuth()
+  const { app, auth } = <%= awaitApp %>appWithAuth()
   const signedUp = await request(app).post(`${AUTH}/sign-up/email`).set('origin', WEB_ORIGIN).send(ada)
-  const guarded = express().post('/notes', requireAuth(auth), (_request, response) => {
+<% if (fastify) { %>
+  const guarded = await guardedApp((instance) => {
+    instance.post('/notes', { preHandler: requireAuth(auth) }, () => ({ ok: true }))
+  })
+<% } else { %>  const guarded = express().post('/notes', requireAuth(auth), (_request, response) => {
     response.json({ ok: true })
   })
+<% } %>
 
   const forged = await request(guarded)
     .post('/notes')
@@ -143,7 +172,7 @@ function mockGitHub(): () => void {
 }
 
 <%= awaitTest %>test('GitHub sign-in: redirect to GitHub, callback, then a session (mocked provider)', async () => {
-  const { app } = appWithAuth()
+  const { app } = <%= awaitApp %>appWithAuth()
   const restore = mockGitHub()
   try {
     const started = await request(app)

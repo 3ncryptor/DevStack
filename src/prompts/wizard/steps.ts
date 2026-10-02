@@ -468,8 +468,10 @@ export const STEPS: readonly WizardStep[] = [
     message: 'Authentication',
     choices: AUTHS,
     defaultValue: NONE,
-    // the auth module is Express + Prisma for now (M3)
-    applies: (answers) => answers.framework === 'framework-express' && answers.orm === 'orm-prisma',
+    // auth modules: Express or Fastify, with Prisma (M3, M4)
+    applies: (answers) =>
+      (answers.framework === 'framework-express' || answers.framework === 'framework-fastify') &&
+      answers.orm === 'orm-prisma',
     addsModule: true
   }),
   oauthProvidersStep,

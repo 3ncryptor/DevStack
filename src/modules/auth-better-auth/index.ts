@@ -4,6 +4,8 @@ import { moduleFilesPath } from '../../paths'
 import type { Condition, DevstackModule, SlotContribution } from '../../types/module'
 
 const VERSIONED: Condition = { has: 'api-versioning' }
+const FASTIFY: Condition = { has: 'framework-fastify' }
+const NOT_FASTIFY: Condition = { not: FASTIFY }
 const GITHUB: Condition = { option: 'github', equals: true }
 const GOOGLE: Condition = { option: 'google', equals: true }
 
@@ -84,7 +86,7 @@ const mount = (prefix: string, when: Condition): SlotContribution => ({
   slot: 'app.middleware',
   code: `app.all('${prefix}/auth/*splat', toNodeHandler(deps.auth))`,
   order: 95,
-  when
+  when: { all: [when, NOT_FASTIFY] }
 })
 
 const providerEnv = (provider: 'GITHUB' | 'GOOGLE', label: string, when: Condition) =>
@@ -114,7 +116,8 @@ const moduleDefinition: DevstackModule = {
   provides: ['auth'],
   description:
     'Better Auth: email + password, optional GitHub and Google sign-in, database sessions and admin roles',
-  requires: ['framework-express', 'orm-prisma', 'core-backend'],
+  requiresAny: ['framework-express', 'framework-fastify'],
+  requires: ['orm-prisma', 'core-backend'],
   dependencies: ['better-auth'],
   options: z.object({
     github: z.boolean().default(false),
@@ -157,15 +160,27 @@ const moduleDefinition: DevstackModule = {
       slot: 'app.imports',
       code: [
         "import { toNodeHandler } from 'better-auth/node'",
-        "import type { Auth } from './__domains__/auth/auth.js'",
         "import { createAuthRouter } from './__domains__/auth/auth.routes.js'"
-      ].join('\n')
+      ].join('\n'),
+      when: NOT_FASTIFY
     },
+    {
+      slot: 'app.imports',
+      code: [
+        "import { registerBetterAuth } from './__domains__/auth/auth.handler.js'",
+        "import { createAuthRoutes } from './__domains__/auth/auth.routes.js'"
+      ].join('\n'),
+      when: FASTIFY
+    },
+    { slot: 'app.imports', code: "import type { Auth } from './__domains__/auth/auth.js'" },
+    // Fastify parses the body itself and hands it on; the route sits at AUTH_BASE_PATH
+    { slot: 'app.plugins', code: 'registerBetterAuth(app, deps.auth)', order: 95, when: FASTIFY },
     mount('/v1', VERSIONED),
     mount('', { not: VERSIONED }),
     { slot: 'app.deps', code: 'auth: Auth' },
     // GET /me through requireAuth: the session as the rest of the API sees it
-    { slot: 'app.routes', code: 'api.use(createAuthRouter(deps.auth))' },
+    { slot: 'app.routes', code: 'api.use(createAuthRouter(deps.auth))', when: NOT_FASTIFY },
+    { slot: 'app.routes', code: 'void api.register(createAuthRoutes(deps.auth))', when: FASTIFY },
     {
       slot: 'index.imports',
       code: [
@@ -181,6 +196,7 @@ const moduleDefinition: DevstackModule = {
     { slot: 'test.imports', code: "import { testAuth } from './auth.js'" },
     { slot: 'test.deps', code: 'auth: testAuth().auth,' }
   ],
+  files: [{ path: 'src/__domains__/auth/auth.handler.ts', when: FASTIFY }],
   filesPath: moduleFilesPath('auth-better-auth')
 }
 

@@ -45,7 +45,8 @@
       "testing-vitest",
       "devops-docker",
       "quality-eslint",
-      "quality-prettier"
+      "quality-prettier",
+      "auth-jwt"
     ]
   },
   {
@@ -57,6 +58,33 @@
       "security-helmet",
       "quality-eslint",
       "quality-prettier"
+    ]
+  },
+  {
+    "id": "fastify-better-auth",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "arch-feature",
+      "orm-prisma",
+      "middleware-cors",
+      "security-helmet",
+      "security-rate-limit",
+      "security-origin-checks",
+      "middleware-request-logger",
+      "middleware-compression",
+      "api-versioning",
+      "api-docs-scalar",
+      "testing-vitest",
+      "devops-docker",
+      "quality-eslint",
+      "quality-prettier",
+      {
+        "id": "auth-better-auth",
+        "options": {
+          "github": true
+        }
+      }
     ]
   },
   {

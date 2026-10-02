@@ -1,3 +1,15 @@
+<% if (it.modules.includes('framework-fastify')) { %>
+import type { SessionClaims } from '../<%= it.domainsDir %>/auth/require-auth.js'
+
+// Set by requireAuth (src/<%= it.domainsDir %>/auth/require-auth.ts) on every request it lets through.
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: SessionClaims
+  }
+}
+
+export {}
+<% } else { %>
 import type { SessionClaims } from '../<%= it.domainsDir %>/auth/require-auth.js'
 
 // Set by requireAuth (src/<%= it.domainsDir %>/auth/require-auth.ts) on every request it lets through.
@@ -10,3 +22,4 @@ declare global {
 }
 
 export {}
+<% } %>
