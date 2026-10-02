@@ -1811,6 +1811,9 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   prompter, so every sample is a stack a user can build and a failure replays from its seed.
   It runs locally for now (no new CI workflow before the project is complete). The compose
   `api` service in a monorepo reads `apps/api/.env`, so secrets such as `JWT_SECRET` reach it.
+  Task 2.4: the Next.js and Vite fullstack monorepos pass every gate and `docker compose up` on
+  npm, yarn and bun as well as pnpm (2026-10-03). The harness requires Helmet's headers only
+  when `security-helmet` is selected (the wizard lets it be left out; sampling found this).
 
 # §8. Open questions
 

@@ -9,10 +9,11 @@ export const REQUIRED_SECURITY_HEADERS = [
 /** Headers that must not be present on a hardened response. */
 export const FORBIDDEN_HEADERS = ['x-powered-by'] as const
 
-export function securityHeaderProblems(headers: Headers): string[] {
-  const missing = REQUIRED_SECURITY_HEADERS.filter((name) => !headers.has(name)).map(
-    (name) => `missing header: ${name}`
-  )
+/** Helmet's headers are required when the stack has Helmet; leaked headers never are. */
+export function securityHeaderProblems(headers: Headers, helmet: boolean): string[] {
+  const missing = (helmet ? REQUIRED_SECURITY_HEADERS : [])
+    .filter((name) => !headers.has(name))
+    .map((name) => `missing header: ${name}`)
   const leaked = FORBIDDEN_HEADERS.filter((name) => headers.has(name)).map(
     (name) => `unexpected header: ${name}`
   )

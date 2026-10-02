@@ -11,19 +11,25 @@ describe('securityHeaderProblems', () => {
       'referrer-policy': 'no-referrer'
     })
 
-    expect(securityHeaderProblems(headers)).toEqual([])
+    expect(securityHeaderProblems(headers, true)).toEqual([])
   })
 
   it('reports missing security headers and a leaked x-powered-by', () => {
     const headers = new Headers({ 'x-powered-by': 'Express' })
 
-    expect(securityHeaderProblems(headers)).toEqual([
+    expect(securityHeaderProblems(headers, true)).toEqual([
       'missing header: content-security-policy',
       'missing header: x-content-type-options',
       'missing header: x-frame-options',
       'missing header: referrer-policy',
       'unexpected header: x-powered-by'
     ])
+  })
+
+  it('requires no helmet headers without helmet, but still refuses x-powered-by', () => {
+    const headers = new Headers({ 'x-powered-by': 'Express' })
+
+    expect(securityHeaderProblems(headers, false)).toEqual(['unexpected header: x-powered-by'])
   })
 })
 

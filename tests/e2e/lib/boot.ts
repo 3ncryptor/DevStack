@@ -78,6 +78,8 @@ export interface BootOptions {
   /** Extra environment, e.g. the project's .env values (production never loads .env itself). */
   env: Record<string, string>
   ready: ReadyExpectation
+  /** security-helmet is selected: its headers must be on every response. */
+  helmet: boolean
 }
 
 const PROBE_REQUEST_ID = 'e2e-probe-1'
@@ -142,7 +144,7 @@ export async function bootAndProbe(
   if (response === undefined) {
     problems.push(`GET /health did not return 2xx within ${timeoutMs} ms`)
   } else {
-    problems.push(...securityHeaderProblems(response.headers))
+    problems.push(...securityHeaderProblems(response.headers, options.helmet))
     problems.push(...(await probeGoldenPath(`http://127.0.0.1:${port}`, options.ready)))
   }
 

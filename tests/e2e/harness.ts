@@ -256,7 +256,8 @@ async function checkCombination(
     const boot = await bootAndProbe(appDir, command, args, {
       timeoutMs: BOOT_TIMEOUT_MS,
       env: bootEnv(appDir),
-      ready: readyExpectation(appDir)
+      ready: readyExpectation(appDir),
+      helmet: stackHas(projectDir, 'security-helmet')
     })
     const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
     steps.push(
@@ -300,6 +301,14 @@ function localBinary(dir: string, binary: string): string {
     if (existsSync(local)) return local
   }
   return binary
+}
+
+/** Whether the generated project's stack manifest lists a module. */
+function stackHas(projectDir: string, id: string): boolean {
+  const manifest = JSON.parse(
+    readFileSync(path.join(projectDir, '.devstack', 'stack.json'), 'utf8')
+  ) as { modules: Array<string | { id: string }> }
+  return manifest.modules.some((entry) => (typeof entry === 'string' ? entry : entry.id) === id)
 }
 
 /** The project's .env, as a deployment would provide it. */
