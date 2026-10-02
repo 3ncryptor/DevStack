@@ -1752,6 +1752,13 @@ details? } }` (`ApiError` and its subclasses, renamed from `AppError`). Express 
   documents the auth routes for every framework; `express` is added for Nest because the docs
   router imports it. Decorator-generated specs can come later. (5) The wizard offers auth and
   API docs for every framework (docs had been Express-only, also for Fastify).
+- **D-75 (2026-10-02)** — Jest as a testing choice (M4). `testing-jest` runs the same generated
+  API tests as Vitest and node:test (`test` from `@jest/globals`; Jest has no `skipIf`, so the
+  Postgres test picks `test` or `test.skip`). The project is ESM, so Jest runs natively
+  (`node --experimental-vm-modules node_modules/jest/bin/jest.js`) with `@swc/jest` (decorator
+  metadata for Nest) and a mapper from `.js` specifiers to `.ts` sources; `watchman: false`, so
+  a test run never starts a background daemon. Jest covers the API; web apps keep Vitest (they
+  get no tests with Jest or node:test). Conflicts with `testing-vitest`.
 
 # §8. Open questions
 

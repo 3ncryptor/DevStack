@@ -36,7 +36,7 @@ const moduleDefinition: DevstackModule = {
       name: 'test',
       run: 'node --import tsx --test "tests/**/*.test.ts"',
       depth: 'wired',
-      when: { not: { has: 'testing-vitest' } }
+      when: { not: { any: [{ has: 'testing-vitest' }, { has: 'testing-jest' }] } }
     }
   ]
 }

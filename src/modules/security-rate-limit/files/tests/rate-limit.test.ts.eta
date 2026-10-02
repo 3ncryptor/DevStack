@@ -1,7 +1,7 @@
 <% const { algorithm } = it.options %>
 <% const vitest = it.modules.includes('testing-vitest') %>
 import assert from 'node:assert/strict'
-<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+<% if (vitest) { %>import { test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { test } from '@jest/globals'<% } else { %>import { test } from 'node:test'<% } %>
 
 import { createLimiter } from '../src/lib/rate-limiter.js'
 
@@ -9,7 +9,7 @@ const LIMIT = 3
 const WINDOW_MS = 1000
 const START = 1_000_000
 
-<%= vitest ? '' : 'await ' %>test('<%= algorithm %>: allows the limit, then refuses with a retry time', () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('<%= algorithm %>: allows the limit, then refuses with a retry time', () => {
   const limiter = createLimiter(LIMIT, WINDOW_MS)
 
   const decisions = Array.from({ length: LIMIT + 1 }, () => limiter.consume('client', START))
@@ -21,7 +21,7 @@ const START = 1_000_000
   assert.ok((decisions.at(-1)?.retryAfterMs ?? 0) > 0)
 })
 
-<%= vitest ? '' : 'await ' %>test('<%= algorithm %>: counts each client separately', () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('<%= algorithm %>: counts each client separately', () => {
   const limiter = createLimiter(1, WINDOW_MS)
 
   assert.equal(limiter.consume('a', START).allowed, true)
@@ -29,7 +29,7 @@ const START = 1_000_000
   assert.equal(limiter.consume('a', START).allowed, false)
 })
 
-<%= vitest ? '' : 'await ' %>test('<%= algorithm %>: allows requests again once the client has waited', () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('<%= algorithm %>: allows requests again once the client has waited', () => {
   const limiter = createLimiter(LIMIT, WINDOW_MS)
   for (let index = 0; index < LIMIT; index += 1) limiter.consume('client', START)
   const refused = limiter.consume('client', START)

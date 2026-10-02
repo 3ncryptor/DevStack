@@ -361,5 +361,55 @@
     "id": "node-only",
     "modules": ["language-node", "quality-eslint", "quality-prettier"],
     "boot": false
+  },
+  {
+    "id": "express-jest",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "arch-feature",
+      "orm-prisma",
+      "security-helmet",
+      "security-rate-limit",
+      "api-versioning",
+      "api-docs-scalar",
+      "testing-jest",
+      "auth-jwt",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "fastify-jest",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "arch-flat",
+      "security-helmet",
+      "security-rate-limit",
+      "testing-jest",
+      "quality-eslint",
+      "quality-prettier"
+    ]
+  },
+  {
+    "id": "nest-jest",
+    "modules": [
+      "language-node",
+      "framework-nest",
+      "orm-prisma",
+      "security-helmet",
+      "security-rate-limit",
+      "api-versioning",
+      "testing-jest",
+      {
+        "id": "auth-better-auth",
+        "options": {
+          "github": true
+        }
+      },
+      "quality-eslint",
+      "quality-prettier"
+    ]
   }
 ]

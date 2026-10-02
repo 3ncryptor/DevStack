@@ -1,12 +1,12 @@
 <% const vitest = it.modules.includes('testing-vitest') %>
-<% const awaitTest = vitest ? '' : 'await ' %>
+<% const awaitTest = vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
 <% const { github } = it.options %>
 <% const fastify = it.modules.includes('framework-fastify') %>
 <% const nest = it.modules.includes('framework-nest') %>
 <% const awaitApp = fastify || nest ? 'await ' : '' %>
 <%~ nest ? "import 'reflect-metadata'\n\n" : '' %>import assert from 'node:assert/strict'
-<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+<% if (vitest) { %>import { test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { test } from '@jest/globals'<% } else { %>import { test } from 'node:test'<% } %>
 
 <%~ fastify ? "import Fastify, { type FastifyInstance } from 'fastify'" : nest ? "import { Controller, Get, HttpCode, Module, Post, UseGuards } from '@nestjs/common'\nimport { NestFactory } from '@nestjs/core'\nimport type { NestExpressApplication } from '@nestjs/platform-express'" : "import express from 'express'" %>
 import request, { type Response } from 'supertest'

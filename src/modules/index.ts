@@ -37,6 +37,7 @@ import securityHelmet from './security-helmet/index'
 import securityOriginChecks from './security-origin-checks/index'
 import sharedApi from './shared-api/index'
 import templateTodo from './template-todo/index'
+import testingJest from './testing-jest/index'
 import testingVitest from './testing-vitest/index'
 import testingVitestWeb from './testing-vitest-web/index'
 import uiTailwind from './ui-tailwind/index'
@@ -59,6 +60,7 @@ export const BUILTIN_MODULES: readonly DevstackModule[] = [
   archWebAtomic,
   appAdmin,
   testingVitest,
+  testingJest,
   testingVitestWeb,
   sharedApi,
   ormPrisma,

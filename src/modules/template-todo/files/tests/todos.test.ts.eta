@@ -1,10 +1,10 @@
 <% const vitest = it.modules.includes('testing-vitest') %>
-<% const awaitTest = vitest ? '' : 'await ' %>
+<% const awaitTest = vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
 <% const jwt = it.modules.includes('auth-jwt') %>
 <% const authed = jwt || it.modules.includes('auth-better-auth') %>
 import assert from 'node:assert/strict'
-<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+<% if (vitest) { %>import { test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { test } from '@jest/globals'<% } else { %>import { test } from 'node:test'<% } %>
 
 import type { Express } from 'express'
 import request<% if (authed) { %>, { type Response }<% } %> from 'supertest'

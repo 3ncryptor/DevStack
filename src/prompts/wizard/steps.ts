@@ -204,6 +204,7 @@ const FRONTEND_ARCHITECTURES: Choice<string>[] = [
 /** Question 12: the test runner; node:test needs nothing extra (D-60). */
 const TEST_RUNNERS: Choice<string>[] = [
   { value: 'testing-vitest', label: 'Vitest' },
+  { value: 'testing-jest', label: 'Jest', hint: 'native ESM mode, SWC for TypeScript' },
   { value: NONE, label: "Node's built-in test runner", hint: 'node --test, no extra dependency' }
 ]
 
@@ -605,7 +606,7 @@ export function answersFromModules(modules: readonly string[]): WizardAnswers {
     admin: modules.includes('app-admin'),
     frontendArchitecture: firstOf(modules, FRONTEND_ARCHITECTURES),
     apiVersioning: modules.includes('api-versioning'),
-    tests: modules.includes('testing-vitest') ? 'testing-vitest' : NONE,
+    tests: firstOf(modules, TEST_RUNNERS) ?? NONE,
     apiDocs: modules.includes('api-docs-scalar'),
     ci: modules.includes('devops-github-actions'),
     // a module list carries no options: a preset with rate limiting starts from the default

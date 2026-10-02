@@ -53,7 +53,7 @@ const moduleDefinition: DevstackModule = {
       name: 'test',
       run: 'node --import @swc-node/register/esm-register --test "tests/**/*.test.ts"',
       depth: 'wired',
-      when: { not: { has: 'testing-vitest' } }
+      when: { not: { any: [{ has: 'testing-vitest' }, { has: 'testing-jest' }] } }
     }
   ]
 }

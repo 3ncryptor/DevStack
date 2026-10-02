@@ -3,7 +3,7 @@ import 'reflect-metadata'
 
 import assert from 'node:assert/strict'
 import type { Server } from 'node:http'
-<% if (vitest) { %>import { test } from 'vitest'<% } else { %>import { test } from 'node:test'<% } %>
+<% if (vitest) { %>import { test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { test } from '@jest/globals'<% } else { %>import { test } from 'node:test'<% } %>
 
 import request from 'supertest'
 
@@ -23,7 +23,7 @@ async function withApp(
   }
 }
 
-<%= vitest ? '' : 'await ' %>test('GET /health reports the process is alive', () =>
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /health reports the process is alive', () =>
   withApp([], async (server) => {
     const response = await request(server).get('/health')
 
@@ -31,7 +31,7 @@ async function withApp(
     assert.equal((response.body as { status: string }).status, 'ok')
   }))
 
-<%= vitest ? '' : 'await ' %>test('GET /ready is 503 with per-check status when a check fails', () =>
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /ready is 503 with per-check status when a check fails', () =>
   withApp([{ name: 'db', check: () => Promise.reject(new Error('down')) }], async (server) => {
     const response = await request(server).get('/ready')
 
@@ -39,7 +39,7 @@ async function withApp(
     assert.deepEqual(response.body as unknown, { status: 'error', checks: { db: 'error' } })
   }))
 
-<%= vitest ? '' : 'await ' %>test('unknown routes get the error envelope with the request id', () =>
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('unknown routes get the error envelope with the request id', () =>
   withApp([], async (server) => {
     const response = await request(server).get('/missing').set('x-request-id', 'test-id')
     const body = response.body as { success: boolean; error: { code: string; requestId: string } }

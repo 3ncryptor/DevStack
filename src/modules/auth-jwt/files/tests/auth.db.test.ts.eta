@@ -4,7 +4,7 @@ import '../src/config/env.js'
 
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-<% if (vitest) { %>import { afterAll, test } from 'vitest'<% } else { %>import { after, test } from 'node:test'<% } %>
+<% if (vitest) { %>import { afterAll, test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { afterAll, test } from '@jest/globals'<% } else { %>import { after, test } from 'node:test'<% } %>
 
 import { createAuthService } from '../src/<%= it.domainsDir %>/auth/auth.service.js'
 import { disconnectDatabase, prisma } from '../src/db/client.js'
@@ -19,12 +19,15 @@ const ready = await prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`.then(
 const SKIPPED = 'database not reachable or not migrated: run db:up, then db:migrate'
 const email = `db-test-${randomUUID()}@example.com`
 
-<% if (vitest) { %>afterAll<% } else { %>after<% } %>(async () => {
+<% if (vitest || it.modules.includes('testing-jest')) { %>afterAll<% } else { %>after<% } %>(async () => {
   if (ready) await prisma.user.deleteMany({ where: { email } })
   await disconnectDatabase()
 })
 
-<% if (vitest) { %>
+<% if (it.modules.includes('testing-jest')) { %>
+// Jest has no skipIf: the test or its skipped twin, with the reason in the name
+;(ready ? test : test.skip)(`register, login, refresh and logout on Postgres${ready ? '' : ` (${SKIPPED})`}`, async () => {
+<% } else if (vitest) { %>
 test.skipIf(!ready)(`register, login, refresh and logout on Postgres${ready ? '' : ` (${SKIPPED})`}`, async () => {
 <% } else { %>
 await test('register, login, refresh and logout on Postgres', { skip: ready ? false : SKIPPED }, async () => {
