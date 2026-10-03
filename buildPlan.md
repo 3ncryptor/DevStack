@@ -458,7 +458,7 @@ references; the milestone column says where each task actually lands.
 | 0.5.0   | M3 Auth on the slice                                          | JWT and Better Auth (GitHub/Google OAuth) on Express + Prisma, frontend auth pages, per-user Todo                                                                                                                                                                                                             | 4.1, 4.2, 4.5 (slice)                                                          |
 | 0.6.0   | M4 Breadth                                                    | Fastify, Hono, Nest parity; MySQL/SQLite/MongoDB/Redis; Drizzle, Mongoose; React + Vite, CSS Modules; Jest; yarn/bun/npm monorepos; session auth; Weather template; all presets; pino options; nightly sampling                                                                                               | rest of Phases 2–4                                                             |
 | 0.7.0   | M5 Personalisation                                            | Code style / strictness knobs, remembered defaults, user presets, `add`, `mcp`                                                                                                                                                                                                                                | Phase 5                                                                        |
-| 1.0.0   | M6 Hardening                                                  | Contract frozen, public website with docs (D-83), LTS/catalog policy, release gate (D-81)                                                                                                                                                                                                                     | Phase 6                                                                        |
+| 1.0.0   | M6 Hardening                                                  | Contract frozen, plug-and-play adapters (D-92), `doctor` catalog drift, release gate (D-81)                                                                                                                                                                                                                   | Phase 6                                                                        |
 | 1.1.0   | Python (uv, FastAPI, SQLAlchemy, pytest, ruff)                | post-1.0                                                                                                                                                                                                                                                                                                      |
 | 1.2.0   | Go (Gin or chi, sqlc, golangci-lint), mixed-language monorepo | post-1.0                                                                                                                                                                                                                                                                                                      |
 
@@ -1302,24 +1302,38 @@ only in formatting; `add rate-limit` on a generated Fastify project yields a
 passing project; an MCP client can list modules, plan, and generate a preset
 end-to-end.
 
-## Phase 6 — 1.0 hardening (target: v1.0.0)
+## Phase 6 — 1.0 hardening (target: v1.0.0, D-92)
 
 - Contract v2 frozen; deprecation policy; `LanguageAdapter` interface
   published (Node only) so 1.1 does not change the contract.
-- Public website (D-83): landing page, stack builder, docs with a module reference generated
-  from the registry; `$schema` hosted.
-- Catalog/LTS policy: monthly Renovate cadence, Node default flips to the
-  current LTS.
-- Release gate (D-81): the full matrix and a sampling run pass once before the tag.
+- Plug-and-play extension (owner, D-92): a new language, framework, database or ORM is its own
+  folder plus one registry line. Typed adapter interfaces replace code that branches on module
+  ids (templates checking `it.modules.includes('framework-fastify')`, wizard choice lists and
+  presets naming ids); the wizard's choices come from module metadata. Design and order: D-96.
+- `devstack doctor` reports drift against the catalog (D-93).
+- Install failure after the files are written (D-95): files stay, the summary says Not verified
+  with the exact retry and debugging commands.
+- Catalog/LTS policy (D-97): monthly catalog refresh, Node default follows the current LTS.
+- Release gate (D-81): the full matrix and a sampling run pass once before the tag; the owner
+  makes the go/no-go call after it.
+
+Deferred (D-92): metrics (§ success metrics) are measured later; the public website is M7.
+
+## Phase 7 — Public website (D-83, D-92)
+
+Planned in depth before any work: landing page, interactive stack builder running the real
+resolver, docs with a module reference generated from the registry, MCP setup guide, hosted
+`$schema`. Built in this repo, excluded from the npm package, deployed by the host's Git
+integration (no new workflow).
 
 ## Post-1.0 — Python and Go (targets: v1.1.0, v1.2.0)
 
 | #   | Task                                                                                                                                             | Effort |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| 7.1 | Python adapter: uv, `pyproject.toml`, `uv.lock`, `uv run`; `language-python`; `quality-ruff`, `quality-mypy`; `testing-pytest`.                  | L      |
-| 7.2 | `framework-fastapi` with slots; `orm-sqlalchemy`, `env-pydantic-settings`; Docker/CI for Python. Then `framework-django`, `framework-flask`.     | XL     |
-| 7.3 | Go adapter: `go.mod`, `go.work`; `language-go`; `framework-gin` or `framework-chi` (one first, Q-04); `orm-sqlc`; `quality-golangci`; Docker/CI. | XL     |
-| 7.4 | Mixed-language monorepo: Go/Python `apps/api` + Next `apps/web` with Turborepo tasks.                                                            | L      |
+| 8.1 | Python adapter: uv, `pyproject.toml`, `uv.lock`, `uv run`; `language-python`; `quality-ruff`, `quality-mypy`; `testing-pytest`.                  | L      |
+| 8.2 | `framework-fastapi` with slots; `orm-sqlalchemy`, `env-pydantic-settings`; Docker/CI for Python. Then `framework-django`, `framework-flask`.     | XL     |
+| 8.3 | Go adapter: `go.mod`, `go.work`; `language-go`; `framework-gin` or `framework-chi` (one first, Q-04); `orm-sqlc`; `quality-golangci`; Docker/CI. | XL     |
+| 8.4 | Mixed-language monorepo: Go/Python `apps/api` + Next `apps/web` with Turborepo tasks.                                                            | L      |
 
 Exit gate: a FastAPI project and a Go project generate, install, lint, test,
 build and serve `/health` through the same CLI flow; no Python/Go-specific
@@ -1907,6 +1921,35 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   combinations cover Express, Fastify and Nest; Vitest, Jest and node:test; Prisma, Drizzle and
   Mongoose; JWT, sessions and Better Auth; the Todo template, API docs, Winston and JSON logs,
   a fullstack preset and `add` on a CommonJS project.
+- **D-92 (2026-10-04)** — M6 scope (owner): contract freeze, plug-and-play adapters (adding a
+  language, framework, database or ORM is a few files in its own folder, using typed interfaces
+  instead of id checks spread across modules), `doctor` drift, partial-install UX, release gate.
+  The public website moves to M7 (Phase 7) to be planned in depth; metrics are measured later.
+  No new GitHub workflows: they slow down pushes (owner). Post-1.0 language tasks become 8.x.
+- **D-93 (2026-10-04, Q-09)** — When the catalog moves (e.g. Prisma 7 → 8), generated projects
+  are not changed automatically; `devstack doctor` reports drift between a project's
+  dependencies and the catalog.
+- **D-94 (2026-10-04, Q-10)** — Windows is supported through WSL for now; native Windows is
+  decided later.
+- **D-95 (2026-10-04, Q-11)** — When install fails after the files are written, the files stay,
+  the summary reports the project as Not verified and lists the exact next steps: the retry
+  commands and the debugging commands.
+- **D-96 (2026-10-04)** — Plug-and-play design (owner, D-92): providers describe themselves and
+  consumers read the description. Databases, ORMs and frameworks declare typed traits (compose
+  service and SQL dialect, build steps, entry file) that templates read through `it.stack`
+  instead of checking ids; code that differs per framework is a declared variant, and a missing
+  variant is a resolver diagnostic, not broken output; Docker, CI and editor files expose slots
+  that ORMs fill; the wizard is built from module metadata and the resolver's rules; a
+  `LanguageAdapter` owns the manifest, catalog, package managers, check commands and base image.
+  Interfaces get only what Node needs now (B7). Order, each step a commit with the matrix green:
+  (1) a plan snapshot over every e2e combination, and the `framework` condition reads the backend
+  framework, not the first framework in the stack; (2) database traits; (3) ORM slot
+  contributions; (4) derived wizard; (5) framework variants; (6) `LanguageAdapter` as the core
+  seam, then contract v2 frozen. Code standard (owner): clean, object-oriented where behaviour
+  varies, lean; a field or method lands in the step that uses it.
+- **D-97 (2026-10-04)** — Node and catalog policy (owner): generated projects target the current
+  active Node LTS (`engines`, the Docker image, `@types/node` move together after a full e2e
+  run); the catalog is refreshed monthly, locally, followed by the full matrix.
 
 # §8. Open questions
 
@@ -1920,9 +1963,9 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
 | Q-06 | Frontend order after Next/React-Vite: SvelteKit vs Nuxt vs Astro vs Angular.                                                                                                                                                                                                                                                                                                                                                            | Owner | Post-1.0          |
 | Q-07 | **Resolved 2026-10-03 → D-82.** Whether `add` supports removal (`devstack remove`) in 0.7 or later.                                                                                                                                                                                                                                                                                                                                     | Owner | Phase 5           |
 | Q-08 | **Resolved 2026-10-03 → D-83.** Docs hosting (static site generator) and domain for `$schema` URL.                                                                                                                                                                                                                                                                                                                                      | Owner | Phase 1           |
-| Q-09 | Upgrade story for generated projects when the catalog moves (e.g. Prisma 7 → 8): nothing automatic vs `devstack doctor` reporting drift against the catalog.                                                                                                                                                                                                                                                                            | Owner | Phase 6           |
-| Q-10 | OS support: native Windows vs WSL only; the e2e matrix is Linux-only today.                                                                                                                                                                                                                                                                                                                                                             | Owner | Phase 2           |
-| Q-11 | Partial-install UX: what the summary and exit code say when install fails after files are written.                                                                                                                                                                                                                                                                                                                                      | Eng   | Phase 0, task 0.5 |
+| Q-09 | **Resolved 2026-10-04 → D-93.** Upgrade story for generated projects when the catalog moves (e.g. Prisma 7 → 8): nothing automatic vs `devstack doctor` reporting drift against the catalog.                                                                                                                                                                                                                                            | Owner | Phase 6           |
+| Q-10 | **Resolved 2026-10-04 → D-94.** OS support: native Windows vs WSL only; the e2e matrix is Linux-only today.                                                                                                                                                                                                                                                                                                                             | Owner | Phase 2           |
+| Q-11 | **Resolved 2026-10-04 → D-95.** Partial-install UX: what the summary and exit code say when install fails after files are written.                                                                                                                                                                                                                                                                                                      | Eng   | Phase 0, task 0.5 |
 | Q-12 | **Resolved 2026-10-03 → D-82.** Command name for post-init commands: a second `bin` (`devstack add`) vs `npx <package> add`. Interim (2026-10-01, D-59): `plan`, `modules`, `doctor` are subcommands of `create-devstack-app`; a project with one of those names needs `init <name>`.                                                                                                                                                   | Owner | Phase 1           |
 | Q-13 | Secret scanner in pre-commit: gitleaks (Go binary, not on npm, separate install) vs secretlint (npm, catalog-pinned). Recommendation: secretlint by default, gitleaks when found on PATH. **Resolved 2026-10-03:** secretlint only (npm, catalog-pinned); detecting gitleaks on PATH is dropped, since an optional external binary makes hook behaviour differ between machines.                                                        | Eng   | Phase 3, task 3.6 |
 
