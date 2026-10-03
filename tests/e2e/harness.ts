@@ -217,6 +217,18 @@ async function checkCombination(
   }
 
   const projectDir = path.join(projectsDir, combination.id)
+  // tasks 5.6, 5.8: change the generated stack with the CLI, then hold it to the same gates
+  for (const change of combination.evolve ?? []) {
+    const [verb, ids] =
+      change.add !== undefined ? ['add', change.add] : ['remove', change.remove ?? []]
+    const evolved = await run(cliBin, [verb, ...ids], {
+      cwd: projectDir,
+      timeoutMs: INSTALL_TIMEOUT_MS,
+      env: { npm_config_user_agent: `${pm}/e2e` }
+    })
+    steps.push(toStep(`${verb} ${ids.join(' ')}`, evolved, evolved.output))
+    if (!evolved.ok) return { id: combination.id, pm, steps }
+  }
   steps.push(await checkRequiredFiles(projectDir))
   steps.push(...(await runGateScripts(projectDir, pm, tier)))
 

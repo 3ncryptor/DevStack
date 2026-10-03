@@ -34,5 +34,17 @@ export async function formatPlannedFiles(files: readonly PlannedFile[]): Promise
   if (config === undefined) {
     return [...files]
   }
+  return formatWith(files, config)
+}
+
+/** Formats files with a given Prettier config, e.g. a project's own when `add` merges files. */
+export function formatWith(
+  files: readonly PlannedFile[],
+  config: prettier.Options
+): Promise<PlannedFile[]> {
   return Promise.all(files.map((file) => formatOne(file, config)))
 }
+
+/** The Prettier config a plan writes (its `.prettierrc`), if the project has Prettier. */
+export const prettierConfigOf = (files: readonly PlannedFile[]): prettier.Options | undefined =>
+  parseConfig(files)

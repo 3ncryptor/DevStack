@@ -833,5 +833,63 @@
     "settings": {
       "strictness": "strictest"
     }
+  },
+  {
+    "id": "fastify-add-rate-limit",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "security-helmet",
+      "middleware-cors",
+      "testing-vitest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "evolve": [
+      {
+        "add": ["security-rate-limit"]
+      }
+    ]
+  },
+  {
+    "id": "fullstack-add-auth",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "security-helmet",
+      "framework-nextjs",
+      "ui-tailwind",
+      "testing-vitest",
+      "testing-vitest-web",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "evolve": [
+      {
+        "add": ["auth-jwt"]
+      }
+    ]
+  },
+  {
+    "id": "express-add-remove-redis",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "security-helmet",
+      "database-postgres",
+      "orm-prisma",
+      "testing-vitest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "evolve": [
+      {
+        "add": ["cache-redis", "middleware-compression"]
+      },
+      {
+        "remove": ["cache-redis"]
+      }
+    ]
   }
 ]

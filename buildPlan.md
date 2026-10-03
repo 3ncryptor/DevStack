@@ -1858,6 +1858,19 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   built-in) carry modules with options, settings, package manager and depth; `--preset` and
   question 0 find them. The review screen's "Save as preset" now saves a named user preset
   (amends D-59) and gains "Remember as my defaults". The JSON plan reports depth and settings.
+- **D-88 (2026-10-03)** — `add` and `remove` (tasks 5.6, 5.8) re-plan the project from its
+  manifest twice (as generated, and with the change) and decide every file from three versions:
+  old plan, new plan, disk. New files are created; files untouched since generation are updated
+  or, when no longer generated, deleted; a file the user edited is never overwritten: its new
+  version is written next to it as `<file>.devstack-new` (`--force` overwrites, original backed
+  up, as are deleted files). `package.json` gets a three-way JSON merge (removed dependencies are
+  dropped only while they still hold the generated value), `.env` gets the new variables appended
+  (never removed: local secrets), `pnpm-workspace.yaml` gets the new build approvals (pnpm 11+
+  fails installs without them). The manifest now records the package manager's version, so the
+  replay is byte-exact. `remove` refuses a module another one still requires. After writing,
+  the package manager installs and the new modules' own steps run (e.g. `prisma generate`).
+  Exit gate automated: e2e `fastify-add-rate-limit`, `fullstack-add-auth` (JWT auth into a
+  monorepo, Postgres and Prisma pulled in), `express-add-remove-redis`.
 
 # §8. Open questions
 

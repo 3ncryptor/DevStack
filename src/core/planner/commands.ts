@@ -54,6 +54,7 @@ export function planCommands(
         command: packageManager,
         args: pm.exec(binary, args),
         description: `${moduleDefinition.id}: ${moduleCommand.run.join(' ')}`,
+        module: moduleDefinition.id,
         ...(dirOf(moduleDefinition) === '' ? {} : { cwd: dirOf(moduleDefinition) })
       })
     }

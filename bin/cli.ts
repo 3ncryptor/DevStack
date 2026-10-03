@@ -3,6 +3,7 @@ import { Command, CommanderError } from 'commander'
 
 import { configGet, configList, configPath, configSet, configUnset } from '../src/commands/config'
 import { runDoctor } from '../src/commands/doctor'
+import { addModules, removeModules, type EvolveOptions } from '../src/commands/evolve'
 import { presetsDelete, presetsList, presetsSave, presetsShow } from '../src/commands/presets'
 import { listModules } from '../src/commands/modules'
 import { systemProbe } from '../src/core/doctor'
@@ -11,6 +12,7 @@ import { loadModules } from '../src/core/module-loader'
 import { Aborted, EXIT_CODE, exitCodeFor } from '../src/errors'
 import { runCreateDevstack } from '../src/index'
 import type { CliOptions } from '../src/types/cli'
+import { ConsoleLogger } from '../src/utils/logger'
 
 interface InitFlags {
   preset?: string
@@ -132,6 +134,39 @@ program
 
 const print = (text: string): void => {
   process.stdout.write(text)
+}
+
+interface EvolveFlags {
+  dryRun: boolean
+  force: boolean
+  skipInstall: boolean
+  verbose: boolean
+}
+
+const evolveOptions = (flags: EvolveFlags): EvolveOptions => ({
+  projectDir: process.cwd(),
+  dryRun: flags.dryRun,
+  force: flags.force,
+  skipInstall: flags.skipInstall,
+  logger: new ConsoleLogger({ verbose: flags.verbose, silent: false })
+})
+
+// Change a generated project's stack (tasks 5.6, 5.8): run in the project's root folder.
+for (const [name, description, run] of [
+  ['add', 'Add modules to this DevStack project', addModules],
+  ['remove', 'Remove modules from this DevStack project', removeModules]
+] as const) {
+  program
+    .command(name)
+    .description(description)
+    .argument('<modules...>', 'Module ids, e.g. security-rate-limit (see modules list)')
+    .option('--dry-run', 'List the changes and write nothing', false)
+    .option('--force', 'Overwrite files you edited (originals are backed up)', false)
+    .option('--skip-install', 'Do not run the package manager afterwards', false)
+    .option('--verbose', 'Print debug output', false)
+    .action(async (modules: string[], flags: EvolveFlags) => {
+      print((await run(modules, evolveOptions(flags))).report)
+    })
 }
 
 // Remembered defaults (task 5.4): what the wizard pre-selects and --yes uses.

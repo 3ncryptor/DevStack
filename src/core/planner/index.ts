@@ -286,6 +286,9 @@ function rootFiles(
   const manifest = manifestFor({
     projectName: input.projectName,
     packageManager: input.packageManager,
+    ...(input.packageManagerVersion === undefined
+      ? {}
+      : { packageManagerVersion: input.packageManagerVersion }),
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
     options: context.moduleOptions,
     depth: context.depth,

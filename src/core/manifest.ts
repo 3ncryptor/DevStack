@@ -30,6 +30,8 @@ export const stackConfigSchema = z.strictObject({
     if (problem !== undefined) context.addIssue({ code: 'custom', message: problem })
   }),
   packageManager: z.enum(PACKAGE_MANAGERS).optional(),
+  /** The version that wrote the lockfile; `add`/`remove` re-plan with it (D-85, task 5.6). */
+  packageManagerVersion: z.string().min(1).optional(),
   modules: z
     .array(
       z.union([
@@ -57,6 +59,7 @@ export function parseStackConfig(raw: unknown, source: string): StackConfig {
 export interface ManifestInput {
   projectName: string
   packageManager: NonNullable<StackConfig['packageManager']>
+  packageManagerVersion?: string
   /** Resolved module ids in dependency order. */
   modules: readonly string[]
   /** Resolved options per module id; recorded so a replay renders the same files. */
@@ -71,6 +74,9 @@ export function manifestFor(input: ManifestInput): StackConfig {
     version: STACK_CONFIG_VERSION,
     name: input.projectName,
     packageManager: input.packageManager,
+    ...(input.packageManagerVersion === undefined
+      ? {}
+      : { packageManagerVersion: input.packageManagerVersion }),
     modules: input.modules.map((id) => {
       const options = input.options?.[id]
       return options === undefined ? id : { id, options }

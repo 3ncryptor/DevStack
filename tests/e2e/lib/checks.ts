@@ -88,6 +88,8 @@ export interface Combination {
   compose?: boolean
   /** Project settings for the stack config (tasks 5.1-5.3), e.g. other app folder names. */
   settings?: Record<string, unknown>
+  /** After generating: `add` or `remove` modules with the CLI, in order (tasks 5.6, 5.8). */
+  evolve?: Array<{ add?: string[]; remove?: string[] }>
 }
 
 /** Ids become folder and project names, so keep them to safe kebab-case. */
@@ -116,7 +118,8 @@ export function parseMatrix(raw: unknown): Combination[] {
       ...(candidate.smoke === undefined ? {} : { smoke: candidate.smoke }),
       ...(candidate.finish === undefined ? {} : { finish: candidate.finish }),
       ...(candidate.compose === undefined ? {} : { compose: candidate.compose }),
-      ...(candidate.settings === undefined ? {} : { settings: candidate.settings })
+      ...(candidate.settings === undefined ? {} : { settings: candidate.settings }),
+      ...(candidate.evolve === undefined ? {} : { evolve: candidate.evolve })
     }
     return hasPreset
       ? { id: candidate.id, preset: candidate.preset, ...extra }

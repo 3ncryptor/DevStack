@@ -34,6 +34,8 @@ export interface PlannedCommand {
   skipIfExists?: string
   /** Project-relative directory to run in, e.g. `apps/api`; default the project root. */
   cwd?: string
+  /** The module a postInstall command belongs to (task 5.6: `add` runs the new ones). */
+  module?: string
 }
 
 /** An environment variable of the generated project, merged across the modules declaring it. */
