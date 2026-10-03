@@ -8,6 +8,7 @@ export default defineConfig({
   platform: 'node',
   target: 'node22',
   clean: true,
-  splitting: false,
+  // chunks: rarely used commands (mcp, with its bundled SDK) load only when they run
+  splitting: true,
   sourcemap: false
 })

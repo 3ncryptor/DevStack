@@ -94,36 +94,42 @@ create-devstack-app my-app --preset backend --print-plan json
 create-devstack-app plan --preset backend         # what init would write and run
 create-devstack-app modules list                  # every module, by category
 create-devstack-app doctor                        # check Node.js, package managers, git, Docker
+
+create-devstack-app add security-rate-limit       # in a project: add modules later
+create-devstack-app remove cache-redis            # in a project: remove them again
+create-devstack-app config set settings.license MIT   # remember a default
+create-devstack-app presets save team-api         # keep this project's stack as a preset
+create-devstack-app mcp                           # serve DevStack to AI assistants
 ```
 
 The wizard first checks your machine (Node.js version, package managers, git identity), then
 asks only the questions that apply: framework, database and ORM, package manager, architecture,
 pre-commit hooks, Docker and what `app.ts` sets up. ESLint, Prettier and TypeScript are always
 configured. Nothing is written until the review screen, where you can generate, change any
-answer, save the stack as a file for `--config`, or cancel. A missing package manager is caught
-there too, before any file is written.
+answer, save the stack as a named preset, remember your answers as defaults, or cancel. A
+missing package manager is caught there too, before any file is written.
 
-`plan`, `modules` and `doctor` are commands, so a project with one of those names needs the
-explicit form: `create-devstack-app init doctor`.
+`plan`, `modules`, `doctor`, `add`, `remove`, `config`, `presets` and `mcp` are commands, so a
+project with one of those names needs the explicit form: `create-devstack-app init doctor`.
 
-| Flag                        | Effect                                                                                                                      |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `--preset <name>`           | Start from a built-in preset (`backend`, `fullstack-next-express`); you still see the review screen unless you pass `--yes` |
-| `--pm <name>`               | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm)              |
-| `--depth <level>`           | `wired` (default): integration code included. `bare`: config, tooling and folders only                                      |
-| `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                                 |
-| `--yes`                     | Accept defaults, never ask. Never overwrites existing files                                                                 |
-| `--force`                   | Overwrite existing files. Originals are backed up first                                                                     |
-| `--advanced`                | Pick modules one by one; the review screen offers fixes when they do not fit together                                       |
-| `--in-place`                | Generate into the current directory                                                                                         |
-| `--dry-run`                 | Print the plan (files and commands) and stop                                                                                |
-| `--print-plan [text\|json]` | Print the plan in a format; `json` never prompts                                                                            |
-| `--skip-install`            | Do not install dependencies                                                                                                 |
-| `--skip-git`                | Do not initialise git or install hooks                                                                                      |
-| `--skip-verify`             | Skip the checks and boot test after install (the project is "Not verified")                                                 |
-| `--github <url>`            | Push the initial commit to this existing, empty GitHub repository                                                           |
-| `--start`                   | Start the database and the dev servers when the project is ready                                                            |
-| `--verbose`                 | Debug output and full error details                                                                                         |
+| Flag                        | Effect                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--preset <name>`           | Start from a preset, built in or your own (`presets list`); you still see the review screen unless you pass `--yes` |
+| `--pm <name>`               | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm)      |
+| `--depth <level>`           | `wired` (default): integration code included. `bare`: config, tooling and folders only                              |
+| `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                         |
+| `--yes`                     | Accept defaults, never ask. Never overwrites existing files                                                         |
+| `--force`                   | Overwrite existing files. Originals are backed up first                                                             |
+| `--advanced`                | Pick modules one by one; the review screen offers fixes when they do not fit together                               |
+| `--in-place`                | Generate into the current directory                                                                                 |
+| `--dry-run`                 | Print the plan (files and commands) and stop                                                                        |
+| `--print-plan [text\|json]` | Print the plan in a format; `json` never prompts                                                                    |
+| `--skip-install`            | Do not install dependencies                                                                                         |
+| `--skip-git`                | Do not initialise git or install hooks                                                                              |
+| `--skip-verify`             | Skip the checks and boot test after install (the project is "Not verified")                                         |
+| `--github <url>`            | Push the initial commit to this existing, empty GitHub repository                                                   |
+| `--start`                   | Start the database and the dev servers when the project is ready                                                    |
+| `--verbose`                 | Debug output and full error details                                                                                 |
 
 Exit codes: `0` success, `1` generation failed after writing (the message lists what was written),
 `2` invalid input or stack (nothing written), `3` cancelled.
@@ -147,15 +153,79 @@ Exit codes: `0` success, `1` generation failed after writing (the message lists 
 A module entry can be an id or `{ "id", "options" }`; options are validated against the
 module's schema, and defaults fill in the rest (rate limiting: `windowMs`, `limit`).
 
+A config can also carry `settings`, recorded with every project:
+
+```json
+"settings": {
+  "style": { "semi": true, "singleQuote": false, "tabWidth": 4, "printWidth": 100 },
+  "strictness": "strictest",
+  "apps": { "backend": "server", "frontend": "site" },
+  "ports": { "backend": 4000 },
+  "license": "MIT",
+  "author": "Ada Lovelace",
+  "initialCommit": true
+}
+```
+
+The code style goes into `.prettierrc` and every generated file follows it; `strictest` adds
+`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` and `noImplicitOverride`; `apps` and
+`ports` rename the monorepo's apps everywhere (folders, compose, Dockerfiles, env).
+
 Every generated project records its own config in `.devstack/stack.json`; passing it to
 `--config` regenerates the same files.
+
+### Change a project later: add and remove
+
+Run in a generated project's root folder:
+
+```bash
+create-devstack-app add cache-redis --dry-run     # list the changes first
+create-devstack-app add cache-redis               # write them, then install
+create-devstack-app remove cache-redis
+```
+
+DevStack compares what it generated, what the stack needs now, and what is on disk. Files you
+have not touched are updated, created or (on `remove`) deleted. A file you edited is never
+overwritten: the new version is written next to it as `<file>.devstack-new` for you to merge,
+or `--force` overwrites it after a backup. `package.json` and `pnpm-workspace.yaml` are merged
+and new variables are appended to `.env`. `remove` refuses a module another one still needs.
+
+### Remembered defaults and your presets
+
+```bash
+create-devstack-app config set packageManager pnpm
+create-devstack-app config set settings.style.semi true
+create-devstack-app config list                   # also: get, unset, path
+create-devstack-app presets save team-api --description "Team API"
+create-devstack-app presets list                  # also: show, delete
+```
+
+Defaults live in `~/.config/devstack/config.json` (or `$XDG_CONFIG_HOME/devstack`): the wizard
+pre-selects them and `--yes` uses them. "Remember as my defaults" on the review screen saves
+your answers. Flags win over a `--config` file, which wins over a preset, which wins over your
+defaults. Presets are saved in `~/.config/devstack/presets/` and work with `--preset <name>`.
+
+### Use from AI assistants (MCP)
+
+`create-devstack-app mcp` is a local MCP server over stdio: your AI assistant starts it, no
+hosting involved. It offers `list_modules`, `list_presets`, `validate`, `plan`, `init`,
+`add_modules` and `remove_modules`. Add it to Claude Code with
+`claude mcp add devstack -- npx create-devstack-app mcp`, or to any client's config:
+
+```json
+{ "mcpServers": { "devstack": { "command": "npx", "args": ["create-devstack-app", "mcp"] } } }
+```
+
+`init` only writes into a new or empty folder given as an absolute path, and the add and
+remove tools keep the same rules as the commands.
 
 ## Safety
 
 - Nothing is written until the whole plan has rendered. Files are staged in a temp directory,
   then copied in.
 - `--yes` never overwrites. With `--force` or an interactive "overwrite", originals are copied to
-  a backup directory first and the summary says where. Nothing is ever deleted.
+  a backup directory first and the summary says where. `init` never deletes anything; `remove`
+  deletes only files it generated that you have not changed, after backing them up.
 - Symlinks, non-regular files and paths outside the project are refused before anything is written.
 - Project names follow npm's rules, including reserved and Windows device names.
 - Commands run without a shell.

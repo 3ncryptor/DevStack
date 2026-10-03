@@ -1284,16 +1284,16 @@ cannot read another user's todo.
 
 ## Phase 5 — Personalisation extras, `add`, MCP (target: v0.7.0)
 
-| #   | Task                                                                                                                                                                                                                 | Effort |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 5.1 | Code style knobs (semicolons, quotes, tabs, trailing commas, width) → Prettier config, and generated files formatted at plan time to match.                                                                          | M      |
-| 5.2 | TS strictness tiers and ESM/CJS choice applied to every `tsconfig`/manifest.                                                                                                                                         | S      |
-| 5.3 | Naming and metadata: app folder names, port, license, author, initial commit toggle.                                                                                                                                 | S      |
-| 5.4 | Remembered defaults `~/.config/devstack/config.json`; precedence flags > config file > preset > defaults; `devstack config set/get`.                                                                                 | S      |
-| 5.5 | User presets: `devstack presets save <name>` from any wizard result.                                                                                                                                                 | S      |
-| 5.6 | `devstack add <module>`: read manifest, re-resolve with additions, plan diff, apply only new/changed files with conflict policy, update manifest.                                                                    | L      |
-| 5.7 | `devstack mcp`: stdio MCP server exposing `list_modules`, `validate`, `plan`, `init`; diagnostics returned as structured data.                                                                                       | M      |
-| 5.8 | `devstack remove <module>` (D-82): re-resolve without it (refusing when another module requires it), delete only files it generated and that are unchanged since, revert its slots and scripts, update the manifest. | M      |
+| #   | Task                                                                                                                                                                                                                                                                                                                                       | Effort |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 5.1 | Code style knobs (semicolons, quotes, tabs, trailing commas, width) → Prettier config, and generated files formatted at plan time to match. _(Landed 2026-10-03 (M5, D-86): code style settings drive `.prettierrc` and every planned file; exit gate tested.)_                                                                            | M      |
+| 5.2 | TS strictness tiers and ESM/CJS choice applied to every `tsconfig`/manifest. _(Landed 2026-10-03 (M5, D-86): `standard`/`strictest`, templates fixed for strictest; CommonJS dropped (ESM only).)_                                                                                                                                         | S      |
+| 5.3 | Naming and metadata: app folder names, port, license, author, initial commit toggle. _(Landed 2026-10-03 (M5, D-86): app folder names and ports, license, author, description, initial commit toggle; `.editorconfig`.)_                                                                                                                   | S      |
+| 5.4 | Remembered defaults `~/.config/devstack/config.json`; precedence flags > config file > preset > defaults; `devstack config set/get`. _(Landed 2026-10-03 (M5, D-87): `~/.config/devstack/config.json`, `config path                                                                                                                        | list   | get  | set                                                     | unset`, wizard pre-selection, review "Remember as my defaults".)_ | S   |
+| 5.5 | User presets: `devstack presets save <name>` from any wizard result. _(Landed 2026-10-03 (M5, D-87): `presets list                                                                                                                                                                                                                         | show   | save | delete`; `--preset` and question 0 find user presets.)_ | S                                                                 |
+| 5.6 | `devstack add <module>`: read manifest, re-resolve with additions, plan diff, apply only new/changed files with conflict policy, update manifest. _(Landed 2026-10-03 (M5, D-88): three-way re-plan, sidecars for edited files, merges for package.json, .env, pnpm-workspace.yaml; exit gate in e2e.)_                                    | L      |
+| 5.7 | `devstack mcp`: stdio MCP server exposing `list_modules`, `validate`, `plan`, `init`; diagnostics returned as structured data. _(Landed 2026-10-03 (M5, D-89): seven tools on the official SDK, lazily loaded; exit gate verified over stdio.)_                                                                                            | M      |
+| 5.8 | `devstack remove <module>` (D-82): re-resolve without it (refusing when another module requires it), delete only files it generated and that are unchanged since, revert its slots and scripts, update the manifest. _(Landed 2026-10-03 (M5, D-88): deletes only untouched generated files, backed up; refuses a module others require.)_ | M      |
 
 Exit gate: two generations of the same spec with different style knobs differ
 only in formatting; `add rate-limit` on a generated Fastify project yields a
@@ -1871,6 +1871,15 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   the package manager installs and the new modules' own steps run (e.g. `prisma generate`).
   Exit gate automated: e2e `fastify-add-rate-limit`, `fullstack-add-auth` (JWT auth into a
   monorepo, Postgres and Prisma pulled in), `express-add-remove-redis`.
+- **D-89 (2026-10-03)** — `mcp` (task 5.7) is built on the official SDK
+  (`@modelcontextprotocol/sdk` 1.32), bundled into the CLI's build as a lazily loaded chunk, so an
+  `npx` user downloads nothing extra and every other command starts without it. Tools:
+  `list_modules`, `list_presets`, `validate` (diagnostics with fixes), `plan`, `init` (absolute,
+  new or empty folder only; installs unless `install: false`), `add_modules`, `remove_modules`
+  (the D-88 rules). Read-only tools are annotated as such; failures come back as tool errors with
+  the resolver's diagnostics. stdout carries the protocol, so all progress and child-process
+  output go to stderr. Exit gate verified with the SDK's client over real stdio: list, validate,
+  plan, then `init` of the `backend-fastify` preset, installed and passing every gate.
 
 # §8. Open questions
 

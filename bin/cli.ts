@@ -169,6 +169,16 @@ for (const [name, description, run] of [
     })
 }
 
+// MCP server for AI assistants (task 5.7, D-84): stdio, started by the client; the SDK loads
+// only here, so every other command starts without it.
+program
+  .command('mcp')
+  .description('Serve DevStack to AI assistants over MCP (stdio): list, validate, plan, init, add')
+  .action(async () => {
+    const { runMcpServer } = await import('../src/mcp/server')
+    await runMcpServer()
+  })
+
 // Remembered defaults (task 5.4): what the wizard pre-selects and --yes uses.
 const config = program
   .command('config')

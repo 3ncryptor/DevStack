@@ -1,4 +1,4 @@
-import { runPlanCommands } from '../core/apply/commands'
+import { runPlanCommands, type CommandOutput } from '../core/apply/commands'
 import { applyChanges, type EvolveOutcome } from '../core/evolve/apply'
 import {
   planProject,
@@ -22,6 +22,8 @@ export interface EvolveOptions {
   force: boolean
   skipInstall: boolean
   logger: Logger
+  /** stderr when stdout is not the user's terminal (MCP). */
+  commandOutput?: CommandOutput
 }
 
 export interface EvolveResult {
@@ -103,7 +105,7 @@ async function applyAndInstall(
         command.phase === 'install' ||
         (command.module !== undefined && added.includes(command.module))
     )
-    await runPlanCommands({ ...newPlan, commands }, options.logger)
+    await runPlanCommands({ ...newPlan, commands }, options.logger, options.commandOutput)
   }
   return outcome
 }
