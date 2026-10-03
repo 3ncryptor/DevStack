@@ -21,6 +21,11 @@ export interface Limiter {
   prune(now?: number): void
 }
 
+<% if (algorithm !== 'fixed-window') { %>
+/** Absorbs floating-point error, so a request exactly at its retry time is allowed. */
+const TOLERANCE = 1e-9
+
+<% } %>
 <% if (algorithm === 'fixed-window') { %>
 /**
  * Fixed window: up to `limit` requests per client in each `windowMs` window. Simple and cheap;
@@ -87,11 +92,25 @@ class SlidingWindow implements Limiter {
     return state
   }
 
+  /** When the weighted estimate first leaves room for one more request. */
+  private retryAfterMs(state: { current: number; previous: number; startedAt: number }, now: number): number {
+    const room = this.limit - 1
+    const nextStart = state.startedAt + this.windowMs
+    // within this window: the previous window's weight fades until the estimate fits
+    if (state.current <= room && state.previous > 0) {
+      const at = state.startedAt + this.windowMs * (1 - (room - state.current) / state.previous)
+      if (at < nextStart) return Math.max(1, Math.ceil(at - now))
+    }
+    if (state.current === 0) return Math.max(1, Math.ceil(nextStart - now))
+    // next window: this window's count becomes the previous one, fading the same way
+    return Math.ceil(nextStart + this.windowMs * (1 - room / state.current) - now)
+  }
+
   consume(key: string, now = Date.now()): Decision {
     const state = this.rolled(key, now)
     const overlap = 1 - (now - state.startedAt) / this.windowMs
     const estimated = state.previous * overlap + state.current
-    const allowed = estimated + 1 <= this.limit
+    const allowed = estimated + 1 <= this.limit + TOLERANCE
     const next = allowed ? { ...state, current: state.current + 1 } : state
     this.windows.set(key, next)
     const resetMs = next.startedAt + 2 * this.windowMs - now
@@ -100,7 +119,7 @@ class SlidingWindow implements Limiter {
       limit: this.limit,
       remaining: Math.max(0, Math.floor(this.limit - (estimated + (allowed ? 1 : 0)))),
       resetMs,
-      retryAfterMs: allowed ? 0 : next.startedAt + this.windowMs - now
+      retryAfterMs: allowed ? 0 : this.retryAfterMs(next, now)
     }
   }
 
@@ -132,8 +151,8 @@ class TokenBucket implements Limiter {
   consume(key: string, now = Date.now()): Decision {
     const state = this.buckets.get(key) ?? { tokens: this.limit, updatedAt: now }
     const tokens = Math.min(this.limit, state.tokens + (now - state.updatedAt) * this.refillPerMs)
-    const allowed = tokens >= 1
-    const left = allowed ? tokens - 1 : tokens
+    const allowed = tokens >= 1 - TOLERANCE
+    const left = allowed ? Math.max(0, tokens - 1) : tokens
     this.buckets.set(key, { tokens: left, updatedAt: now })
     return {
       allowed,
@@ -173,13 +192,13 @@ class LeakyBucket implements Limiter {
   consume(key: string, now = Date.now()): Decision {
     const state = this.buckets.get(key) ?? { level: 0, updatedAt: now }
     const level = Math.max(0, state.level - (now - state.updatedAt) * this.leakPerMs)
-    const allowed = level + 1 <= this.limit
+    const allowed = level + 1 <= this.limit + TOLERANCE
     const next = allowed ? level + 1 : level
     this.buckets.set(key, { level: next, updatedAt: now })
     return {
       allowed,
       limit: this.limit,
-      remaining: Math.floor(this.limit - next),
+      remaining: Math.max(0, Math.floor(this.limit - next)),
       resetMs: Math.ceil(next / this.leakPerMs),
       retryAfterMs: allowed ? 0 : Math.ceil((level + 1 - this.limit) / this.leakPerMs)
     }
