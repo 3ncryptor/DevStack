@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto'
-
 import * as prettier from 'prettier'
 import { describe, expect, it } from 'vitest'
 
@@ -8,6 +6,7 @@ import { buildGenerationPlan, type PlanInput } from '../src/core/planner/index'
 import { toProjectRelativePath } from '../src/core/planner/files'
 import { getPreset, PRESETS } from '../src/core/presets'
 import type { GenerationPlan } from '../src/types/plan'
+import { summarisePlan } from './helpers/plan-summary'
 
 const BACKEND_MODULES = [...(getPreset('backend')?.modules ?? [])]
 
@@ -29,19 +28,6 @@ function fileAt(plan: GenerationPlan, filePath: string) {
   return plan.files.find((file) => file.path === filePath)
 }
 
-function summarise(plan: GenerationPlan) {
-  return {
-    modules: plan.modules,
-    files: plan.files.map((file) => ({
-      path: file.path,
-      mode: file.mode.toString(8),
-      strategy: file.strategy,
-      sha256: createHash('sha256').update(file.content).digest('hex').slice(0, 16)
-    })),
-    commands: plan.commands.map((command) => [command.phase, command.command, ...command.args])
-  }
-}
-
 describe('buildGenerationPlan', () => {
   it('is deterministic for the same input', async () => {
     const first = await buildGenerationPlan(planInput())
@@ -55,7 +41,7 @@ describe('buildGenerationPlan', () => {
       planInput({ selectedModuleNames: [...(PRESETS[name]?.modules ?? [])] })
     )
 
-    expect(summarise(plan)).toMatchSnapshot()
+    expect(summarisePlan(plan)).toMatchSnapshot()
   })
 
   it('formats every file with the project Prettier config so `prettier --check` passes', async () => {
