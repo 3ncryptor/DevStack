@@ -1,5 +1,5 @@
 import type { PackageManagerId } from '../../adapters/package-manager/index'
-import { PRESETS } from '../../core/presets'
+import { PRESETS, type ResolvedPreset } from '../../core/presets'
 import { applyFixAction } from '../../core/resolver/index'
 import type { Prompter } from '../../intake/prompter'
 import type { Depth } from '../../types/module'
@@ -23,6 +23,8 @@ export interface WizardContext extends StepEnvironment {
   depth: Depth
   /** Modules of a preset given with --preset; pre-fills the answers and skips question 0. */
   presetModules?: readonly string[]
+  /** The user's saved presets (task 5.5), offered in question 0 after the built-in ones. */
+  userPresets?: readonly ResolvedPreset[]
 }
 
 export interface StackSelection {
@@ -30,6 +32,8 @@ export interface StackSelection {
   packageManager: PackageManagerId
   /** Options the answers set, e.g. `{ 'security-rate-limit': { algorithm: 'token-bucket' } }`. */
   moduleOptions: Record<string, Record<string, unknown>>
+  /** The user preset picked in question 0, whose settings and options the project takes. */
+  preset?: ResolvedPreset
 }
 
 const CUSTOM = 'custom'
@@ -71,10 +75,16 @@ async function fillMissing(
   return answers
 }
 
-async function startingAnswers(prompter: Prompter, context: WizardContext): Promise<WizardAnswers> {
+interface Start {
+  answers: WizardAnswers
+  preset?: ResolvedPreset
+}
+
+async function startingAnswers(prompter: Prompter, context: WizardContext): Promise<Start> {
   if (context.presetModules !== undefined) {
-    return answersFromModules(context.presetModules)
+    return { answers: answersFromModules(context.presetModules) }
   }
+  const saved = context.userPresets ?? []
   const choice = await prompter.select({
     message: 'Start from a preset?',
     choices: [
@@ -83,12 +93,21 @@ async function startingAnswers(prompter: Prompter, context: WizardContext): Prom
         value: preset.name,
         label: preset.name,
         hint: preset.description
+      })),
+      ...saved.map((preset) => ({
+        value: `user:${preset.name}`,
+        label: preset.name,
+        hint: `yours: ${preset.description}`
       }))
     ],
     initialValue: CUSTOM
   })
-  const preset = PRESETS[choice]
-  return preset === undefined ? {} : answersFromModules(preset.modules)
+  const builtIn = PRESETS[choice]
+  if (builtIn !== undefined) return { answers: answersFromModules(builtIn.modules) }
+  const mine = saved.find((preset) => `user:${preset.name}` === choice)
+  return mine === undefined
+    ? { answers: {} }
+    : { answers: answersFromModules(mine.modules), preset: mine }
 }
 
 const packageManagerOf = (answers: WizardAnswers, context: WizardContext): PackageManagerId =>
@@ -120,7 +139,8 @@ export async function runWizard(
   context: WizardContext,
   services: WizardServices
 ): Promise<StackSelection> {
-  const answers = await fillMissing(prompter, await startingAnswers(prompter, context), context)
+  const start = await startingAnswers(prompter, context)
+  const answers = await fillMissing(prompter, start.answers, context)
   const draft = (state: WizardAnswers): StackDraft => ({
     projectName: context.projectName,
     modules: modulesFromAnswers(state, context.registry),
@@ -140,7 +160,9 @@ export async function runWizard(
         ).map((step): [string, string] => [step.label, step.describe(state, context)]),
         ['Always included', ALWAYS_INCLUDED_LABEL]
       ],
-      edit: (state) => editAnswer(prompter, state, context)
+      edit: (state) => editAnswer(prompter, state, context),
+      // the project-specific answer (its preset) is not a default worth remembering
+      remember: (state) => ({ ...state })
     },
     services
   )
@@ -148,7 +170,8 @@ export async function runWizard(
   return {
     modules,
     packageManager,
-    moduleOptions: moduleOptionsFromAnswers(reviewed, context.registry)
+    moduleOptions: moduleOptionsFromAnswers(reviewed, context.registry),
+    ...(start.preset === undefined ? {} : { preset: start.preset })
   }
 }
 

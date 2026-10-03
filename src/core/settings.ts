@@ -88,6 +88,20 @@ export const DEFAULT_SETTINGS: ResolvedSettings = {
 
 const SCALARS = ['strictness', 'license', 'author', 'description', 'initialCommit'] as const
 
+/** Merges partial settings without filling defaults; later sources win, field by field. */
+export function mergeSettings(
+  ...sources: ReadonlyArray<ProjectSettings | undefined>
+): ProjectSettings {
+  return sources.reduce<ProjectSettings>((merged, source) => {
+    if (source === undefined) return merged
+    const nested = (key: 'style' | 'apps' | 'ports') =>
+      merged[key] === undefined && source[key] === undefined
+        ? {}
+        : { [key]: { ...merged[key], ...source[key] } }
+    return { ...merged, ...source, ...nested('style'), ...nested('apps'), ...nested('ports') }
+  }, {})
+}
+
 /** Merges partial settings over the defaults; later sources win, field by field. */
 export function resolveSettings(
   ...sources: ReadonlyArray<ProjectSettings | undefined>

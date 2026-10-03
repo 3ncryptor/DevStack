@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { Command, CommanderError } from 'commander'
 
+import { configGet, configList, configPath, configSet, configUnset } from '../src/commands/config'
 import { runDoctor } from '../src/commands/doctor'
+import { presetsDelete, presetsList, presetsSave, presetsShow } from '../src/commands/presets'
 import { listModules } from '../src/commands/modules'
 import { systemProbe } from '../src/core/doctor'
 import { CLI_PACKAGE } from '../src/core/manifest'
@@ -126,6 +128,82 @@ program
     process.exitCode = await runDoctor(systemProbe, (text) => {
       process.stdout.write(`${text}\n`)
     })
+  })
+
+const print = (text: string): void => {
+  process.stdout.write(text)
+}
+
+// Remembered defaults (task 5.4): what the wizard pre-selects and --yes uses.
+const config = program
+  .command('config')
+  .description('Remembered defaults: package manager, depth, code style, license, wizard answers')
+config
+  .command('path')
+  .description('Print where the defaults are stored')
+  .action(() => {
+    print(configPath())
+  })
+config
+  .command('list')
+  .description('Print every remembered default')
+  .action(async () => {
+    print(await configList())
+  })
+config
+  .command('get')
+  .description('Print one default, e.g. settings.style.semi')
+  .argument('<key>', 'Dotted key')
+  .action(async (key: string) => {
+    print(await configGet(key))
+  })
+config
+  .command('set')
+  .description('Remember a default, e.g. config set settings.license MIT')
+  .argument('<key>', 'Dotted key, e.g. packageManager or settings.style.printWidth')
+  .argument('<value>', 'JSON (true, 80, ["a"]) or a plain string')
+  .action(async (key: string, value: string) => {
+    print(await configSet(key, value))
+  })
+config
+  .command('unset')
+  .description('Forget a default')
+  .argument('<key>', 'Dotted key')
+  .action(async (key: string) => {
+    print(await configUnset(key))
+  })
+
+// Named presets (task 5.5): built in, or saved from a project with presets save.
+const presets = program.command('presets').description('List, show, save and delete presets')
+presets
+  .command('list')
+  .description('Built-in presets and your own')
+  .action(async () => {
+    print(await presetsList())
+  })
+presets
+  .command('show')
+  .description('Print a preset as JSON')
+  .argument('<name>', 'Preset name')
+  .action(async (name: string) => {
+    print(await presetsShow(name))
+  })
+presets
+  .command('save')
+  .description("Save this project's stack (or a stack config) as a preset for --preset <name>")
+  .argument('<name>', 'Preset name, kebab-case')
+  .option('--from <file>', 'A stack config to save instead of .devstack/stack.json')
+  .option('--description <text>', 'Shown in presets list and the wizard')
+  .option('--force', 'Replace a preset of the same name', false)
+  .action(async (name: string, flags: { from?: string; description?: string; force: boolean }) => {
+    print(await presetsSave(name, flags))
+  })
+presets
+  .command('delete')
+  .description('Delete one of your presets')
+  .argument('<name>', 'Preset name')
+  .action(async (name: string) => {
+    print(await presetsDelete(name))
   })
 
 const COMMANDER_SUCCESS_CODES = new Set(['commander.helpDisplayed', 'commander.version'])

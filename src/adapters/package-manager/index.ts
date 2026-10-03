@@ -117,8 +117,10 @@ export function isPackageManagerId(value: string): value is PackageManagerId {
 export interface PackageManagerSignals {
   /** `--pm` */
   flag: PackageManagerId | undefined
-  /** `packageManager` in a stack config */
+  /** `packageManager` in a stack config or a preset */
   config: PackageManagerId | undefined
+  /** The remembered default (task 5.4): a stated preference beats guessing from the folder. */
+  remembered?: PackageManagerId | undefined
   /** `npm_config_user_agent`, set by `npm create`, `pnpm create`, `yarn create`, `bunx` */
   userAgent: string
   /** Lockfile names present in the current directory */
@@ -139,6 +141,9 @@ export interface PackageManagerChoice {
 export function choosePackageManager(signals: PackageManagerSignals): PackageManagerChoice {
   if (signals.flag !== undefined) return { id: signals.flag, source: '--pm' }
   if (signals.config !== undefined) return { id: signals.config, source: 'config' }
+  if (signals.remembered !== undefined) {
+    return { id: signals.remembered, source: 'your remembered default' }
+  }
   const invokedWith = signals.userAgent.split('/')[0] ?? ''
   if (isPackageManagerId(invokedWith) && invokedWith !== 'npm') {
     return { id: invokedWith, source: `invoked with ${invokedWith}` }

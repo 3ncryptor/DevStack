@@ -1,3 +1,8 @@
+import type { PackageManagerId } from '../adapters/package-manager/index'
+import { splitModuleEntries } from './manifest'
+import type { ProjectSettings } from './settings'
+import { devstackHome, readUserPreset } from './user-home'
+
 export interface PresetDefinition {
   name: string
   description: string
@@ -166,4 +171,40 @@ export const PRESETS: Record<string, PresetDefinition> = {
 
 export function getPreset(name: string): PresetDefinition | undefined {
   return PRESETS[name]
+}
+
+/** A preset ready to use: built in, or saved by the user (task 5.5). */
+export interface ResolvedPreset {
+  name: string
+  description: string
+  source: 'built-in' | 'user'
+  modules: string[]
+  moduleOptions: Record<string, Record<string, unknown>>
+  settings?: ProjectSettings
+  packageManager?: PackageManagerId
+  depth?: 'bare' | 'wired'
+}
+
+/** Looks a preset up by name: built-in presets first, so a user preset never shadows one. */
+export async function findPreset(
+  name: string,
+  home = devstackHome()
+): Promise<ResolvedPreset | undefined> {
+  const builtIn = PRESETS[name]
+  if (builtIn !== undefined) {
+    return { ...builtIn, source: 'built-in', modules: [...builtIn.modules], moduleOptions: {} }
+  }
+  const saved = await readUserPreset(name, home)
+  if (saved === undefined) return undefined
+  const { ids, options } = splitModuleEntries(saved.modules)
+  return {
+    name,
+    description: saved.description ?? 'Your preset',
+    source: 'user',
+    modules: ids,
+    moduleOptions: options,
+    ...(saved.settings === undefined ? {} : { settings: saved.settings }),
+    ...(saved.packageManager === undefined ? {} : { packageManager: saved.packageManager }),
+    ...(saved.depth === undefined ? {} : { depth: saved.depth })
+  }
 }

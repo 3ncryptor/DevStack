@@ -60,7 +60,7 @@ const Q = {
   repoExtras: 'Repo extras',
   next: 'What next?',
   which: 'Which answer?',
-  saveAs: 'Save as'
+  saveAs: 'Preset name'
 } as const
 
 /** Real resolution, fake planning (the file count is the module count), recorded saves. */
@@ -400,15 +400,15 @@ describe('review screen', () => {
     expect(result.modules).not.toContain('arch-clean')
   })
 
-  it('saves the stack as a preset file and returns to the review', async () => {
+  it('saves the stack as a named preset and returns to the review (task 5.5)', async () => {
     const services = fakeServices()
-    const prompter = new AnswerPrompter([...NEST, [Q.next, 'save'], [Q.saveAs, 'nest.stack.json']])
+    const prompter = new AnswerPrompter([...NEST, [Q.next, 'save'], [Q.saveAs, 'team-nest']])
 
     await runWizard(prompter, CONTEXT, services)
 
     expect(services.saved).toEqual([
       {
-        fileName: 'nest.stack.json',
+        fileName: 'team-nest',
         draft: {
           projectName: 'wizard-app',
           modules: expect.arrayContaining(['framework-nest']) as string[],
@@ -418,7 +418,7 @@ describe('review screen', () => {
         }
       }
     ])
-    expect(prompter.notes.join('\n')).toContain('--config /virtual/nest.stack.json')
+    expect(prompter.notes.join('\n')).toContain('--preset team-nest')
   })
 
   it('reports a failed save and keeps the review open', async () => {
@@ -465,9 +465,9 @@ describe('review screen', () => {
     expect(result.packageManager).toBe('npm')
   })
 
-  it('suggests a preset file name without the npm scope', async () => {
+  it('suggests a preset name without the npm scope', async () => {
     const defaults: string[] = []
-    const prompter = new AnswerPrompter([...NEST, [Q.next, 'save'], [Q.saveAs, 'x.json']])
+    const prompter = new AnswerPrompter([...NEST, [Q.next, 'save'], [Q.saveAs, 'x']])
     const text = prompter.text.bind(prompter)
     prompter.text = (prompt) => {
       defaults.push(prompt.initialValue ?? '')
@@ -476,7 +476,50 @@ describe('review screen', () => {
 
     await runWizard(prompter, { ...CONTEXT, projectName: '@acme/api' }, fakeServices())
 
-    expect(defaults).toEqual(['api.stack.json'])
+    expect(defaults).toEqual(['api'])
+  })
+
+  it('remembers the answers as defaults and pre-selects them next time (task 5.4)', async () => {
+    const remembered: Array<Readonly<Record<string, unknown>>> = []
+    const services: WizardServices = {
+      ...fakeServices(),
+      rememberDefaults: (answers) => {
+        remembered.push(answers)
+        return Promise.resolve('/virtual/config.json')
+      }
+    }
+
+    await runWizard(new AnswerPrompter([...NEST, [Q.next, 'remember']]), CONTEXT, services)
+    const next = new AnswerPrompter()
+    const offered = offeredFor(next, Q.framework)
+    const result = await runWizard(next, { ...CONTEXT, remembered: remembered[0] }, fakeServices())
+
+    expect(remembered[0]).toMatchObject({ framework: 'framework-nest', docker: false })
+    // pre-selected, still asked
+    expect(next.asked).toContain(Q.framework)
+    expect(offered).toHaveLength(1)
+    expect(result.modules).toContain('framework-nest')
+    expect(result.modules).not.toContain('devops-docker')
+  })
+
+  it('offers the user presets in question 0 and returns the one picked', async () => {
+    const mine = {
+      name: 'team-api',
+      description: 'Team API',
+      source: 'user' as const,
+      modules: ['framework-fastify', 'database-postgres', 'orm-drizzle'],
+      moduleOptions: {},
+      settings: { license: 'MIT' as const }
+    }
+    const prompter = new AnswerPrompter([
+      [Q.preset, 'user:team-api'],
+      [Q.next, 'generate']
+    ])
+
+    const result = await runWizard(prompter, { ...CONTEXT, userPresets: [mine] }, fakeServices())
+
+    expect(result.modules).toEqual(expect.arrayContaining(mine.modules))
+    expect(result.preset?.name).toBe('team-api')
   })
 })
 

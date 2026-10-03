@@ -4,7 +4,18 @@ import { z } from 'zod'
 
 import { generateProject } from './core/generator'
 import { loadModules } from './core/module-loader'
-import { getPreset } from './core/presets'
+import { findPreset, type ResolvedPreset } from './core/presets'
+import { mergeSettings, type ProjectSettings } from './core/settings'
+import {
+  devstackHome,
+  listUserPresets,
+  readUserConfig,
+  USER_CONFIG_VERSION,
+  writeUserConfig,
+  writeUserPreset,
+  type UserConfig
+} from './core/user-home'
+import { DefaultsPrompter } from './intake/defaults-prompter'
 import {
   assertValidProjectName,
   projectDirectoryName,
@@ -16,7 +27,6 @@ import { loadStackConfig } from './intake/config'
 import type { Prompter } from './intake/prompter'
 import { githubUrlProblem } from './core/finish/github'
 import { checkAnswers, runPreflight } from './intake/preflight'
-import { saveStackPreset } from './intake/save-preset'
 import {
   runAdvancedWizard,
   runWizard,
@@ -95,34 +105,56 @@ interface StackChoice {
   moduleOptions?: Record<string, Record<string, unknown>>
   /** Set when the wizard asked; otherwise the detected package manager is used. */
   packageManager?: PackageManagerId
+  /** A user preset picked in the wizard's question 0 (task 5.5). */
+  preset?: ResolvedPreset
 }
 
-function presetModules(options: CliOptions): string[] | undefined {
+async function presetFor(options: CliOptions, home: string): Promise<ResolvedPreset | undefined> {
   if (options.preset === undefined) return undefined
-  const preset = getPreset(options.preset)
-  if (!preset) {
-    throw new InputError(`Unknown preset: ${options.preset}`)
+  const preset = await findPreset(options.preset, home)
+  if (preset === undefined) {
+    throw new InputError(
+      `Unknown preset: ${options.preset}. See the built-in and your own with: presets list`
+    )
   }
-  return [...preset.modules]
+  return preset
 }
 
-/** Questions are asked unless --yes, a config file or --print-plan json says not to. */
+/** Remembered answers (task 5.4), when there are any. */
+const rememberedAnswers = (remembered: UserConfig): Record<string, unknown> | undefined =>
+  remembered.answers === undefined || Object.keys(remembered.answers).length === 0
+    ? undefined
+    : remembered.answers
+
+/**
+ * Questions are asked unless --yes, a config file or --print-plan json says not to. --yes uses
+ * the preset, else the remembered answers (the wizard answering itself), else the backend preset.
+ */
 async function selectStack(
   options: CliOptions,
   prompter: Prompter,
-  config: StackConfig | undefined,
+  sources: { config?: StackConfig; preset?: ResolvedPreset; userPresets: ResolvedPreset[] },
   context: WizardContext,
   services: WizardServices
 ): Promise<StackChoice> {
-  if (config !== undefined) {
-    return { modules: splitModuleEntries(config.modules).ids }
+  if (sources.config !== undefined) {
+    return { modules: splitModuleEntries(sources.config.modules).ids }
   }
-  const fromPreset = presetModules(options)
+  const fromPreset = sources.preset?.modules
   const interactive = !options.yes && options.printPlan !== 'json'
   if (!interactive) {
-    return { modules: fromPreset ?? [...(getPreset('backend')?.modules ?? [])] }
+    if (fromPreset !== undefined) return { modules: [...fromPreset] }
+    if (context.remembered !== undefined) {
+      return runWizard(new DefaultsPrompter(), context, services)
+    }
+    const backend = await findPreset('backend', devstackHome())
+    return { modules: [...(backend?.modules ?? [])] }
   }
-  const wizardContext = { ...context, presetModules: fromPreset }
+  const wizardContext = {
+    ...context,
+    presetModules: fromPreset,
+    userPresets: sources.userPresets
+  }
   if (options.advanced) {
     return { modules: (await runAdvancedWizard(prompter, wizardContext, services)).modules }
   }
@@ -173,11 +205,27 @@ async function previewDraft(
   }
 }
 
+/** Remembered answers are plain values; the package manager is remembered on its own. */
+function storableAnswers(
+  answers: Readonly<Record<string, unknown>>
+): NonNullable<UserConfig['answers']> {
+  return Object.fromEntries(
+    Object.entries(answers).filter(
+      (entry): entry is [string, string | boolean | string[]] =>
+        entry[0] !== 'packageManager' &&
+        (typeof entry[1] === 'string' ||
+          typeof entry[1] === 'boolean' ||
+          (Array.isArray(entry[1]) && entry[1].every((item) => typeof item === 'string')))
+    )
+  )
+}
+
 function wizardServices(
   registry: Map<string, DevstackModule>,
   projectDir: string,
   options: CliOptions,
-  installed: ReadonlySet<PackageManagerId> | undefined
+  installed: ReadonlySet<PackageManagerId> | undefined,
+  saving: { home: string; settings: ProjectSettings }
 ): WizardServices {
   return {
     preview: async (draft): Promise<StackPreview> => {
@@ -188,7 +236,34 @@ function wizardServices(
       ]
       return { ...preview, problems }
     },
-    savePreset: (fileName, draft) => saveStackPreset(process.cwd(), fileName, draft)
+    savePreset: (name, draft) =>
+      writeUserPreset(
+        name,
+        {
+          version: USER_CONFIG_VERSION,
+          packageManager: draft.packageManager,
+          depth: draft.depth,
+          modules: draft.modules.map((id) => {
+            const moduleOptions = draft.moduleOptions?.[id]
+            return moduleOptions === undefined ? id : { id, options: moduleOptions }
+          }),
+          ...(Object.keys(saving.settings).length === 0 ? {} : { settings: saving.settings })
+        },
+        { replace: false },
+        saving.home
+      ),
+    rememberDefaults: async (answers, draft) => {
+      const current = await readUserConfig(saving.home)
+      return writeUserConfig(
+        {
+          ...current,
+          packageManager: draft.packageManager,
+          depth: draft.depth,
+          answers: storableAnswers(answers)
+        },
+        saving.home
+      )
+    }
   }
 }
 
@@ -276,15 +351,23 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
 
   logger.info('Loading modules...')
   const registry = loadModules()
-  const depth = options.depth ?? config?.depth ?? 'wired'
+  // precedence (A6 layer 5): flags > config file > preset > remembered defaults > built-in
+  const home = devstackHome()
+  const remembered = await readUserConfig(home)
+  const preset = await presetFor(options, home)
+  const userPresets = (
+    await Promise.all((await listUserPresets(home)).map((name) => findPreset(name, home)))
+  ).filter((found): found is ResolvedPreset => found !== undefined && found.source === 'user')
+  const depth = options.depth ?? config?.depth ?? preset?.depth ?? remembered.depth ?? 'wired'
   const detected = choosePackageManager({
     flag: options.pm,
-    config: config?.packageManager,
+    config: config?.packageManager ?? preset?.packageManager,
+    remembered: remembered.packageManager,
     userAgent: process.env.npm_config_user_agent ?? '',
     lockfiles: await lockfilesIn(process.cwd())
   })
 
-  const fixedPackageManager = options.pm ?? config?.packageManager
+  const fixedPackageManager = options.pm ?? config?.packageManager ?? preset?.packageManager
   if (environment !== undefined && fixedPackageManager !== undefined) {
     // fail before the questions, not after them
     await checkAnswers(
@@ -295,20 +378,40 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     )
   }
 
+  const settingsBeforeWizard = mergeSettings(
+    remembered.settings,
+    preset?.settings,
+    config?.settings
+  )
+  const rememberedAnswerSet = rememberedAnswers(remembered)
   const choice = await selectStack(
     options,
     prompter,
-    config,
+    {
+      ...(config === undefined ? {} : { config }),
+      ...(preset === undefined ? {} : { preset }),
+      userPresets
+    },
     {
       registry,
       projectName: target.projectName,
       depth,
       defaultPackageManager: detected.id,
       fixedPackageManager,
-      installedPackageManagers: environment?.installedPackageManagers
+      installedPackageManagers: environment?.installedPackageManagers,
+      ...(rememberedAnswerSet === undefined ? {} : { remembered: rememberedAnswerSet })
     },
-    wizardServices(registry, target.projectDir, options, environment?.installedPackageManagers)
+    wizardServices(registry, target.projectDir, options, environment?.installedPackageManagers, {
+      home,
+      settings: settingsBeforeWizard
+    })
   )
+  // a user preset picked in the wizard brings its settings and module options too
+  const chosenPreset = preset ?? choice.preset
+  const settings = mergeSettings(remembered.settings, chosenPreset?.settings, config?.settings)
+  if (options.github !== undefined && settings.initialCommit === false) {
+    throw new InputError('--github needs the initial commit; the settings turn it off.')
+  }
   if (choice.modules.length === 0) {
     throw new InputError('No modules selected. Aborting.')
   }
@@ -334,13 +437,13 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     selectedModuleNames: choice.modules,
     moduleOptions:
       config === undefined
-        ? (choice.moduleOptions ?? {})
+        ? { ...chosenPreset?.moduleOptions, ...choice.moduleOptions }
         : splitModuleEntries(config.modules).options,
     depth,
     registry,
     packageManager,
     packageManagerVersion: environment?.packageManagerVersions[packageManager],
-    settings: config?.settings,
+    settings,
     options: { ...options, github: await githubUrl(options, prompter, config) },
     logger,
     prompter

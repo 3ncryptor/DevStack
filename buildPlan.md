@@ -1846,6 +1846,18 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   **CommonJS is dropped** from A6's module-system knob: every template is ESM with NodeNext
   specifiers, Prisma 7's client, Next.js and Vite are ESM, tests use top-level await; a CJS
   variant would double the template surface for a legacy target. Revisit only on demand.
+- **D-87 (2026-10-03)** — Remembered defaults and user presets (tasks 5.4, 5.5) live in
+  `~/.config/devstack` (`XDG_CONFIG_HOME`, `%APPDATA%`; `DEVSTACK_CONFIG_HOME` for tests and CI,
+  which the unit tests and the e2e harness always set, so a developer's own defaults never leak
+  into results). `config.json` holds the package manager, depth, settings and wizard answers:
+  answers are pre-selected but every question is still asked, and `--yes` runs the wizard
+  through a defaults prompter so it obeys the same rules. Precedence: flags > `--config` >
+  preset > remembered > built-in (the package manager: remembered beats user-agent and lockfile
+  guesses). `config path|list|get|set|unset` edits it by dotted key, validated against the whole
+  schema. User presets (`presets list|show|save|delete`, kebab-case names that never shadow a
+  built-in) carry modules with options, settings, package manager and depth; `--preset` and
+  question 0 find them. The review screen's "Save as preset" now saves a named user preset
+  (amends D-59) and gains "Remember as my defaults". The JSON plan reports depth and settings.
 
 # §8. Open questions
 

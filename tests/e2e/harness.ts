@@ -621,6 +621,8 @@ async function main(): Promise<void> {
     throw new Error(`--only "${args.only ?? ''}" matches no ${args.tier} combination`)
   }
   const workDir = await mkdtemp(path.join(os.tmpdir(), 'devstack-e2e-'))
+  // the generated projects never depend on the developer's remembered defaults or presets
+  process.env.DEVSTACK_CONFIG_HOME = path.join(workDir, 'devstack-home')
   cleanUpOnInterrupt(workDir, args.keep)
 
   try {

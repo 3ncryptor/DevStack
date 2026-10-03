@@ -46,6 +46,35 @@ export interface StepEnvironment {
   fixedPackageManager?: PackageManagerId
   /** From the pre-flight; managers missing here are marked "not installed". */
   installedPackageManagers?: ReadonlySet<PackageManagerId>
+  /**
+   * Remembered answers (task 5.4): pre-selected, never taken as answered, so every question is
+   * still asked. A remembered value that no longer fits is ignored.
+   */
+  remembered?: Readonly<Record<string, unknown>>
+}
+
+const rememberedText = (environment: StepEnvironment, key: string): string | undefined => {
+  const value = environment.remembered?.[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+const rememberedFlag = (environment: StepEnvironment, key: string): boolean | undefined => {
+  const value = environment.remembered?.[key]
+  return typeof value === 'boolean' ? value : undefined
+}
+
+/** A remembered multi-select answer, limited to the choices offered now. */
+const rememberedList = (
+  environment: StepEnvironment,
+  key: string,
+  choices: readonly Choice<string>[]
+): string[] | undefined => {
+  const value = environment.remembered?.[key]
+  if (!Array.isArray(value)) return undefined
+  return value.filter(
+    (item): item is string =>
+      typeof item === 'string' && choices.some((choice) => choice.value === item)
+  )
 }
 
 export interface WizardStep {
@@ -171,7 +200,10 @@ const repoExtrasStep: WizardStep = {
       repoExtras: await prompter.multiselect({
         message: 'Repo extras',
         choices,
-        initialValues: answers.repoExtras ?? choices.map((choice) => choice.value),
+        initialValues:
+          answers.repoExtras ??
+          rememberedList(environment, 'repoExtras', choices) ??
+          choices.map((choice) => choice.value),
         required: false
       })
     }
@@ -187,12 +219,15 @@ const oauthProvidersStep: WizardStep = {
   key: 'oauthProviders',
   label: 'OAuth providers',
   applies: (answers) => answers.auth === 'auth-better-auth',
-  ask: async (prompter, answers) => ({
+  ask: async (prompter, answers, environment) => ({
     ...answers,
     oauthProviders: await prompter.multiselect({
       message: 'OAuth providers (client id and secret go in .env later)',
       choices: OAUTH_PROVIDERS,
-      initialValues: answers.oauthProviders ?? [],
+      initialValues:
+        answers.oauthProviders ??
+        rememberedList(environment, 'oauthProviders', OAUTH_PROVIDERS) ??
+        [],
       required: false
     })
   }),
@@ -300,10 +335,16 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
       : definition.choices
     ).filter((choice) => definition.fits?.(choice.value, answers) ?? true)
   // an earlier answer may rule out the previous or the default value (e.g. Prisma on MongoDB)
-  const initialValue = (choices: Choice<string>[], answers: WizardAnswers): string | undefined =>
-    [answers[definition.key], definition.defaultValue].find((value) =>
-      choices.some((choice) => choice.value === value)
-    ) ?? choices[0]?.value
+  const initialValue = (
+    choices: Choice<string>[],
+    answers: WizardAnswers,
+    environment: StepEnvironment
+  ): string | undefined =>
+    [
+      answers[definition.key],
+      rememberedText(environment, definition.key),
+      definition.defaultValue
+    ].find((value) => choices.some((choice) => choice.value === value)) ?? choices[0]?.value
   return {
     key: definition.key,
     label: definition.label,
@@ -315,7 +356,7 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
       const value = await prompter.select({
         message: definition.message,
         choices,
-        initialValue: initialValue(choices, answers)
+        initialValue: initialValue(choices, answers, environment)
       })
       return { ...answers, [definition.key]: value }
     },
@@ -349,9 +390,12 @@ function confirmStep({
     key,
     label,
     applies: (answers) => applies(answers),
-    ask: async (prompter, answers) => ({
+    ask: async (prompter, answers, environment) => ({
       ...answers,
-      [key]: await prompter.confirm({ message, initialValue: answers[key] ?? defaultValue })
+      [key]: await prompter.confirm({
+        message,
+        initialValue: answers[key] ?? rememberedFlag(environment, key) ?? defaultValue
+      })
     }),
     describe: (answers) => yesNo(answers[key]),
     modules: (answers) => (answers[key] === true ? [moduleId] : [])
@@ -399,6 +443,7 @@ const appSetupStep: WizardStep = {
       choices,
       initialValues:
         answers.appSetup ??
+        rememberedList(environment, 'appSetup', choices) ??
         APP_SETUP_CHOICES.filter((choice) => choice.checked).map((choice) => choice.value)
     })
     return { ...answers, appSetup }

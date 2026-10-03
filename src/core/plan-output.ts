@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 
 import type { GenerationPlan } from '../types/plan'
 import type { ClassifiedFile, FileStatus } from './apply/index'
+import type { ResolvedSettings } from './settings'
 
 const STATUS_MARK: Record<FileStatus, string> = { new: '+', overwrite: '~', keep: '=', merge: '±' }
 const STATUS_LABEL: Record<FileStatus, string> = {
@@ -39,6 +40,9 @@ export interface PlanJson {
   projectDir: string
   packageManager: string
   modules: string[]
+  depth: 'bare' | 'wired'
+  /** Resolved project settings (tasks 5.1-5.3). */
+  settings: ResolvedSettings
   files: Array<{
     path: string
     bytes: number
@@ -57,6 +61,8 @@ export function planToJson(plan: GenerationPlan, files: readonly ClassifiedFile[
     projectDir: plan.projectDir,
     packageManager: plan.packageManager,
     modules: plan.modules,
+    depth: plan.depth,
+    settings: plan.settings,
     files: files.map((entry) => ({
       path: entry.file.path,
       bytes: Buffer.byteLength(entry.file.content),
