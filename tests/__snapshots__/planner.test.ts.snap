@@ -1449,7 +1449,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "src/scripts/make-admin.ts",
-      "sha256": "1ebcb9810eae9766",
+      "sha256": "3bf54f4db6655dd1",
       "strategy": "create",
     },
     {
@@ -2571,7 +2571,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "apps/api/src/scripts/make-admin.ts",
-      "sha256": "1ebcb9810eae9766",
+      "sha256": "3bf54f4db6655dd1",
       "strategy": "create",
     },
     {

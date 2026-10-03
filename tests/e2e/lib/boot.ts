@@ -19,16 +19,26 @@ const REQUEST_TIMEOUT_MS = 2000
 const SHUTDOWN_GRACE_MS = 15_000
 const OUTPUT_TAIL_CHARS = 4000
 
+/** Ports handed out in this run: combinations run concurrently and must not share one. */
+const handedOut = new Set<number>()
+
+/**
+ * A port free on every address: the probe listens on the unspecified (dual-stack) address like
+ * Next.js does, so a port another app holds on `::` is not mistaken for free.
+ */
 export async function findFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
+  const port = await new Promise<number>((resolve, reject) => {
     const server = net.createServer()
     server.once('error', reject)
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, () => {
       const address = server.address()
-      const port = typeof address === 'object' && address !== null ? address.port : 0
-      server.close(() => resolve(port))
+      const found = typeof address === 'object' && address !== null ? address.port : 0
+      server.close(() => resolve(found))
     })
   })
+  if (handedOut.has(port)) return findFreePort()
+  handedOut.add(port)
+  return port
 }
 
 function delay<T>(ms: number, value: T): { promise: Promise<T>; cancel: () => void } {

@@ -11,7 +11,7 @@ if (email === undefined || email === '') {
 }
 
 // a function, not top-level await, so the same code runs as ESM and as CommonJS (task 5.2)
-async function main(): Promise<void> {
+async function main(email: string): Promise<void> {
   try {
   // Better Auth's admin plugin reads the role from the user row on every request
   const { count } = await prisma.user.updateMany({ where: { email }, data: { role: 'admin' } })
@@ -29,7 +29,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
+main(email).catch((error: unknown) => {
   console.error(error)
   process.exitCode = 1
 })
