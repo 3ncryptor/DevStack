@@ -1,6 +1,6 @@
 import { Eta } from 'eta'
 
-import type { LanguageAdapter } from '../../adapters/language/node'
+import type { LanguageAdapter } from '../../adapters/language/index'
 import type { DockerCommands } from '../../adapters/package-manager/index'
 import type { DatabaseTraits } from '../../types/module'
 import type { PlannedEnvVar } from '../../types/plan'

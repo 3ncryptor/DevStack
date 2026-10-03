@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { NODE_CATALOG, buildApprovalsFor } from '../src/catalog/node'
+import { NODE_CATALOG, nodeCatalog } from '../src/catalog/node'
 import { TYPE_PAIRS } from '../src/catalog/pairs'
 import { BUILTIN_MODULES, MODULE_FOLDERS } from '../src/modules/registry'
 import { dependencyName } from '../src/types/module'
@@ -28,7 +28,7 @@ describe('version catalog', () => {
   })
 
   it('reports the packages whose install scripts pnpm must be allowed to run', () => {
-    expect(buildApprovalsFor(['prisma', 'tsx', 'express'])).toEqual([
+    expect(nodeCatalog.buildApprovals(['prisma', 'tsx', 'express'])).toEqual([
       '@prisma/engines',
       'esbuild',
       'prisma'

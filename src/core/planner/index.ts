@@ -3,8 +3,7 @@ import path from 'node:path'
 import type { Condition, Depth, DevstackModule, ModuleSystem } from '../../types/module'
 import type { PackageJson } from '../../types/package-json'
 import type { GenerationPlan, PlannedEnvVar, PlannedFile } from '../../types/plan'
-import { NODE_LANGUAGE } from '../../adapters/language/node'
-import { NODE_CATALOG } from '../../catalog/node'
+import { languageOf } from '../../adapters/language/index'
 import {
   packageManagerAdapter,
   type PackageManagerId as PackageManager
@@ -269,7 +268,7 @@ async function targetOutput(
     pm: packageManagerAdapter(input.packageManager).docker(
       input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager]
     ),
-    language: NODE_LANGUAGE,
+    language: languageOf(context.modules),
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
     capabilities: [
       ...new Set(context.modules.flatMap((moduleDefinition) => moduleDefinition.provides ?? []))
@@ -281,9 +280,7 @@ async function targetOutput(
     entry: apiEntry(input, context),
     packageManagerVersion:
       input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager],
-    versions: Object.fromEntries(
-      Object.entries(NODE_CATALOG).map(([name, entry]) => [name, entry.version])
-    ),
+    versions: languageOf(context.modules).catalog.versions(),
     packageNames: Object.fromEntries(
       context.targets.map((candidate) => [candidate.role, candidate.packageName])
     ),

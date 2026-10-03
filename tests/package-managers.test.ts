@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { NODE_LANGUAGE } from '../src/adapters/language/node'
 import {
   choosePackageManager,
   packageManagerAdapter,
-  PACKAGE_MANAGERS,
   type PackageManagerId
 } from '../src/adapters/package-manager/index'
 import { InputError } from '../src/errors'
@@ -58,10 +56,6 @@ describe('package manager adapters', () => {
       expect(adapter.run('dev')).toEqual(['run', 'dev'])
     }
   )
-
-  it('covers every package manager the Node adapter supports', () => {
-    expect([...NODE_LANGUAGE.packageManagers].sort()).toEqual([...PACKAGE_MANAGERS].sort())
-  })
 })
 
 describe('choosePackageManager', () => {

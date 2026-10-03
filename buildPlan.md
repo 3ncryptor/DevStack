@@ -547,69 +547,47 @@ cheap.
 
 ## B4. Module contract v2
 
-```ts
-export interface DevstackModule {
-  // identity
-  id: string // 'framework-fastify'; unique, kebab-case, category-prefixed
-  version: string // module version, semver; bumps when files/contract change
-  category: ModuleCategory
-  language: LanguageId // 'node' | 'python' | 'go'
-  title: string // shown in prompts
-  description: string
-  docsUrl?: string
+**Frozen at 1.0 (D-98).** The contract is `DevstackModule` and `moduleDefinitionSchema` in
+`src/types/module.ts`; that file is the source of truth, and this section summarises it.
 
-  // constraints (ids or capability tags)
-  provides?: string[] // ['http-framework', 'auth']
-  requires?: string[] // all must be present
-  requiresAny?: string[] // at least one must be present
-  conflictsWith?: string[]
-  enhancedBy?: string[] // soft; drives recommendations and template branching
-  singleSelect?: boolean // override category default
+| Group                   | Fields                                                                                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity                | `id` (stable forever, kebab-case, category-prefixed; renames via `src/modules/aliases.ts`), `title`, `description`, `category` (closed enum), `language`       |
+| Constraints             | `provides` (capability tags), `requires`, `requiresAny`, `conflictsWith`: ids or tags                                                                          |
+| Placement               | `target` (`root`, `backend`, `frontend`, `admin`, `shared`; default `backend`), `depth` (`bare` or `wired`)                                                    |
+| Dependencies            | `dependencies`, `devDependencies`: catalog names, optionally with `when`; versions come from the language's catalog                                            |
+| Files and code          | `filesPath` (Eta templates), `files` (per-file `when`/`depth`), `slots`, `exposesSlots`, `packageJson`, `scripts` (conditional)                                |
+| Configuration           | `options` (zod schema with defaults; `it.options`), `env` (declarations, validated in `config/env.ts`)                                                         |
+| Lifecycle               | `commands` (`postInstall` steps, run after install and by Docker and CI)                                                                                       |
+| Self-description (D-96) | `database` (dialect, compose service or file), `vscodeExtensions`, `agentsMd` (layout, conventions, storage), `wizard` (question, order, label, hint, checked) |
 
-  // placement
-  target?: TargetRole // 'root' | 'backend' | 'frontend' | 'shared' (default: backend)
-
-  // dependencies — versions come from the catalog, not literals
-  dependencies?: CatalogRef[] // ['fastify', '@fastify/cors']
-  devDependencies?: CatalogRef[]
-  manifest?: ManifestFragment // scripts, engines, etc. merged by the language adapter
-
-  // files and code — every FileSpec and SlotContribution may carry `when` and `depth`
-  files?: FileSpec[] // { from: 'files/src/app.ts.eta', to: 'src/app.ts', when?: Condition, depth?: Depth }
-  slots?: SlotContribution[] // { slot: 'app.middleware', code: '...', order?: number, imports?: [...], when?, depth? }
-  exposesSlots?: string[] // frameworks declare the slots their templates render
-  templateVariables?: (ctx: TemplateContext) => Record<string, unknown>
-
-  // configuration
-  options?: ZodSchema // per-module options (e.g. rate-limit window); validated in StackSpec
-  env?: EnvDeclaration[] // { name, description, example?, required, secret? }
-
-  // lifecycle (data, not side effects, where possible)
-  commands?: CommandSpec[] // { phase: 'postInstall', run: ['prisma','generate'], when: 'installed' }
-  hooks?: {
-    afterResolve?: (stack: ResolvedStack) => Diagnostic[] // custom validation
-    beforeApply?: (plan: GenerationPlan) => GenerationPlan // rare; must be pure
-  }
-}
-```
+Capability vocabulary: `http-framework`, `web-framework`, `orm`, `db:<engine>`, `db:sql`, and a
+framework's API style (`http:connect`, `http:express`, `http:nest`, `http:fastify`, `web:next`,
+`web:vite`), which modules choose their code by.
 
 ```ts
 type Depth = 'bare' | 'wired' // a contribution appears at its depth and above; default 'wired'
 
 type Condition =
-  // evaluated against the ResolvedStack at plan time
-  | { has: string } // module id or capability tag is selected (same target)
-  | { hasAnywhere: string } // ... in any target (e.g. frontend checks for a backend)
-  | { framework: string } // this target's framework id
+  | { has: string } // a module id or capability tag is selected
+  | { moduleSystem: 'esm' | 'cjs' }
   | { option: string; equals: unknown } // this module's option value
+  | { depth: Depth }
+  | { target: ModuleTarget } // files only
   | { all: Condition[] }
   | { any: Condition[] }
   | { not: Condition }
 ```
 
+**Deprecation policy (D-98).** Within contract v2 nothing is removed or changes meaning: new
+fields and condition kinds are optional additions. A field to retire is marked `@deprecated`
+in `src/types/module.ts`, keeps working, and is reported by the module contract lint for at
+least one minor release; it is removed only in contract v3, a major CLI release. Module ids,
+capability tags and wizard question keys follow the same rule (renamed ids keep an alias).
+
 Conditional contributions are how **integration glue** is expressed: the
 Prisma module ships `src/db/client.ts` unconditionally, a Fastify plugin
-`when: { framework: 'framework-fastify' }`, and a user repository
+`when: { has: 'http:fastify' }`, and a user repository
 `when: { has: 'auth' }`. There are no separate "glue modules"; glue lives
 with the module that owns the capability being adapted (ORM owns
 repositories, framework owns HTTP adapters, auth owns the service core).
@@ -1945,11 +1923,20 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   (1) a plan snapshot over every e2e combination, and the `framework` condition reads the backend
   framework, not the first framework in the stack; (2) database traits; (3) ORM slot
   contributions; (4) derived wizard; (5) framework variants; (6) `LanguageAdapter` as the core
-  seam, then contract v2 frozen. Code standard (owner): clean, object-oriented where behaviour
+  seam, then contract v2 frozen (D-98). Code standard (owner): clean, object-oriented where behaviour
   varies, lean; a field or method lands in the step that uses it.
 - **D-97 (2026-10-04)** — Node and catalog policy (owner): generated projects target the current
   active Node LTS (`engines`, the Docker image, `@types/node` move together after a full e2e
   run); the catalog is refreshed monthly, locally, followed by the full matrix.
+
+- **D-98 (2026-10-04)** — Contract v2 is frozen at 1.0 (Phase 6). `src/types/module.ts` is the
+  source of truth and B4 summarises it; the original B4 sketch (`version`, `docsUrl`,
+  `enhancedBy`, `templateVariables`, `hooks`, the `framework` condition) was never built and is
+  dropped. Deprecation policy in B4: additions only within v2; a retired field is marked
+  `@deprecated`, keeps working for at least one minor release and goes in v3. Core reaches a
+  language through `LanguageAdapter` (`src/adapters/language`: version catalog, Docker base
+  image); adding a language is an adapter, a catalog (`VersionCatalog`) and an entry in
+  `LANGUAGE_IDS`.
 
 # §8. Open questions
 

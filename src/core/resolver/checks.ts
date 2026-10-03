@@ -1,4 +1,4 @@
-import { isCatalogName } from '../../catalog/node'
+import { LANGUAGES } from '../../adapters/language/index'
 import type { Diagnostic, FixAction } from '../../types/diagnostics'
 import { dependencyName, type DevstackModule, type ModuleCategory } from '../../types/module'
 
@@ -150,20 +150,22 @@ export function checkSlots(context: CheckContext): Diagnostic[] {
   )
 }
 
+/** Every package a module depends on is in its language's catalog (D-08). */
 export function checkCatalog(context: CheckContext): Diagnostic[] {
-  return [...context.selected.values()].flatMap((moduleDefinition) =>
-    (
+  return [...context.selected.values()].flatMap((moduleDefinition) => {
+    const { catalog } = LANGUAGES[moduleDefinition.language]
+    return (
       [...(moduleDefinition.dependencies ?? []), ...(moduleDefinition.devDependencies ?? [])].map(
         dependencyName
       ) as string[]
     )
-      .filter((name) => !isCatalogName(name))
+      .filter((name) => !catalog.has(name))
       .map((name) => ({
         severity: 'error' as const,
         code: 'unknown-package' as const,
         moduleId: moduleDefinition.id,
         message: `Module "${moduleDefinition.id}" depends on "${name}", which is not in the version catalog.`,
-        fix: 'Add the package to src/catalog/node.ts.'
+        fix: `Add the package to ${catalog.source}.`
       }))
-  )
+  })
 }

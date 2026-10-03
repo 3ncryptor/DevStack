@@ -1,19 +1,12 @@
+import { VersionCatalog, type CatalogEntry } from './catalog'
+
 /**
  * Version catalog for generated Node projects (buildPlan B9, D-08). Modules reference packages by
  * name only; every version a generated project installs comes from here. Verified against the
  * npm registry on 2026-09-30 (backend baseline packages on 2026-10-01).
  *
- * Generated projects are ESM, which Nest 12 (ESM-only) and Prisma 7 (ESM-first) require (D-53).
+ * Nest 12 and Prisma 7 are ESM-first (D-53); a CommonJS project loads them through require(esm) (D-91).
  */
-export interface CatalogEntry {
-  version: string
-  /**
-   * Packages (this one and/or its transitive dependencies) whose install scripts must run.
-   * pnpm >= 11 refuses to install until they are approved.
-   */
-  allowBuilds?: readonly string[]
-}
-
 export const NODE_CATALOG = {
   // runtime and language
   '@types/node': { version: '^24.19.0' },
@@ -124,15 +117,4 @@ export const NODE_CATALOG = {
 
 export type CatalogName = keyof typeof NODE_CATALOG
 
-export function isCatalogName(name: string): name is CatalogName {
-  return Object.hasOwn(NODE_CATALOG, name)
-}
-
-/** Sorted, de-duplicated list of packages whose install scripts must be approved. */
-export function buildApprovalsFor(names: readonly string[]): string[] {
-  const approvals = names.flatMap((name) => {
-    const entry: CatalogEntry | undefined = isCatalogName(name) ? NODE_CATALOG[name] : undefined
-    return entry?.allowBuilds ?? []
-  })
-  return [...new Set(approvals)].sort()
-}
+export const nodeCatalog = new VersionCatalog(NODE_CATALOG, 'src/catalog/node.ts')

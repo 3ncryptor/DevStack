@@ -1,6 +1,7 @@
 import deepmerge from 'deepmerge'
 
-import { buildApprovalsFor, isCatalogName, NODE_CATALOG } from '../catalog/node'
+import { languageOf } from '../adapters/language/index'
+import type { VersionCatalog } from '../catalog/catalog'
 import { TYPE_PAIRS } from '../catalog/pairs'
 import { ResolutionError } from '../errors'
 import { CLI_PACKAGE } from './manifest'
@@ -61,14 +62,15 @@ function collectDependencyNames(
   return { dependencies, devDependencies }
 }
 
-function toVersionMap(names: Map<string, string>): DependencyMap {
+function toVersionMap(names: Map<string, string>, catalog: VersionCatalog): DependencyMap {
   const entries = [...names.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, owner]): [string, string] => {
-      if (!isCatalogName(name)) {
+      const version = catalog.version(name)
+      if (version === undefined) {
         throw new ResolutionError(`"${name}" (required by ${owner}) is not in the version catalog`)
       }
-      return [name, NODE_CATALOG[name].version]
+      return [name, version]
     })
   return Object.fromEntries(entries)
 }
@@ -97,10 +99,11 @@ export function composeProjectPackageJson(
   )
 
   const names = collectDependencyNames(modules, stack, moduleSystem)
+  const { catalog } = languageOf(stack)
   return {
     ...withFragments,
-    dependencies: toVersionMap(names.dependencies),
-    devDependencies: toVersionMap(names.devDependencies)
+    dependencies: toVersionMap(names.dependencies, catalog),
+    devDependencies: toVersionMap(names.devDependencies, catalog)
   }
 }
 
@@ -129,5 +132,9 @@ export function composeModules(
     ...Object.keys(packageJson.dependencies ?? {}),
     ...Object.keys(packageJson.devDependencies ?? {})
   ]
-  return { orderedModules, packageJson, buildApprovals: buildApprovalsFor(installed) }
+  return {
+    orderedModules,
+    packageJson,
+    buildApprovals: languageOf(orderedModules).catalog.buildApprovals(installed)
+  }
 }

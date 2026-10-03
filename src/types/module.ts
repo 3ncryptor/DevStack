@@ -122,7 +122,9 @@ export const MODULE_CATEGORIES = [
 
 export type ModuleCategory = (typeof MODULE_CATEGORIES)[number]
 
-export type LanguageId = 'node'
+/** Languages with an adapter (src/adapters/language); a new one is added here and there. */
+export const LANGUAGE_IDS = ['node'] as const
+export type LanguageId = (typeof LANGUAGE_IDS)[number]
 
 /**
  * Where a module's files, scripts and dependencies go (B8). In the single layout every target is
@@ -132,7 +134,7 @@ export type LanguageId = 'node'
 export const MODULE_TARGETS = ['root', 'backend', 'frontend', 'admin', 'shared'] as const
 export type ModuleTarget = (typeof MODULE_TARGETS)[number]
 
-/** Module contract v2 (buildPlan B4). */
+/** Module contract v2 (buildPlan B4), frozen at 1.0: additions only, see the deprecation policy (D-98). */
 export interface DevstackModule {
   /** Stable forever, kebab-case and category-prefixed; renames go through src/modules/aliases.ts. */
   id: string
@@ -246,7 +248,7 @@ export const moduleDefinitionSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   category: z.enum(MODULE_CATEGORIES),
-  language: z.literal('node'),
+  language: z.enum(LANGUAGE_IDS),
   provides: z.array(z.string().min(1)).optional(),
   depth: depthSchema.optional(),
   target: z.enum(MODULE_TARGETS).optional(),
