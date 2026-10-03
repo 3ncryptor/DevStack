@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  conditionContextFor,
   evaluateCondition,
   includedAtDepth,
   type ConditionContext
 } from '../src/core/planner/conditions'
+import { testModule } from './helpers/modules'
 
 const context: ConditionContext = {
   present: new Set(['language-node', 'framework-express', 'http-framework']),
@@ -35,6 +37,21 @@ describe('evaluateCondition', () => {
     [{ all: [] }, true]
   ] as const)('%j is %s', (condition, expected) => {
     expect(evaluateCondition(condition, context)).toBe(expected)
+  })
+})
+
+describe('conditionContextFor', () => {
+  it("takes the API's framework, whichever framework the stack lists first", () => {
+    const nextjs = testModule({ id: 'framework-nextjs', category: 'framework' })
+    const express = testModule({
+      id: 'framework-express',
+      category: 'framework',
+      provides: ['http-framework']
+    })
+
+    const context = conditionContextFor([nextjs, express], {}, 'wired', 'esm')
+
+    expect(context.framework).toBe('framework-express')
   })
 })
 

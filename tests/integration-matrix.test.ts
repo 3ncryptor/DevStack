@@ -4,7 +4,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { loadModules } from '../src/core/module-loader'
-import { evaluateCondition, type ConditionContext } from '../src/core/planner/conditions'
+import { conditionContextFor, evaluateCondition } from '../src/core/planner/conditions'
 import { getPreset } from '../src/core/presets'
 import { resolveStack } from '../src/core/resolver/index'
 import { BUILTIN_MODULES } from '../src/modules/registry'
@@ -32,18 +32,12 @@ const combinations = matrix.flatMap((combination) => {
       ? [...(getPreset(combination.preset)?.modules ?? [])]
       : (combination.modules ?? []).map(moduleIdOf)
   const modules = resolveStack(requested, registry).modules
-  const context: ConditionContext = {
-    present: new Set(
-      modules.flatMap((moduleDefinition) => [
-        moduleDefinition.id,
-        ...(moduleDefinition.provides ?? [])
-      ])
-    ),
-    framework: modules.find((moduleDefinition) => moduleDefinition.category === 'framework')?.id,
-    options: {},
-    depth: combination.depth ?? 'wired',
-    moduleSystem: combination.settings?.['moduleSystem'] === 'cjs' ? 'cjs' : 'esm'
-  }
+  const context = conditionContextFor(
+    modules,
+    {},
+    combination.depth ?? 'wired',
+    combination.settings?.['moduleSystem'] === 'cjs' ? 'cjs' : 'esm'
+  )
   const targets = [
     'backend',
     ...(context.present.has('framework-nextjs') ? ['frontend'] : []),

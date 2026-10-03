@@ -4,7 +4,7 @@ import type { Condition, DevstackModule, Depth, ModuleSystem } from '../../types
 export interface ConditionContext {
   /** Ids and capability tags of every selected module. */
   present: ReadonlySet<string>
-  /** Id of the selected framework, if any. */
+  /** Id of the API's framework (the `http-framework` provider), if any; web frameworks aside. */
   framework: string | undefined
   /** Resolved options of the module the condition belongs to. */
   options: Readonly<Record<string, unknown>>
@@ -52,7 +52,9 @@ export function conditionContextFor(
         ...(moduleDefinition.provides ?? [])
       ])
     ),
-    framework: modules.find((moduleDefinition) => moduleDefinition.category === 'framework')?.id,
+    framework: modules.find((moduleDefinition) =>
+      moduleDefinition.provides?.includes('http-framework')
+    )?.id,
     options,
     depth,
     moduleSystem

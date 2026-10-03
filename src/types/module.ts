@@ -44,6 +44,7 @@ export type Condition =
   | { has: string }
   /** The project's module system, e.g. Nest's dev script differs under CommonJS. */
   | { moduleSystem: ModuleSystem }
+  /** The API's framework, e.g. `framework-nest`; a fullstack stack's web framework never matches. */
   | { framework: string }
   | { option: string; equals: unknown }
   | { depth: Depth }
