@@ -1,4 +1,4 @@
-<% if (it.modules.includes('framework-fastify')) { %>
+<% if (it.capabilities.includes('http:fastify')) { %>
 import type { AccessClaims } from '../<%= it.domainsDir %>/auth/tokens.js'
 
 // Set by requireAuth (src/<%= it.domainsDir %>/auth/require-auth.ts) on every request it lets through.

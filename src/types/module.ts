@@ -48,8 +48,6 @@ export type Condition =
   | { has: string }
   /** The project's module system, e.g. Nest's dev script differs under CommonJS. */
   | { moduleSystem: ModuleSystem }
-  /** The API's framework, e.g. `framework-nest`; a fullstack stack's web framework never matches. */
-  | { framework: string }
   | { option: string; equals: unknown }
   | { depth: Depth }
   /** The target being rendered, e.g. `admin` (files only: slots and scripts never match it). */
@@ -143,7 +141,11 @@ export interface DevstackModule {
   description: string
   category: ModuleCategory
   language: LanguageId
-  /** Capability tags this module satisfies, e.g. `http-framework`, `db:postgres`. */
+  /**
+   * Capability tags this module satisfies, e.g. `http-framework`, `db:postgres`. A framework
+   * also names its API style (D-96): `http:connect` (Express-style middleware), `http:express`,
+   * `http:nest`, `http:fastify`, `web:next`, `web:vite`; modules choose their code by these.
+   */
   provides?: readonly string[]
   /** Depth of this module's files, slots and env; default `wired`. Tooling modules are `bare`. */
   depth?: Depth
@@ -225,7 +227,6 @@ const depthSchema = z.enum(['bare', 'wired'])
 const conditionSchema: z.ZodType<Condition> = z.lazy(() =>
   z.union([
     z.strictObject({ has: z.string().min(1) }),
-    z.strictObject({ framework: z.string().min(1) }),
     z.strictObject({ moduleSystem: z.enum(['esm', 'cjs']) }),
     z.strictObject({ option: z.string().min(1), equals: z.unknown() }),
     z.strictObject({ depth: depthSchema }),

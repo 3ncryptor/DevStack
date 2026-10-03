@@ -1,4 +1,4 @@
-<% if (it.modules.includes('framework-fastify')) { %>
+<% if (it.capabilities.includes('http:fastify')) { %>
 import type { FastifyPluginCallback } from 'fastify'
 import { fromNodeHeaders } from 'better-auth/node'
 

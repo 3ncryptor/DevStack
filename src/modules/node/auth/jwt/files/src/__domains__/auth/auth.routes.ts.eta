@@ -1,4 +1,4 @@
-<% if (it.modules.includes('framework-fastify')) { %>
+<% if (it.capabilities.includes('http:fastify')) { %>
 import type { FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify'
 
 import { ApiSuccess } from '../../lib/api-response.js'

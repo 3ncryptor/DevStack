@@ -3,8 +3,8 @@ import { z } from 'zod'
 import { moduleFilesPath } from '../../../../paths'
 import type { Condition, DevstackModule } from '../../../../types/module'
 
-const FASTIFY: Condition = { has: 'framework-fastify' }
-const NOT_FASTIFY: Condition = { not: FASTIFY }
+const FASTIFY: Condition = { has: 'http:fastify' }
+const CONNECT: Condition = { has: 'http:connect' }
 
 const moduleDefinition: DevstackModule = {
   id: 'security-rate-limit',
@@ -14,16 +14,16 @@ const moduleDefinition: DevstackModule = {
   wizard: { question: 'appSetup', order: 3, checked: true },
   description:
     'API rate limiting for Express or NestJS: fixed window, sliding window, token or leaky bucket',
-  requiresAny: ['http-framework'],
+  requiresAny: ['http:connect', 'http:fastify'],
   // the middleware is typed with Express types, which Nest does not bring in on its own
-  devDependencies: [{ name: '@types/express', when: NOT_FASTIFY }],
+  devDependencies: [{ name: '@types/express', when: CONNECT }],
   slots: [
     {
       slot: 'app.imports',
       code: "import { apiRateLimiter } from './middlewares/rate-limit.js'",
-      when: NOT_FASTIFY
+      when: CONNECT
     },
-    { slot: 'app.middleware', code: 'app.use(apiRateLimiter)', order: 60, when: NOT_FASTIFY },
+    { slot: 'app.middleware', code: 'app.use(apiRateLimiter)', order: 60, when: CONNECT },
     {
       slot: 'app.imports',
       code: "import { registerRateLimit } from './plugins/rate-limit.js'",
@@ -46,7 +46,7 @@ const moduleDefinition: DevstackModule = {
     limit: z.number().int().positive().default(100)
   }),
   files: [
-    { path: 'src/middlewares/rate-limit.ts', when: NOT_FASTIFY },
+    { path: 'src/middlewares/rate-limit.ts', when: CONNECT },
     { path: 'src/plugins/rate-limit.ts', when: FASTIFY }
   ],
   filesPath: moduleFilesPath('node/security/rate-limit')

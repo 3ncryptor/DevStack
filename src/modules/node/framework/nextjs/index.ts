@@ -8,7 +8,7 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   wizard: { question: 'frontend', order: 1 },
   target: 'frontend',
-  provides: ['web-framework'],
+  provides: ['web-framework', 'web:next'],
   description:
     'Next.js 16 (App Router) web app with a status page and a development proxy to the API',
   // fullstack for now (apps/web next to apps/api); a frontend-only app type comes later

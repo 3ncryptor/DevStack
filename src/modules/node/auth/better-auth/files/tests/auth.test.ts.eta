@@ -2,8 +2,8 @@
 <% const awaitTest = vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
 <% const { github } = it.options %>
-<% const fastify = it.modules.includes('framework-fastify') %>
-<% const nest = it.modules.includes('framework-nest') %>
+<% const fastify = it.capabilities.includes('http:fastify') %>
+<% const nest = it.capabilities.includes('http:nest') %>
 <% const awaitApp = fastify || nest ? 'await ' : '' %>
 <%~ nest ? "import 'reflect-metadata'\n\n" : '' %>import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { test } from '@jest/globals'<% } else { %>import { test } from 'node:test'<% } %>

@@ -1,8 +1,8 @@
 import { moduleFilesPath } from '../../../../paths'
 import type { Condition, DevstackModule } from '../../../../types/module'
 
-const FASTIFY: Condition = { has: 'framework-fastify' }
-const NOT_FASTIFY: Condition = { not: FASTIFY }
+const FASTIFY: Condition = { has: 'http:fastify' }
+const CONNECT: Condition = { has: 'http:connect' }
 
 const moduleDefinition: DevstackModule = {
   id: 'middleware-cors',
@@ -11,9 +11,9 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   wizard: { question: 'appSetup', order: 1, checked: true },
   description: 'CORS middleware for Express or NestJS APIs',
-  requiresAny: ['http-framework'],
+  requiresAny: ['http:connect', 'http:fastify'],
   dependencies: [
-    { name: 'cors', when: NOT_FASTIFY },
+    { name: 'cors', when: CONNECT },
     { name: '@fastify/cors', when: FASTIFY }
   ],
   env: [
@@ -29,9 +29,9 @@ const moduleDefinition: DevstackModule = {
     {
       slot: 'app.imports',
       code: "import { corsMiddleware } from './middlewares/cors.js'",
-      when: NOT_FASTIFY
+      when: CONNECT
     },
-    { slot: 'app.middleware', code: 'app.use(corsMiddleware)', order: 40, when: NOT_FASTIFY },
+    { slot: 'app.middleware', code: 'app.use(corsMiddleware)', order: 40, when: CONNECT },
     {
       slot: 'app.imports',
       code: "import { registerCors } from './plugins/cors.js'",
@@ -40,7 +40,7 @@ const moduleDefinition: DevstackModule = {
     { slot: 'app.plugins', code: 'await registerCors(app)', order: 40, when: FASTIFY }
   ],
   files: [
-    { path: 'src/middlewares/cors.ts', when: NOT_FASTIFY },
+    { path: 'src/middlewares/cors.ts', when: CONNECT },
     { path: 'src/plugins/cors.ts', when: FASTIFY }
   ],
   filesPath: moduleFilesPath('node/middleware/cors')

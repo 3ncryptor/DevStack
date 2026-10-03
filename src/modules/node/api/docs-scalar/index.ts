@@ -1,8 +1,8 @@
 import { moduleFilesPath } from '../../../../paths'
 import type { Condition, DevstackModule } from '../../../../types/module'
 
-const FASTIFY: Condition = { has: 'framework-fastify' }
-const NOT_FASTIFY: Condition = { not: FASTIFY }
+const FASTIFY: Condition = { has: 'http:fastify' }
+const CONNECT: Condition = { has: 'http:connect' }
 
 const moduleDefinition: DevstackModule = {
   id: 'api-docs-scalar',
@@ -12,11 +12,11 @@ const moduleDefinition: DevstackModule = {
   description: 'OpenAPI document at /openapi.json and a Scalar API reference at /docs',
   // Nest uses @nestjs/swagger for its document; that variant comes later (task 4.4)
   // Nest runs on Express, so it serves the same Scalar reference and OpenAPI document (D-74)
-  requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
+  requiresAny: ['http:express', 'http:fastify', 'http:nest'],
   dependencies: [
-    { name: '@scalar/express-api-reference', when: NOT_FASTIFY },
+    { name: '@scalar/express-api-reference', when: CONNECT },
     // the docs router imports express at runtime; in a Nest project it is otherwise only transitive
-    { name: 'express', when: { has: 'framework-nest' } },
+    { name: 'express', when: { has: 'http:nest' } },
     { name: '@scalar/fastify-api-reference', when: FASTIFY }
   ],
   // other modules document their routes here (e.g. auth-jwt)
@@ -25,7 +25,7 @@ const moduleDefinition: DevstackModule = {
     {
       slot: 'app.imports',
       code: "import { createDocsRouter, docsEnabled } from './routes/docs.js'",
-      when: NOT_FASTIFY
+      when: CONNECT
     },
     // before the security headers: the reference loads its script from a CDN that a strict
     // Content-Security-Policy would block
@@ -33,7 +33,7 @@ const moduleDefinition: DevstackModule = {
       slot: 'app.middleware',
       code: 'if (docsEnabled) app.use(createDocsRouter())',
       order: 25,
-      when: NOT_FASTIFY
+      when: CONNECT
     },
     {
       slot: 'app.imports',
@@ -56,7 +56,7 @@ const moduleDefinition: DevstackModule = {
     }
   ],
   files: [
-    { path: 'src/routes/docs.ts', when: NOT_FASTIFY },
+    { path: 'src/routes/docs.ts', when: CONNECT },
     { path: 'src/plugins/docs.ts', when: FASTIFY }
   ],
   filesPath: moduleFilesPath('node/api/docs-scalar')

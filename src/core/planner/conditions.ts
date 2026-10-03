@@ -4,8 +4,6 @@ import type { Condition, DevstackModule, Depth, ModuleSystem } from '../../types
 export interface ConditionContext {
   /** Ids and capability tags of every selected module. */
   present: ReadonlySet<string>
-  /** Id of the API's framework (the `http-framework` provider), if any; web frameworks aside. */
-  framework: string | undefined
   /** Resolved options of the module the condition belongs to. */
   options: Readonly<Record<string, unknown>>
   depth: Depth
@@ -19,7 +17,6 @@ export function evaluateCondition(condition: Condition, context: ConditionContex
   if ('any' in condition) return condition.any.some((part) => evaluateCondition(part, context))
   if ('not' in condition) return !evaluateCondition(condition.not, context)
   if ('has' in condition) return context.present.has(condition.has)
-  if ('framework' in condition) return context.framework === condition.framework
   if ('moduleSystem' in condition) return context.moduleSystem === condition.moduleSystem
   if ('option' in condition) return Object.is(context.options[condition.option], condition.equals)
   if ('target' in condition) return context.target === condition.target
@@ -52,9 +49,6 @@ export function conditionContextFor(
         ...(moduleDefinition.provides ?? [])
       ])
     ),
-    framework: modules.find((moduleDefinition) =>
-      moduleDefinition.provides?.includes('http-framework')
-    )?.id,
     options,
     depth,
     moduleSystem

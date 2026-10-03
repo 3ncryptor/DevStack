@@ -12,7 +12,7 @@ const moduleDefinition: DevstackModule = {
   depth: 'bare',
   // PostCSS works for both: Next.js and Vite read postcss.config.mjs
   description: 'Tailwind CSS 4 through PostCSS for the web app',
-  requiresAny: ['framework-nextjs', 'framework-react-vite'],
+  requiresAny: ['web:next', 'web:vite'],
   devDependencies: ['tailwindcss', '@tailwindcss/postcss', 'postcss'],
   filesPath: moduleFilesPath('node/ui/tailwind')
 }

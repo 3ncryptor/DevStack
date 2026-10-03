@@ -9,7 +9,7 @@ const moduleDefinition: DevstackModule = {
   // every web app, the admin app included
   target: 'frontend',
   description: 'Vitest for the web apps, starting with the status page logic',
-  requiresAny: ['framework-nextjs', 'framework-react-vite'],
+  requiresAny: ['web:next', 'web:vite'],
   // vite is vitest's peer: declared, because yarn classic does not install peers
   devDependencies: ['vitest', 'vite'],
   // the session logic of auth-jwt's web client (refresh on 401, one refresh at a time)

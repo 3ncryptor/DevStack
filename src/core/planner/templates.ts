@@ -29,6 +29,8 @@ export interface TemplateContext {
   port: number
   /** Script names of the target's package.json, e.g. which gates CI can run. */
   scripts: readonly string[]
+  /** The built file the API's start script runs, e.g. `dist/main.js`; Docker runs it directly. */
+  entry: string | undefined
   /** Installed version of the package manager (or a fallback in dry runs). */
   packageManagerVersion: string
   /** Catalog version ranges by package, e.g. `it.versions.turbo` for a Dockerfile. */
@@ -40,8 +42,10 @@ export interface TemplateContext {
    * architecture, else `modules`. Template paths spell it `__domains__`.
    */
   domainsDir: string
-  /** Selected module ids, e.g. for `it.modules.includes('orm-prisma')`. */
+  /** Selected module ids, e.g. for `it.modules.includes('cache-redis')`. */
   modules: readonly string[]
+  /** Capability tags of the selected modules, e.g. a framework's API style `http:fastify`. */
+  capabilities: readonly string[]
   /** Env vars of the modules at this depth, e.g. for the generated `config/env.ts`. */
   env: readonly PlannedEnvVar[]
   /** Rendered slot output, keyed by slot name (e.g. `app.middleware`). */

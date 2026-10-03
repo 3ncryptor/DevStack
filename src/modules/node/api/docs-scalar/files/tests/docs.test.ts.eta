@@ -1,6 +1,6 @@
 <% const vitest = it.modules.includes('testing-vitest') %>
-<%~ it.modules.includes('framework-nest') ? "import 'reflect-metadata'\n\n" : '' %><% const fastify = it.modules.includes('framework-fastify') %>
-<% const nest = it.modules.includes('framework-nest') %>
+<%~ it.capabilities.includes('http:nest') ? "import 'reflect-metadata'\n\n" : '' %><% const fastify = it.capabilities.includes('http:fastify') %>
+<% const nest = it.capabilities.includes('http:nest') %>
 import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { test } from '@jest/globals'<% } else { %>import { test } from 'node:test'<% } %>
 

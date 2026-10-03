@@ -2,10 +2,10 @@ import { moduleFilesPath } from '../../../../paths'
 import type { Condition, DevstackModule } from '../../../../types/module'
 import { AUTH_OPENAPI_SLOTS } from './openapi'
 
-const FASTIFY: Condition = { has: 'framework-fastify' }
-const NOT_FASTIFY: Condition = { not: FASTIFY }
-const EXPRESS: Condition = { has: 'framework-express' }
-const NEST: Condition = { has: 'framework-nest' }
+const FASTIFY: Condition = { has: 'http:fastify' }
+const CONNECT: Condition = { has: 'http:connect' }
+const EXPRESS: Condition = { has: 'http:express' }
+const NEST: Condition = { has: 'http:nest' }
 
 const USER_MODELS_TEMPLATE = `enum Role {
   USER
@@ -64,13 +64,13 @@ const moduleDefinition: DevstackModule = {
   description:
     'Register, login, refresh and logout with argon2 password hashing, JWT access tokens and rotating refresh tokens',
   // login and register always get a strict per-IP limit (brute force, argon2 cost)
-  requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
+  requiresAny: ['http:express', 'http:fastify', 'http:nest'],
   // written and tested on Postgres; other databases are a later port (D-77)
   requires: ['orm-prisma', 'database-postgres', 'core-backend', 'security-rate-limit'],
   dependencies: [
     'argon2',
     'jose',
-    { name: 'cookie-parser', when: NOT_FASTIFY },
+    { name: 'cookie-parser', when: CONNECT },
     { name: '@fastify/cookie', when: FASTIFY }
   ],
   scripts: [{ name: 'auth:make-admin', run: 'tsx src/scripts/make-admin.ts' }],
@@ -112,7 +112,7 @@ const moduleDefinition: DevstackModule = {
   slots: [
     { slot: 'prisma.models', code: USER_MODELS, when: { not: { has: 'template-todo' } } },
     { slot: 'prisma.models', code: USER_MODELS_WITH_TODOS, when: { has: 'template-todo' } },
-    { slot: 'app.imports', code: "import cookieParser from 'cookie-parser'", when: NOT_FASTIFY },
+    { slot: 'app.imports', code: "import cookieParser from 'cookie-parser'", when: CONNECT },
     {
       slot: 'app.imports',
       code: "import { createAuthRouter } from './__domains__/auth/auth.routes.js'",
@@ -131,7 +131,7 @@ const moduleDefinition: DevstackModule = {
       code: "import type { AuthService } from './__domains__/auth/auth.service.js'"
     },
     // cookies are parsed after the security middleware, before any route
-    { slot: 'app.middleware', code: 'app.use(cookieParser())', order: 90, when: NOT_FASTIFY },
+    { slot: 'app.middleware', code: 'app.use(cookieParser())', order: 90, when: CONNECT },
     { slot: 'app.plugins', code: 'await app.register(fastifyCookie)', order: 90, when: FASTIFY },
     { slot: 'app.deps', code: 'auth: AuthService' },
     {

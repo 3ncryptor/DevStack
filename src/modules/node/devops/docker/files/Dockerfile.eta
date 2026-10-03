@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Multi-stage build: build tools and dev dependencies never reach the runtime image.
-<% const entry = it.modules.includes('framework-nest') ? 'dist/main.js' : 'dist/index.js' %>
+
 FROM <%= it.language.dockerBaseImage %> AS base
 WORKDIR /app
 <% if (it.pm.setup !== '') { %><%= it.pm.setup %>
@@ -32,4 +32,4 @@ EXPOSE <%= it.apps.backend.port %>
 HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=5 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:<%= it.apps.backend.port %>/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
 # node directly (not npm start) so SIGTERM reaches the app and it shuts down gracefully
-CMD ["node", "<%= entry %>"]
+CMD ["node", "<%= it.entry %>"]

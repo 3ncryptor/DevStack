@@ -12,7 +12,7 @@
     console: 'integratedTerminal',
     skipFiles: ['<node_internals>/**']
   },
-  ...(it.modules.includes('framework-nextjs')
+  ...(it.capabilities.includes('web:next')
     ? [{
         name: 'Debug the web app (server)',
         type: 'node',
@@ -25,7 +25,7 @@
       }]
     : []),
   // a single-page app runs in the browser: start its dev script, then debug it in Chrome
-  ...(it.modules.includes('framework-react-vite')
+  ...(it.capabilities.includes('web:vite')
     ? [{
         name: 'Debug the web app (browser)',
         type: 'chrome',

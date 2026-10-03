@@ -1,7 +1,7 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
 <% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
 <% const authed = it.modules.includes('auth-jwt') || it.modules.includes('auth-better-auth') %>
-<% const next = it.modules.includes('framework-nextjs') %>
+<% const next = it.capabilities.includes('web:next') %>
 <% const cssModules = it.modules.includes('ui-css-modules') %>
 <%~ next ? "'use client'\n\n" : '' %>import { useCallback, useEffect, useState, type FormEvent } from 'react'
 

@@ -67,6 +67,20 @@ describe('resolveStack with the built-in modules', () => {
     expect(diagnostic?.fix).toContain('framework-express')
   })
 
+  it('names the API styles a module supports when the framework has another (D-96)', () => {
+    const koa = testModule({
+      id: 'framework-koa',
+      category: 'framework',
+      provides: ['http-framework', 'http:koa']
+    })
+    const withKoa = new Map([...registry, [koa.id, koa]])
+
+    const [diagnostic] = resolveStack(['framework-koa', 'middleware-cors'], withKoa).diagnostics
+
+    expect(diagnostic?.message).toContain('middleware-cors')
+    expect(diagnostic?.message).toContain('http:connect, http:fastify')
+  })
+
   it('lists the modules that provide a missing capability', () => {
     const [diagnostic] = resolveStack(['security-helmet'], registry).diagnostics
 

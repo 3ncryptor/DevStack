@@ -12,8 +12,8 @@ const moduleDefinition: DevstackModule = {
   description:
     'An image per web app from the pruned workspace: the Next.js standalone server, or nginx for React + Vite',
   requires: ['devops-docker'],
-  requiresAny: ['framework-nextjs', 'framework-react-vite'],
-  files: [{ path: 'nginx.conf.template', when: { has: 'framework-react-vite' } }],
+  requiresAny: ['web:next', 'web:vite'],
+  files: [{ path: 'nginx.conf.template', when: { has: 'web:vite' } }],
   filesPath: moduleFilesPath('node/devops/docker-web')
 }
 

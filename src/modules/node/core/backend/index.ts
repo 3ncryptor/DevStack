@@ -4,12 +4,9 @@ import type { Condition, DevstackModule } from '../../../../types/module'
 /** Winston or plain JSON logs: they bring their own lib/logger.ts. */
 const OTHER_LOGGER: Condition = { any: [{ has: 'obs-winston' }, { has: 'obs-json-logs' }] }
 const PINO: Condition = { not: OTHER_LOGGER }
-const NEST: Condition = { framework: 'framework-nest' }
-
+const NEST: Condition = { has: 'http:nest' }
 /** Express and Nest (platform-express) share the Express request pipeline. */
-const ON_EXPRESS: Condition = {
-  any: [{ framework: 'framework-express' }, { framework: 'framework-nest' }]
-}
+const ON_EXPRESS: Condition = { has: 'http:connect' }
 
 const moduleDefinition: DevstackModule = {
   id: 'core-backend',

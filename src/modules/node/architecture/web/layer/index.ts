@@ -16,7 +16,7 @@ const moduleDefinition: DevstackModule = {
   target: 'frontend',
   depth: 'bare',
   description: 'components/, hooks/, services/, utils/, types/ and constants/ at the top level',
-  requiresAny: ['framework-nextjs', 'framework-react-vite'],
+  requiresAny: ['web:next', 'web:vite'],
   filesPath: moduleFilesPath('node/architecture/web/layer')
 }
 

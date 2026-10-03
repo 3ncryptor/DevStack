@@ -21,7 +21,7 @@ const moduleDefinition: DevstackModule = {
   target: 'frontend',
   provides: ['web-pages'],
   description: 'The API client, auth pages and Todo page shared by the web frameworks',
-  requiresAny: ['framework-nextjs', 'framework-react-vite'],
+  requiresAny: ['web:next', 'web:vite'],
   files: [
     { path: 'lib/auth/index.ts', when: AUTH },
     { path: 'lib/auth/session.ts', when: AUTH },

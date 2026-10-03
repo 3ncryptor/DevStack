@@ -1,8 +1,8 @@
 import { moduleFilesPath } from '../../../../paths'
 import type { Condition, DevstackModule } from '../../../../types/module'
 
-const FASTIFY: Condition = { has: 'framework-fastify' }
-const NOT_FASTIFY: Condition = { not: FASTIFY }
+const FASTIFY: Condition = { has: 'http:fastify' }
+const CONNECT: Condition = { has: 'http:connect' }
 
 const moduleDefinition: DevstackModule = {
   id: 'security-helmet',
@@ -11,18 +11,18 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   wizard: { question: 'appSetup', order: 2, checked: true },
   description: 'Security headers via Helmet middleware for Express or NestJS',
-  requiresAny: ['http-framework'],
+  requiresAny: ['http:connect', 'http:fastify'],
   dependencies: [
-    { name: 'helmet', when: NOT_FASTIFY },
+    { name: 'helmet', when: CONNECT },
     { name: '@fastify/helmet', when: FASTIFY }
   ],
   slots: [
     {
       slot: 'app.imports',
       code: "import { helmetMiddleware } from './middlewares/helmet.js'",
-      when: NOT_FASTIFY
+      when: CONNECT
     },
-    { slot: 'app.middleware', code: 'app.use(helmetMiddleware)', order: 30, when: NOT_FASTIFY },
+    { slot: 'app.middleware', code: 'app.use(helmetMiddleware)', order: 30, when: CONNECT },
     {
       slot: 'app.imports',
       code: "import { registerHelmet } from './plugins/helmet.js'",
@@ -31,7 +31,7 @@ const moduleDefinition: DevstackModule = {
     { slot: 'app.plugins', code: 'await registerHelmet(app)', order: 30, when: FASTIFY }
   ],
   files: [
-    { path: 'src/middlewares/helmet.ts', when: NOT_FASTIFY },
+    { path: 'src/middlewares/helmet.ts', when: CONNECT },
     { path: 'src/plugins/helmet.ts', when: FASTIFY }
   ],
   filesPath: moduleFilesPath('node/security/helmet')

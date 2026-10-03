@@ -3,7 +3,7 @@
 <% const admin = it.target === 'admin' %>
 <% const providerOptions = it.moduleOptions['auth-better-auth'] ?? {} %>
 <% const providers = admin ? [] : [['github', 'GitHub'], ['google', 'Google']].filter(([id]) => providerOptions[id] === true) %>
-<% const next = it.modules.includes('framework-nextjs') %>
+<% const next = it.capabilities.includes('web:next') %>
 <% const cssModules = it.modules.includes('ui-css-modules') %>
 <%~ next ? "'use client'\n\n" : '' %><%~ next ? "import { useRouter } from 'next/navigation'\n" : '' %>import { useState, type FormEvent } from 'react'
 

@@ -13,7 +13,7 @@ const moduleDefinition: DevstackModule = {
   // vite is vitest's peer: declared, because yarn classic does not install peers
   devDependencies: ['vitest', 'vite'],
   // Nest brings its own config with the SWC plugin
-  files: [{ path: 'vitest.config.ts', when: { not: { framework: 'framework-nest' } } }],
+  files: [{ path: 'vitest.config.ts', when: { not: { has: 'http:nest' } } }],
   scripts: [{ name: 'test', run: 'vitest run', depth: 'wired' }],
   filesPath: moduleFilesPath('node/testing/vitest')
 }

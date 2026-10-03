@@ -20,7 +20,7 @@ COPY --from=prune /app/out/full/ ./
 WORKDIR /app/apps/<%= app %>
 RUN <%= it.pm.run %> build
 
-<% if (it.modules.includes('framework-react-vite')) { -%>
+<% if (it.capabilities.includes('web:vite')) { -%>
 # a static build: unprivileged nginx serves it, falls back to index.html for client routes and
 # proxies /api to the API (nginx.conf.template, filled from API_URL and PORT at start)
 FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime

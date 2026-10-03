@@ -1,8 +1,8 @@
 import { moduleFilesPath } from '../../../../paths'
 import type { Condition, DevstackModule } from '../../../../types/module'
 
-const FASTIFY: Condition = { has: 'framework-fastify' }
-const NOT_FASTIFY: Condition = { not: FASTIFY }
+const FASTIFY: Condition = { has: 'http:fastify' }
+const CONNECT: Condition = { has: 'http:connect' }
 
 const moduleDefinition: DevstackModule = {
   id: 'middleware-compression',
@@ -11,22 +11,22 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   wizard: { question: 'appSetup', order: 5, checked: false },
   description: 'Response compression middleware',
-  requiresAny: ['http-framework'],
+  requiresAny: ['http:connect', 'http:fastify'],
   dependencies: [
-    { name: 'compression', when: NOT_FASTIFY },
+    { name: 'compression', when: CONNECT },
     { name: '@fastify/compress', when: FASTIFY }
   ],
   slots: [
     {
       slot: 'app.imports',
       code: "import { compressionMiddleware } from './middlewares/compression.js'",
-      when: NOT_FASTIFY
+      when: CONNECT
     },
     {
       slot: 'app.middleware',
       code: 'app.use(compressionMiddleware)',
       order: 70,
-      when: NOT_FASTIFY
+      when: CONNECT
     },
     {
       slot: 'app.imports',
@@ -36,7 +36,7 @@ const moduleDefinition: DevstackModule = {
     { slot: 'app.plugins', code: 'await registerCompression(app)', order: 70, when: FASTIFY }
   ],
   files: [
-    { path: 'src/middlewares/compression.ts', when: NOT_FASTIFY },
+    { path: 'src/middlewares/compression.ts', when: CONNECT },
     { path: 'src/plugins/compression.ts', when: FASTIFY }
   ],
   filesPath: moduleFilesPath('node/middleware/compression')

@@ -14,7 +14,7 @@ const moduleDefinition: DevstackModule = {
   target: 'frontend',
   depth: 'bare',
   description: 'Locally scoped styles with CSS Modules (app/ui.module.css), no extra dependency',
-  requiresAny: ['framework-nextjs', 'framework-react-vite'],
+  requiresAny: ['web:next', 'web:vite'],
   filesPath: moduleFilesPath('node/ui/css-modules')
 }
 

@@ -12,7 +12,7 @@ import { PACKAGE_ROOT } from '../src/paths'
 import type { Condition } from '../src/types/module'
 import { moduleIdOf, parseMatrix } from './e2e/lib/checks'
 
-/** Every leaf condition (`has`, `framework`, `depth`, ...) inside a condition tree. */
+/** Every leaf condition (`has`, `option`, `depth`, ...) inside a condition tree. */
 function atoms(condition: Condition): Condition[] {
   if ('all' in condition) return condition.all.flatMap(atoms)
   if ('any' in condition) return condition.any.flatMap(atoms)

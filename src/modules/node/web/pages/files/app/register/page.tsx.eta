@@ -1,6 +1,6 @@
 <% const tailwind = it.modules.includes('ui-tailwind') %>
 <% const cls = (value) => (tailwind ? ` className="${value}"` : '') %>
-<% const next = it.modules.includes('framework-nextjs') %>
+<% const next = it.capabilities.includes('web:next') %>
 <% const cssModules = it.modules.includes('ui-css-modules') %>
 <%~ next ? "'use client'\n\n" : '' %><%~ next ? "import { useRouter } from 'next/navigation'\n" : '' %>import { useState, type FormEvent } from 'react'
 

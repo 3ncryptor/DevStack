@@ -13,7 +13,7 @@ const moduleDefinition: DevstackModule = {
   language: 'node',
   wizard: { question: 'frontend', order: 2, hint: 'a single-page app' },
   target: 'frontend',
-  provides: ['web-framework'],
+  provides: ['web-framework', 'web:vite'],
   description:
     'React 19 single-page app on Vite with React Router, a status page and an /api proxy',
   requires: ['layout:monorepo', 'shared-api', 'web-pages'],

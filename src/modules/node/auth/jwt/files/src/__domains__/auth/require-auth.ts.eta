@@ -1,4 +1,4 @@
-<% if (it.modules.includes('framework-fastify')) { %>
+<% if (it.capabilities.includes('http:fastify')) { %>
 import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify'
 
 import { ForbiddenError, UnauthorizedError } from '../../lib/errors.js'

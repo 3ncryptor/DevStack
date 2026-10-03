@@ -1,8 +1,8 @@
 <% const vitest = it.modules.includes('testing-vitest') %>
 <% const awaitTest = vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
-<% const fastify = it.modules.includes('framework-fastify') %>
-<% const nest = it.modules.includes('framework-nest') %>
+<% const fastify = it.capabilities.includes('http:fastify') %>
+<% const nest = it.capabilities.includes('http:nest') %>
 <%/* Express builds the app synchronously; Supertest drives Fastify and Nest through their servers */%>
 <% const app = (args = '') => (fastify ? `(await testApp(${args})).server` : nest ? `(await testApp(${args})).getHttpServer()` : `testApp(${args})`) %>
 <%~ nest ? "import 'reflect-metadata'\n\n" : '' %>import assert from 'node:assert/strict'

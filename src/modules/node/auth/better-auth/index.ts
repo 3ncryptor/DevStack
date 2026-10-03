@@ -4,10 +4,10 @@ import { moduleFilesPath } from '../../../../paths'
 import type { Condition, DevstackModule, SlotContribution } from '../../../../types/module'
 
 const VERSIONED: Condition = { has: 'api-versioning' }
-const FASTIFY: Condition = { has: 'framework-fastify' }
-const NOT_FASTIFY: Condition = { not: FASTIFY }
-const EXPRESS: Condition = { has: 'framework-express' }
-const NEST: Condition = { has: 'framework-nest' }
+const FASTIFY: Condition = { has: 'http:fastify' }
+const CONNECT: Condition = { has: 'http:connect' }
+const EXPRESS: Condition = { has: 'http:express' }
+const NEST: Condition = { has: 'http:nest' }
 const GITHUB: Condition = { option: 'github', equals: true }
 const GOOGLE: Condition = { option: 'google', equals: true }
 
@@ -136,7 +136,7 @@ const moduleDefinition: DevstackModule = {
   provides: ['auth'],
   description:
     'Better Auth: email + password, optional GitHub and Google sign-in, database sessions and admin roles',
-  requiresAny: ['framework-express', 'framework-fastify', 'framework-nest'],
+  requiresAny: ['http:express', 'http:fastify', 'http:nest'],
   // written and tested on Postgres; other databases are a later port (D-77)
   requires: ['orm-prisma', 'database-postgres', 'core-backend'],
   dependencies: ['better-auth'],
@@ -180,7 +180,7 @@ const moduleDefinition: DevstackModule = {
     {
       slot: 'app.imports',
       code: "import { toNodeHandler } from 'better-auth/node'",
-      when: NOT_FASTIFY
+      when: CONNECT
     },
     {
       slot: 'app.imports',

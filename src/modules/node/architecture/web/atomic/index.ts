@@ -16,7 +16,7 @@ const moduleDefinition: DevstackModule = {
   target: 'frontend',
   depth: 'bare',
   description: 'components/{atoms,molecules,organisms,templates} plus hooks/',
-  requiresAny: ['framework-nextjs', 'framework-react-vite'],
+  requiresAny: ['web:next', 'web:vite'],
   filesPath: moduleFilesPath('node/architecture/web/atomic')
 }
 

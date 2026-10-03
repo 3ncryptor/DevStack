@@ -223,6 +223,13 @@ interface PlanContext {
   settings: ResolvedSettings
 }
 
+/** The built file the API's start script runs, e.g. `dist/main.js`, for Docker's CMD. */
+function apiEntry(input: PlanInput, context: PlanContext): string | undefined {
+  const api = context.targets.find((target) => target.role === 'backend') ?? context.targets[0]
+  if (api === undefined) return undefined
+  return targetPackageJson(input, api, context).scripts?.['start']?.split(' ').at(-1)
+}
+
 const scopeOf = (context: PlanContext): RuleScope => ({
   depth: context.depth,
   moduleSystem: context.settings.moduleSystem
@@ -264,10 +271,14 @@ async function targetOutput(
     ),
     language: NODE_LANGUAGE,
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
+    capabilities: [
+      ...new Set(context.modules.flatMap((moduleDefinition) => moduleDefinition.provides ?? []))
+    ],
     domainsDir: context.domainsDir,
     target: target.role,
     port: portOf(target.role, context.monorepo, context.settings),
     scripts: Object.keys(packageJson.scripts ?? {}),
+    entry: apiEntry(input, context),
     packageManagerVersion:
       input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager],
     versions: Object.fromEntries(
