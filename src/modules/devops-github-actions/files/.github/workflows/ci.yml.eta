@@ -44,7 +44,7 @@ jobs:
 <% if (it.modules.includes('orm-prisma')) { -%>
       - run: <%= it.pm.exec %> prisma generate
 <% if (monorepo) { -%>
-        working-directory: apps/api
+        working-directory: <%= it.apps.backend.dir %>
 <% } -%>
 <% } -%>
 <% for (const gate of gates) { -%>

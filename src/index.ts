@@ -340,6 +340,7 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     registry,
     packageManager,
     packageManagerVersion: environment?.packageManagerVersions[packageManager],
+    settings: config?.settings,
     options: { ...options, github: await githubUrl(options, prompter, config) },
     logger,
     prompter

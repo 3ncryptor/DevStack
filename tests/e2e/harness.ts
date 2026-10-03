@@ -62,11 +62,19 @@ const GATE_SCRIPTS = ['lint', 'format', 'typecheck', 'build'] as const
 const OPTIONAL_GATE_SCRIPTS = ['test'] as const
 const REQUIRED_FILES = ['package.json', '.gitignore'] as const
 
-/** The app to boot: apps/api in a monorepo (B8), the project itself otherwise. */
-const appDirOf = (projectDir: string): string =>
-  existsSync(path.join(projectDir, 'apps', 'api', 'package.json'))
-    ? path.join(projectDir, 'apps', 'api')
-    : projectDir
+/** App folder names from the generated manifest (task 5.3); api, web and admin by default. */
+function appFolders(projectDir: string): { backend: string; frontend: string; admin: string } {
+  const manifest = JSON.parse(
+    readFileSync(path.join(projectDir, '.devstack', 'stack.json'), 'utf8')
+  ) as { settings?: { apps?: Partial<Record<'backend' | 'frontend' | 'admin', string>> } }
+  return { backend: 'api', frontend: 'web', admin: 'admin', ...manifest.settings?.apps }
+}
+
+/** The app to boot: the API's folder in a monorepo (B8), the project itself otherwise. */
+const appDirOf = (projectDir: string): string => {
+  const apiDir = path.join(projectDir, 'apps', appFolders(projectDir).backend)
+  return existsSync(path.join(apiDir, 'package.json')) ? apiDir : projectDir
+}
 const MINUTE_MS = 60_000
 const INSTALL_TIMEOUT_MS = 10 * MINUTE_MS
 const STEP_TIMEOUT_MS = 5 * MINUTE_MS
@@ -160,7 +168,12 @@ async function stackArgs(combination: Combination, projectsDir: string): Promise
     return ['--preset', combination.preset]
   }
   const configFile = path.join(projectsDir, `${combination.id}.stack.json`)
-  const config = { version: 1, name: combination.id, modules: combination.modules }
+  const config = {
+    version: 1,
+    name: combination.id,
+    modules: combination.modules,
+    ...(combination.settings === undefined ? {} : { settings: combination.settings })
+  }
   await writeFile(configFile, `${JSON.stringify(config, null, 2)}\n`)
   return ['--config', configFile]
 }
@@ -213,18 +226,23 @@ async function checkCombination(
   } else if (built) {
     const startedAt = Date.now()
     const appDir = appDirOf(projectDir)
-    const webDir = path.join(projectDir, 'apps', 'web')
+    const folders = appFolders(projectDir)
+    const webDir = path.join(projectDir, 'apps', folders.frontend)
     if (existsSync(path.join(webDir, 'package.json'))) {
       const startedAt = Date.now()
       const webApps = await Promise.all(
-        ['web', 'admin']
-          .map((name) => ({ name, dir: path.join(projectDir, 'apps', name) }))
+        (['frontend', 'admin'] as const)
+          .map((role) => ({
+            role,
+            name: folders[role],
+            dir: path.join(projectDir, 'apps', folders[role])
+          }))
           .filter((app) => existsSync(path.join(app.dir, 'package.json')))
           .map(async (app) => ({
             ...app,
             command: await startCommand(app.dir),
             // with auth, the admin home page is behind a login (D-67): its login page answers
-            guarded: app.name === 'admin' && existsSync(path.join(app.dir, 'app', 'login')),
+            guarded: app.role === 'admin' && existsSync(path.join(app.dir, 'app', 'login')),
             spa: existsSync(path.join(app.dir, 'vite.config.ts'))
           }))
       )
@@ -241,7 +259,10 @@ async function checkCombination(
         env: bootEnv(appDir),
         timeoutMs: BOOT_TIMEOUT_MS,
         hasDatabase: existsSync(path.join(appDir, 'src', 'db', 'client.ts')),
-        databaseUp: serviceUp(readEnvFile(appDir), 'DATABASE_URL')
+        // a SQLite file is always there; a server only with E2E_DATABASE_URL
+        databaseUp:
+          readEnvFile(appDir).DATABASE_URL?.startsWith('file:') === true ||
+          serviceUp(readEnvFile(appDir), 'DATABASE_URL')
       })
       const detail = `${boot.problems.join('\n')}\n--- app output ---\n${boot.output}`
       steps.push(
@@ -272,7 +293,13 @@ async function checkCombination(
     })
   }
   if (combination.compose === true && tier === 'full' && built) {
-    steps.push(await composeCheck(projectDir, combination.id))
+    steps.push(
+      await composeCheck(
+        projectDir,
+        combination.id,
+        path.join('apps', appFolders(projectDir).frontend)
+      )
+    )
   }
   return { id: combination.id, pm, steps }
 }

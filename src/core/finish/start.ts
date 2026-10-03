@@ -7,15 +7,19 @@ import { packageManagerAdapter } from '../../adapters/package-manager/index'
 import type { GenerationPlan } from '../../types/plan'
 import type { Logger } from '../../utils/logger'
 import { plannedScripts } from './verify'
+import { appDir, portFor } from '../settings'
 
 const OPEN_WAIT_MS = 60_000
 const POLL_INTERVAL_MS = 500
 
 /** The page worth opening: the status page of a web app, the API docs, or /health. */
 export function startUrl(plan: GenerationPlan): string {
+  const monorepo = plan.modules.includes('layout-monorepo')
   const web = ['framework-nextjs', 'framework-react-vite']
-  if (web.some((id) => plan.modules.includes(id))) return 'http://localhost:3000/'
-  const port = plan.modules.includes('layout-monorepo') ? 3001 : 3000
+  if (web.some((id) => plan.modules.includes(id))) {
+    return `http://localhost:${portFor(plan.settings, 'frontend', monorepo)}/`
+  }
+  const port = portFor(plan.settings, 'backend', monorepo)
   return plan.modules.includes('api-docs-scalar')
     ? `http://localhost:${port}/docs`
     : `http://localhost:${port}/health`
@@ -51,7 +55,9 @@ async function openWhenUp(url: string, logger: Logger): Promise<void> {
 /** "Start it now?" (A0.4 step 7): data services, then the dev servers, in the foreground. */
 export async function startProject(plan: GenerationPlan, logger: Logger): Promise<void> {
   const pm = packageManagerAdapter(plan.packageManager)
-  const dbDir = ['', 'apps/api'].find((dir) => plannedScripts(plan, dir)['db:up'] !== undefined)
+  const dbDir = ['', appDir(plan.settings, 'backend')].find(
+    (dir) => plannedScripts(plan, dir)['db:up'] !== undefined
+  )
   if (dbDir !== undefined) {
     logger.info('Starting the database (db:up)...')
     const database = await execa(plan.packageManager, pm.run('db:up'), {

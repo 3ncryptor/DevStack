@@ -8,6 +8,7 @@ import { PACKAGE_MANAGERS } from '../adapters/package-manager/index'
 import { InputError } from '../errors'
 import { PACKAGE_ROOT } from '../paths'
 import { projectNameProblem } from './project-name'
+import { settingsSchema, type ProjectSettings } from './settings'
 
 /** Where every generated project records the stack it was generated from (buildPlan B12). */
 export const MANIFEST_PATH = '.devstack/stack.json'
@@ -38,6 +39,8 @@ export const stackConfigSchema = z.strictObject({
     )
     .min(1, 'List at least one module.'),
   depth: z.enum(['bare', 'wired']).optional(),
+  /** How the code looks and what the apps are called (tasks 5.1-5.3). */
+  settings: settingsSchema.optional(),
   generatedBy: z.strictObject({ name: z.string(), version: z.string() }).optional()
 })
 
@@ -59,6 +62,7 @@ export interface ManifestInput {
   /** Resolved options per module id; recorded so a replay renders the same files. */
   options?: Readonly<Record<string, Record<string, unknown>>>
   depth: 'bare' | 'wired'
+  settings?: ProjectSettings
 }
 
 /** The manifest contents; deterministic (no timestamps), so the same stack gives the same file. */
@@ -72,6 +76,7 @@ export function manifestFor(input: ManifestInput): StackConfig {
       return options === undefined ? id : { id, options }
     }),
     depth: input.depth,
+    ...(input.settings === undefined ? {} : { settings: input.settings }),
     generatedBy: { name: CLI_PACKAGE.name, version: CLI_PACKAGE.version }
   }
 }

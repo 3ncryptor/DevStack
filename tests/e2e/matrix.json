@@ -647,5 +647,191 @@
   {
     "id": "fullstack-vite-preset",
     "preset": "fullstack-vite-express"
+  },
+  {
+    "id": "fullstack-renamed",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "security-helmet",
+      "framework-nextjs",
+      "ui-tailwind",
+      "database-postgres",
+      "orm-prisma",
+      "auth-jwt",
+      "testing-vitest",
+      "testing-vitest-web",
+      "devops-docker",
+      "devops-docker-web",
+      "repo-vscode",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "apps": {
+        "backend": "server",
+        "frontend": "site"
+      },
+      "ports": {
+        "backend": 4100,
+        "frontend": 4000
+      },
+      "style": {
+        "semi": true,
+        "singleQuote": false,
+        "tabWidth": 4,
+        "trailingComma": "all"
+      },
+      "license": "MIT",
+      "author": "Ada Lovelace",
+      "description": "A renamed fullstack app"
+    },
+    "compose": true
+  },
+  {
+    "id": "express-strictest",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "security-helmet",
+      "security-rate-limit",
+      "middleware-cors",
+      "middleware-request-logger",
+      "middleware-compression",
+      "database-postgres",
+      "orm-prisma",
+      "auth-jwt",
+      "template-todo",
+      "api-versioning",
+      "api-docs-scalar",
+      "testing-vitest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "strictness": "strictest"
+    }
+  },
+  {
+    "id": "fastify-strictest",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "security-helmet",
+      "security-rate-limit",
+      "middleware-cors",
+      "database-postgres",
+      "orm-drizzle",
+      "cache-redis",
+      "obs-winston",
+      "api-docs-scalar",
+      "testing-vitest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "strictness": "strictest"
+    }
+  },
+  {
+    "id": "fastify-better-auth-strictest",
+    "modules": [
+      "language-node",
+      "framework-fastify",
+      "security-helmet",
+      "database-postgres",
+      "orm-prisma",
+      {
+        "id": "auth-better-auth",
+        "options": {
+          "github": true
+        }
+      },
+      "testing-jest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "strictness": "strictest"
+    }
+  },
+  {
+    "id": "nest-strictest",
+    "modules": [
+      "language-node",
+      "framework-nest",
+      "security-helmet",
+      "security-rate-limit",
+      "database-mongodb",
+      "orm-mongoose",
+      "obs-json-logs",
+      "testing-jest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "strictness": "strictest"
+    }
+  },
+  {
+    "id": "nest-session-strictest",
+    "modules": [
+      "language-node",
+      "framework-nest",
+      "security-helmet",
+      "database-postgres",
+      "orm-prisma",
+      "auth-session",
+      "testing-vitest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "strictness": "strictest"
+    }
+  },
+  {
+    "id": "fullstack-vite-strictest",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "security-helmet",
+      "framework-react-vite",
+      "ui-css-modules",
+      "database-sqlite",
+      "orm-drizzle",
+      "testing-vitest",
+      "testing-vitest-web",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "strictness": "strictest"
+    }
+  },
+  {
+    "id": "fullstack-next-strictest",
+    "modules": [
+      "language-node",
+      "layout-monorepo",
+      "framework-express",
+      "security-helmet",
+      "framework-nextjs",
+      "ui-tailwind",
+      "app-admin",
+      "database-postgres",
+      "orm-prisma",
+      "auth-jwt",
+      "template-todo",
+      "testing-vitest",
+      "testing-vitest-web",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "settings": {
+      "strictness": "strictest"
+    }
   }
 ]

@@ -9,6 +9,7 @@ import type { GenerationPlan, PlannedFile } from '../src/types/plan'
 import { ConsoleLogger } from '../src/utils/logger'
 import { ScriptedPrompter } from './helpers/scripted-prompter'
 import { removeTempDirs, tempDir } from './helpers/temp-dirs'
+import { DEFAULT_SETTINGS } from '../src/core/settings'
 
 afterAll(removeTempDirs)
 let stagingRoot = ''
@@ -41,7 +42,8 @@ function planIn(projectDir: string, files: PlannedFile[]): GenerationPlan {
     files,
     commands: [],
     env: [],
-    depth: 'wired'
+    depth: 'wired',
+    settings: DEFAULT_SETTINGS
   }
 }
 

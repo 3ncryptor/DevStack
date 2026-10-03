@@ -76,6 +76,7 @@
   "files": [
     "dist",
     "src/modules/*/files/**",
+    "src/licenses",
     "README.md",
     "LICENSE"
   ],

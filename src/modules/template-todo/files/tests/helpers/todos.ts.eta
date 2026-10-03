@@ -36,7 +36,11 @@ export function memoryTodoRepository(): TodoRepository {
     update(id, changes) {
       const existing = todos.get(id)
       if (existing === undefined) return Promise.reject(new Error(`No todo ${id}`))
-      const updated: Todo = { ...existing, ...changes, updatedAt: tick() }
+      // a field left out keeps its value; spreading undefined would erase it
+      const given = Object.fromEntries(
+        Object.entries(changes).filter(([, value]) => value !== undefined)
+      ) as Partial<Todo>
+      const updated: Todo = { ...existing, ...given, updatedAt: tick() }
       todos.set(id, updated)
       return Promise.resolve(updated)
     },

@@ -11,6 +11,14 @@ import {
 } from '../../adapters/package-manager/index'
 import { composeModules, composeProjectPackageJson } from '../composer'
 import { MANIFEST_PATH, manifestFor } from '../manifest'
+import {
+  assertDistinctPorts,
+  resolveSettings,
+  settingsForManifest,
+  type ProjectSettings,
+  type ResolvedSettings
+} from '../settings'
+import { editorConfig, licenseFile, packageMetadata, withStrictness } from './settings-files'
 import { planCommands, type CommandOptions } from './commands'
 import { collectEnv, dotEnv, envExample } from './env'
 import { agentsMd, CLAUDE_MD } from './agents-md'
@@ -26,14 +34,14 @@ import {
   envForTarget,
   inTarget,
   isMonorepo,
-  MONOREPO_PORTS,
+  monorepoDirs,
   planTargets,
   portOf,
   type Target,
   WEB_ROLES,
   workspaceRange
 } from './targets'
-import type { TemplateContext } from './templates'
+import type { AppInfo, TemplateContext } from './templates'
 
 export interface PlanInput {
   projectName: string
@@ -50,6 +58,10 @@ export interface PlanInput {
   options: CommandOptions
   /** Source of generated local secrets (B17.7); random unless a test pins it. */
   secret?: () => string
+  /** Project settings (tasks 5.1-5.3) from the config, a preset or remembered defaults. */
+  settings?: ProjectSettings
+  /** The clock, e.g. for the year in a LICENSE; a test pins it. */
+  now?: () => Date
 }
 
 const plannedDepth = (input: PlanInput): Depth => input.depth ?? 'wired'
@@ -122,6 +134,8 @@ const WORKSPACE_GLOBS = ['apps/*', 'packages/*']
 
 /** A target's package.json: its modules' fragments and dependencies, plus workspace fields at the root. */
 function targetPackageJson(input: PlanInput, target: Target, context: PlanContext): PackageJson {
+  const withSettings = (packageJson: PackageJson): PackageJson =>
+    target.role === 'root' ? { ...packageJson, ...packageMetadata(context.settings) } : packageJson
   const composed = withPorts(
     withScriptRules(
       composeProjectPackageJson(target.packageName, target.modules, context.modules),
@@ -130,9 +144,9 @@ function targetPackageJson(input: PlanInput, target: Target, context: PlanContex
       context.moduleOptions,
       context.depth
     ),
-    portOf(target.role, context.monorepo)
+    portOf(target.role, context.monorepo, context.settings)
   )
-  if (!context.monorepo) return composed
+  if (!context.monorepo) return withSettings(composed)
   const shared = context.targets.find((candidate) => candidate.role === 'shared')
   if (WEB_ROLES.includes(target.role) && shared !== undefined) {
     return {
@@ -146,12 +160,15 @@ function targetPackageJson(input: PlanInput, target: Target, context: PlanContex
   if (target.role !== 'root') return composed
   const version = input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager]
   return {
-    ...composed,
+    ...withSettings(composed),
     packageManager: `${input.packageManager}@${version}`,
     workspaces: WORKSPACE_GLOBS,
     // the one place the ports are recorded (D-30); both apps' .env defaults use the same values
     devstack: {
-      ports: { web: MONOREPO_PORTS.frontend ?? 3000, api: MONOREPO_PORTS.backend ?? 3001 }
+      ports: {
+        web: portOf('frontend', true, context.settings),
+        api: portOf('backend', true, context.settings)
+      }
     }
   }
 }
@@ -165,6 +182,7 @@ interface PlanContext {
   /** `features` with feature-scoped architecture, else `modules` (B17.6). */
   domainsDir: string
   slots: Record<string, string>
+  settings: ResolvedSettings
 }
 
 interface TargetOutput {
@@ -191,7 +209,8 @@ async function targetOutput(
         target.role
       )
     ),
-    context.targets
+    context.targets,
+    context.settings
   )
   const packageJson = targetPackageJson(input, target, context)
   const templateContext: Omit<TemplateContext, 'options'> = {
@@ -204,7 +223,7 @@ async function targetOutput(
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
     domainsDir: context.domainsDir,
     target: target.role,
-    port: portOf(target.role, context.monorepo),
+    port: portOf(target.role, context.monorepo, context.settings),
     scripts: Object.keys(packageJson.scripts ?? {}),
     packageManagerVersion:
       input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager],
@@ -216,7 +235,9 @@ async function targetOutput(
     ),
     env,
     slots: context.slots,
-    moduleOptions: context.moduleOptions
+    moduleOptions: context.moduleOptions,
+    settings: context.settings,
+    apps: appsOf(context)
   }
   const files: PlannedFile[] = [
     generatedFile('package.json', `${JSON.stringify(packageJson, null, 2)}\n`),
@@ -267,12 +288,20 @@ function rootFiles(
     packageManager: input.packageManager,
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
     options: context.moduleOptions,
-    depth: context.depth
+    depth: context.depth,
+    settings: settingsForManifest(context.settings, context.monorepo)
   })
+  const license = licenseFile(
+    context.settings,
+    input.projectName,
+    (input.now ?? (() => new Date()))().getFullYear()
+  )
   const needsWorkspaceFile =
     input.packageManager === 'pnpm' && (buildApprovals.length > 0 || context.monorepo)
   return [
     generatedFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`),
+    editorConfig(context.settings),
+    ...(license === undefined ? [] : [license]),
     generatedFile(
       'README.md',
       projectReadme({
@@ -332,7 +361,9 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
   const modules = composition.orderedModules
   const moduleOptions = resolveModuleOptions(modules, input.moduleOptions ?? {})
   const depth = plannedDepth(input)
-  const targets = planTargets(input.projectName, modules)
+  const settings = resolveSettings(input.settings)
+  assertDistinctPorts(settings, isMonorepo(modules))
+  const targets = planTargets(input.projectName, modules, settings)
   const domainsDir = modules.some((moduleDefinition) => moduleDefinition.id === 'arch-feature')
     ? 'features'
     : 'modules'
@@ -349,7 +380,8 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
     // slot code imports domain files, so it spells their folder with the same path token
     slots: Object.fromEntries(
       Object.entries(slots).map(([slot, code]) => [slot, resolvePathTokens(code, { domainsDir })])
-    )
+    ),
+    settings
   }
   const outputs = await Promise.all(targets.map((target) => targetOutput(input, target, context)))
   const env = outputs.flatMap((output) => output.env)
@@ -371,10 +403,24 @@ export async function buildGenerationPlan(input: PlanInput): Promise<GenerationP
     packageManager: input.packageManager,
     modules: modules.map((moduleDefinition) => moduleDefinition.id),
     files: await formatPlannedFiles(
-      [...files.values()].map(withMergeStrategy).sort((a, b) => a.path.localeCompare(b.path))
+      [...files.values()]
+        .map((file) => withStrictness(withMergeStrategy(file), settings))
+        .sort((a, b) => a.path.localeCompare(b.path))
     ),
     commands: planCommands(modules, input.packageManager, input.options, dirOf),
     env,
-    depth
+    depth,
+    settings
   }
+}
+
+/** The apps by role for templates: their folder, name and port (tasks 5.3, D-30). */
+function appsOf(context: PlanContext): Record<'backend' | 'frontend' | 'admin', AppInfo> {
+  const dirs = monorepoDirs(context.settings)
+  const app = (role: 'backend' | 'frontend' | 'admin'): AppInfo => ({
+    dir: context.monorepo ? dirs[role] : '',
+    name: context.settings.apps[role],
+    port: portOf(role, context.monorepo, context.settings)
+  })
+  return { backend: app('backend'), frontend: app('frontend'), admin: app('admin') }
 }

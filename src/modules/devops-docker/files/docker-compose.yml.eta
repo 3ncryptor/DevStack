@@ -19,51 +19,52 @@
 ].map((line) => `${line}\n`).join('') -%>
 <% const volumes = [...(database ? [database.volume] : []), ...(redis ? ['redis_data'] : []), ...(sqlite ? ['sqlite_data'] : [])] -%>
 <% const monorepo = it.modules.includes('layout-monorepo') -%>
-<% const webApps = monorepo && it.modules.includes('devops-docker-web') ? [['web', 3000], ...(it.modules.includes('app-admin') ? [['admin', 3002]] : [])] : [] -%>
+<% const api = it.apps.backend -%>
+<% const webApps = monorepo && it.modules.includes('devops-docker-web') ? [['frontend', 'WEB'], ...(it.modules.includes('app-admin') ? [['admin', 'ADMIN']] : [])].map(([role, hostVar]) => ({ ...it.apps[role], hostVar })) : [] -%>
 # Local stack (D-41): docker compose up runs everything, each service starting once the one it
 # needs is healthy. The database credentials below are for local use only.
 # Host ports are configurable when taken, e.g. PORT=4000 POSTGRES_PORT=5433 docker compose up
 services:
 <% if (monorepo) { %>
-  api:
+  <%= api.name %>:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: <%= api.dir %>/Dockerfile
     ports:
-      - '${API_PORT:-3001}:3001'
+      - '${API_PORT:-<%= api.port %>}:<%= api.port %>'
     # secrets such as JWT_SECRET come from the API's local .env; compose overrides the rest
     env_file:
-      - path: apps/api/.env
+      - path: <%= api.dir %>/.env
         required: false
     environment:
-      PORT: 3001
-<% if (webApps.length > 0) { %>      ALLOWED_ORIGINS: <%= webApps.map(([name, port]) => `http://localhost:${port}`).join(',') %>
+      PORT: <%= api.port %>
+<% if (webApps.length > 0) { %>      ALLOWED_ORIGINS: <%= webApps.map((web) => `http://localhost:${web.port}`).join(',') %>
 <% } %><%~ connections() -%>
-<% for (const [name, port] of webApps) { %>
-  <%= name %>:
+<% for (const web of webApps) { %>
+  <%= web.name %>:
     build:
       context: .
-      dockerfile: apps/<%= name %>/Dockerfile
+      dockerfile: <%= web.dir %>/Dockerfile
     ports:
-      - '${<%= name.toUpperCase() %>_PORT:-<%= port %>}:<%= port %>'
+      - '${<%= web.hostVar %>_PORT:-<%= web.port %>}:<%= web.port %>'
     environment:
       # the server-rendered status page calls the API inside the compose network
-      API_URL: http://api:3001
+      API_URL: http://<%= api.name %>:<%= api.port %>
     depends_on:
-      api:
+      <%= api.name %>:
         condition: service_healthy
 <% } -%>
 <% } else { %>
   app:
     build: .
     ports:
-      - '${PORT:-3000}:3000'
+      - '${PORT:-<%= api.port %>}:<%= api.port %>'
     env_file:
       - path: .env
         required: false
     environment:
-      # the container always listens on 3000 (EXPOSE, healthcheck); PORT only picks the host port
-      PORT: 3000
+      # the container always listens on <%= api.port %> (EXPOSE, healthcheck); PORT only picks the host port
+      PORT: <%= api.port %>
 <%~ connections() -%>
 <% } -%>
 <% if (databaseId === 'database-postgres') { -%>

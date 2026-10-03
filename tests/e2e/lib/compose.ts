@@ -20,7 +20,12 @@ export interface ComposeResult {
  * the database connected. The compose project gets a unique name and free host ports, and only
  * what it created (its containers, network, built images and volume) is removed afterwards.
  */
-export async function composeCheck(projectDir: string, id: string): Promise<ComposeResult> {
+export async function composeCheck(
+  projectDir: string,
+  id: string,
+  /** The web app's folder, e.g. apps/web; a project without one checks the API's /ready. */
+  webDir: string
+): Promise<ComposeResult> {
   const startedAt = Date.now()
   const step = 'docker compose up + status page'
   const docker = await run('docker', ['info', '--format', '{{.ServerVersion}}'], {
@@ -53,7 +58,7 @@ export async function composeCheck(projectDir: string, id: string): Promise<Comp
     )
     if (!up.ok) return { step, ok: false, durationMs: Date.now() - startedAt, detail: up.output }
 
-    const problem = existsSync(path.join(projectDir, 'apps', 'web'))
+    const problem = existsSync(path.join(projectDir, webDir))
       ? await webProblem(ports.WEB_PORT)
       : await readyProblem(`http://127.0.0.1:${ports.PORT}/ready`)
     return { step, ok: problem === '', durationMs: Date.now() - startedAt, detail: problem }

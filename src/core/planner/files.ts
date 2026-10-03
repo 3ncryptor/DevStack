@@ -66,9 +66,13 @@ export function templateOutputPath(relativePath: string): string {
 /** Path tokens a template path may contain (B6), replaced from the template context. */
 export function resolvePathTokens(
   projectPath: string,
-  context: Pick<TemplateContext, 'domainsDir'>
+  context: Pick<TemplateContext, 'domainsDir'> & Partial<Pick<TemplateContext, 'apps'>>
 ): string {
-  return projectPath.replaceAll('__domains__', context.domainsDir)
+  const resolved = projectPath.replaceAll('__domains__', context.domainsDir)
+  // __api__: the API's folder in a monorepo (apps/api by default, task 5.3)
+  return context.apps === undefined
+    ? resolved
+    : resolved.replaceAll('__api__', context.apps.backend.dir)
 }
 
 /** Reads a module's template directory into planned files. */

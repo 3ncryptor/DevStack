@@ -8,6 +8,7 @@ import { parseEnv } from 'node:util'
 import type { GenerationPlan } from '../../types/plan'
 import { startProcess, type RunningProcess } from '../../utils/process'
 import { plannedScripts } from './verify'
+import { appDir } from '../settings'
 
 const BOOT_TIMEOUT_MS = 30_000
 const SHUTDOWN_GRACE_MS = 15_000
@@ -33,14 +34,16 @@ interface App {
 /** The apps to boot: the API (or the single app), then each web app against it. */
 export function appsToBoot(plan: GenerationPlan): App[] {
   const has = (dir: string): boolean => plannedScripts(plan, dir).start !== undefined
-  if (!plan.files.some((file) => file.path === 'apps/api/package.json')) {
+  const api = appDir(plan.settings, 'backend')
+  if (!plan.files.some((file) => file.path === `${api}/package.json`)) {
     return has('') ? [{ name: 'app', dir: '', web: false }] : []
   }
   return [
-    ...(has('apps/api') ? [{ name: 'api', dir: 'apps/api', web: false }] : []),
-    ...['web', 'admin']
-      .filter((name) => has(`apps/${name}`))
-      .map((name) => ({ name, dir: `apps/${name}`, web: true }))
+    ...(has(api) ? [{ name: plan.settings.apps.backend, dir: api, web: false }] : []),
+    ...(['frontend', 'admin'] as const)
+      .map((role) => ({ name: plan.settings.apps[role], dir: appDir(plan.settings, role) }))
+      .filter((app) => has(app.dir))
+      .map((app) => ({ ...app, web: true }))
   ]
 }
 

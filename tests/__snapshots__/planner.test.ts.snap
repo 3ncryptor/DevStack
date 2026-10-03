@@ -27,7 +27,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "476ab4ff54a2589b",
+      "sha256": "da607275cf174f8c",
       "strategy": "create",
     },
     {
@@ -35,6 +35,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
       "path": ".dockerignore",
       "sha256": "6e493f7af86fb56a",
       "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".editorconfig",
+      "sha256": "136699256306bd7e",
+      "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
@@ -81,7 +87,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
     {
       "mode": "644",
       "path": ".prettierrc",
-      "sha256": "a55df59e012d84d8",
+      "sha256": "6fa7baa2fca904b7",
       "strategy": "create",
     },
     {
@@ -117,7 +123,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "2a1dafd0b81036ad",
+      "sha256": "cb47cee3bcb6a3eb",
       "strategy": "json-merge",
     },
     {
@@ -135,7 +141,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
     {
       "mode": "644",
       "path": "src/cache/redis.ts",
-      "sha256": "62a669e6328061cb",
+      "sha256": "e891226e6692b83a",
       "strategy": "create",
     },
     {
@@ -375,8 +381,14 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "fadc8ee1879254be",
+      "sha256": "faa04cfc77dc2751",
       "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".editorconfig",
+      "sha256": "136699256306bd7e",
+      "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
@@ -423,7 +435,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".prettierrc",
-      "sha256": "a55df59e012d84d8",
+      "sha256": "6fa7baa2fca904b7",
       "strategy": "create",
     },
     {
@@ -447,7 +459,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "afe720205b403588",
+      "sha256": "8acc3de2f0f0e4c0",
       "strategy": "json-merge",
     },
     {
@@ -714,7 +726,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "33435ff54b8f80fc",
+      "sha256": "c82913b35f0ff469",
       "strategy": "create",
     },
     {
@@ -722,6 +734,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
       "path": ".dockerignore",
       "sha256": "6e493f7af86fb56a",
       "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".editorconfig",
+      "sha256": "136699256306bd7e",
+      "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
@@ -768,7 +786,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": ".prettierrc",
-      "sha256": "a55df59e012d84d8",
+      "sha256": "6fa7baa2fca904b7",
       "strategy": "create",
     },
     {
@@ -810,7 +828,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "465c23096344d6ea",
+      "sha256": "92281a8097a2ca4c",
       "strategy": "json-merge",
     },
     {
@@ -1083,7 +1101,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "0aa8eba41f9e9f96",
+      "sha256": "a5c8c45493fb88b3",
       "strategy": "create",
     },
     {
@@ -1091,6 +1109,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
       "path": ".dockerignore",
       "sha256": "6e493f7af86fb56a",
       "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".editorconfig",
+      "sha256": "136699256306bd7e",
+      "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
@@ -1137,7 +1161,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": ".prettierrc",
-      "sha256": "a55df59e012d84d8",
+      "sha256": "6fa7baa2fca904b7",
       "strategy": "create",
     },
     {
@@ -1179,7 +1203,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "e03bc85f74f604ed",
+      "sha256": "c1198e3b4d12cb4b",
       "strategy": "json-merge",
     },
     {
@@ -1562,7 +1586,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "0d06c3b10d840df7",
+      "sha256": "5559141874be820c",
       "strategy": "create",
     },
     {
@@ -1570,6 +1594,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
       "path": ".dockerignore",
       "sha256": "6e493f7af86fb56a",
       "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".editorconfig",
+      "sha256": "136699256306bd7e",
+      "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
@@ -1640,7 +1670,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": ".prettierrc",
-      "sha256": "a55df59e012d84d8",
+      "sha256": "6fa7baa2fca904b7",
       "strategy": "create",
     },
     {
@@ -2066,7 +2096,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "ae33352ee3433636",
+      "sha256": "fa94e26182e2d17a",
       "strategy": "json-merge",
     },
     {
@@ -2078,7 +2108,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "packages/shared/src/api-client.ts",
-      "sha256": "7bc3b1d233cfab31",
+      "sha256": "59afd80d27528ca4",
       "strategy": "create",
     },
     {
@@ -2181,7 +2211,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "534ad4e88f67cb10",
+      "sha256": "2454d4240ada3272",
       "strategy": "create",
     },
     {
@@ -2189,6 +2219,12 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
       "path": ".dockerignore",
       "sha256": "6e493f7af86fb56a",
       "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".editorconfig",
+      "sha256": "136699256306bd7e",
+      "strategy": "skip-if-exists",
     },
     {
       "mode": "644",
@@ -2259,7 +2295,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": ".prettierrc",
-      "sha256": "a55df59e012d84d8",
+      "sha256": "6fa7baa2fca904b7",
       "strategy": "create",
     },
     {
@@ -2835,7 +2871,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "ae33352ee3433636",
+      "sha256": "fa94e26182e2d17a",
       "strategy": "json-merge",
     },
     {
@@ -2847,7 +2883,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "packages/shared/src/api-client.ts",
-      "sha256": "7bc3b1d233cfab31",
+      "sha256": "59afd80d27528ca4",
       "strategy": "create",
     },
     {

@@ -17,19 +17,20 @@ export interface NewTodo {
   ownerId: string | null
 }
 
+/** Validated input: a field left out of the request is undefined. */
 export interface TodoChanges {
-  title?: string
-  completed?: boolean
-  dueAt?: Date | null
+  title?: string | undefined
+  completed?: boolean | undefined
+  dueAt?: Date | null | undefined
 }
 
 export interface TodoListQuery {
-  ownerId?: string
-  completed?: boolean
+  ownerId?: string | undefined
+  completed?: boolean | undefined
   /** Only todos due before this moment. */
-  dueBefore?: Date
+  dueBefore?: Date | undefined
   /** Id of the last todo of the previous page. */
-  cursor?: string
+  cursor?: string | undefined
   limit: number
 }
 

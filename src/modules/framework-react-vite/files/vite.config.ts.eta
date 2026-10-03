@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
   // In production the browser uses VITE_API_URL, or the Docker image's nginx serves /api.
   const proxy = {
     '/api': {
-      target: env.API_URL ?? 'http://localhost:3001',
+      target: env.API_URL ?? 'http://localhost:<%= it.apps.backend.port %>',
       changeOrigin: true,
       rewrite: (path: string) => path.replace(/^\/api/, '')
     }

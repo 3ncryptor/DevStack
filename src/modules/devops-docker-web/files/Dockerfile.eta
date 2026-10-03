@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-<% const app = it.target === 'admin' ? 'admin' : 'web' %>
+<% const app = it.target === 'admin' ? it.apps.admin.name : it.apps.frontend.name %>
 <% const pkg = it.packageNames[it.target] %>
 # Build from the repository root: docker build -f apps/<%= app %>/Dockerfile .
 FROM <%= it.language.dockerBaseImage %> AS base
@@ -24,7 +24,7 @@ RUN <%= it.pm.run %> build
 # a static build: unprivileged nginx serves it, falls back to index.html for client routes and
 # proxies /api to the API (nginx.conf.template, filled from API_URL and PORT at start)
 FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
-ENV PORT=<%= it.port %> API_URL=http://api:3001
+ENV PORT=<%= it.port %> API_URL=http://<%= it.apps.backend.name %>:<%= it.apps.backend.port %>
 COPY --from=build /app/apps/<%= app %>/dist /usr/share/nginx/html
 COPY apps/<%= app %>/nginx.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE <%= it.port %>

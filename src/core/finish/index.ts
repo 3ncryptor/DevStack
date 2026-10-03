@@ -78,6 +78,12 @@ async function push(
  * After install (A0.4, B18): the project's own gates, a boot check, the initial commit and the
  * optional GitHub push. Failing gates or boot stop with exit 1; git and GitHub only warn.
  */
+/** The settings turned the initial commit off (task 5.3): git is set up, nothing committed. */
+const NO_INITIAL_COMMIT: CommitOutcome = {
+  status: 'skipped',
+  reason: 'The initial commit is turned off in the settings (initialCommit: false).'
+}
+
 export async function finishProject(input: FinishInput): Promise<FinishResult> {
   const run = input.run ?? runCommand
   const verification = await verify(input, run)
@@ -86,9 +92,11 @@ export async function finishProject(input: FinishInput): Promise<FinishResult> {
     .map((file) => file.path)
   const commit = input.skipGit
     ? undefined
-    : await commitProject(input.plan.projectDir, run, {
-        preexistingRepo: input.preexistingRepo,
-        envFiles
-      })
+    : !input.plan.settings.initialCommit
+      ? NO_INITIAL_COMMIT
+      : await commitProject(input.plan.projectDir, run, {
+          preexistingRepo: input.preexistingRepo,
+          envFiles
+        })
   return { verification, commit, push: await push(input, { verification, commit }, run) }
 }

@@ -1,3 +1,4 @@
+import type { ResolvedSettings } from '../core/settings'
 import type { PackageManagerId as PackageManager } from '../adapters/package-manager/index'
 
 /**
@@ -64,4 +65,6 @@ export interface GenerationPlan {
   env: PlannedEnvVar[]
   /** `bare` or `wired` (task 1.9). */
   depth: 'bare' | 'wired'
+  /** Resolved project settings (tasks 5.1-5.3). */
+  settings: ResolvedSettings
 }

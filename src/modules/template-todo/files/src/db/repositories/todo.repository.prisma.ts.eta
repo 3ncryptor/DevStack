@@ -14,12 +14,13 @@ const toTodo = (row: TodoRow): Todo => ({ ...row, ownerId: null })
 export const prismaTodoRepository: TodoRepository = {
   async list(query) {
     const rows = await prisma.todo.findMany({
+      // a filter left out is not a filter (and Prisma rejects explicit undefined in strictest TS)
       where: {
 <% if (authed) { %>
-        ownerId: query.ownerId,
+        ...(query.ownerId === undefined ? {} : { ownerId: query.ownerId }),
 <% } %>
-        completed: query.completed,
-        dueAt: query.dueBefore === undefined ? undefined : { lt: query.dueBefore }
+        ...(query.completed === undefined ? {} : { completed: query.completed }),
+        ...(query.dueBefore === undefined ? {} : { dueAt: { lt: query.dueBefore } })
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       // one extra row tells whether there is a next page
@@ -44,7 +45,12 @@ export const prismaTodoRepository: TodoRepository = {
 <% } %>
   },
   async update(id, changes) {
-    return toTodo(await prisma.todo.update({ where: { id }, data: changes }))
+    const data = {
+      ...(changes.title === undefined ? {} : { title: changes.title }),
+      ...(changes.completed === undefined ? {} : { completed: changes.completed }),
+      ...(changes.dueAt === undefined ? {} : { dueAt: changes.dueAt })
+    }
+    return toTodo(await prisma.todo.update({ where: { id }, data }))
   },
   async delete(id) {
     await prisma.todo.delete({ where: { id } })

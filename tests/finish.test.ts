@@ -14,6 +14,7 @@ import { ConsoleLogger } from '../src/utils/logger'
 import { runCommand, type CommandRunner } from '../src/utils/process'
 import { ScriptedPrompter } from './helpers/scripted-prompter'
 import { removeTempDirs, tempDir } from './helpers/temp-dirs'
+import { DEFAULT_SETTINGS } from '../src/core/settings'
 
 afterAll(removeTempDirs)
 afterEach(() => {
@@ -192,7 +193,8 @@ function planWith(scripts: Record<string, string>, dir = '/virtual/gates'): Gene
     files: [manifest],
     commands: [],
     env: [],
-    depth: 'wired'
+    depth: 'wired',
+    settings: DEFAULT_SETTINGS
   }
 }
 
@@ -251,6 +253,28 @@ describe('finishProject', () => {
     expect(result.push).toMatchObject({
       status: 'skipped',
       reason: expect.stringContaining('not verified') as string
+    })
+  })
+
+  it('commits nothing when the settings turn the initial commit off (task 5.3)', async () => {
+    await isolatedGit({ identity: true })
+    const dir = await project({ 'index.ts': 'export {}\n' })
+    const plan = { ...planWith({}, dir), settings: { ...DEFAULT_SETTINGS, initialCommit: false } }
+
+    const result = await finishProject({
+      plan,
+      skipInstall: true,
+      skipVerify: true,
+      skipGit: false,
+      yes: true,
+      preexistingRepo: false,
+      prompter: new ScriptedPrompter([]),
+      logger
+    })
+
+    expect(result.commit).toMatchObject({
+      status: 'skipped',
+      reason: expect.stringContaining('initialCommit: false') as string
     })
   })
 })

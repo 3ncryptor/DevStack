@@ -92,6 +92,22 @@ describe('.devstack/stack.json manifest', () => {
           : id
       ),
       depth: 'wired',
+      // every resolved setting, single-layout port included, so a replay is exact (task 5.6)
+      settings: {
+        style: {
+          semi: false,
+          singleQuote: true,
+          trailingComma: 'none',
+          printWidth: 100,
+          tabWidth: 2,
+          useTabs: false
+        },
+        strictness: 'standard',
+        apps: { backend: 'api', frontend: 'web', admin: 'admin' },
+        ports: { backend: 3000 },
+        license: 'UNLICENSED',
+        initialCommit: true
+      },
       generatedBy: { name: CLI_PACKAGE.name, version: CLI_PACKAGE.version }
     })
   })

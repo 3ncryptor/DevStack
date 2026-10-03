@@ -10,6 +10,7 @@ const moduleDefinition: DevstackModule = {
   // repo-wide tooling: at the root of a monorepo
   target: 'root',
   provides: ['formatter'],
+  // .prettierrc follows the code style settings (task 5.1); every planned file is formatted with it
   description: 'Prettier formatting defaults',
   devDependencies: ['prettier'],
   filesPath: moduleFilesPath('quality-prettier'),

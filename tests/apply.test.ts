@@ -10,6 +10,7 @@ import type { GenerationPlan, PlannedFile } from '../src/types/plan'
 import { ConsoleLogger } from '../src/utils/logger'
 import { ScriptedPrompter } from './helpers/scripted-prompter'
 import { removeTempDirs, tempDir } from './helpers/temp-dirs'
+import { DEFAULT_SETTINGS } from '../src/core/settings'
 
 const logger = new ConsoleLogger({ silent: true })
 
@@ -39,7 +40,8 @@ function planFor(projectDir: string, files: PlannedFile[]): GenerationPlan {
     files,
     commands: [],
     env: [],
-    depth: 'wired'
+    depth: 'wired',
+    settings: DEFAULT_SETTINGS
   }
 }
 

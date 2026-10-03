@@ -6,6 +6,7 @@ import type { GeneratorOptions } from '../types/context'
 import type { DevstackModule } from '../types/module'
 import type { GenerationPlan } from '../types/plan'
 import type { Logger } from '../utils/logger'
+import type { ProjectSettings } from './settings'
 import type { PackageManagerId as PackageManager } from '../adapters/package-manager/index'
 import { runPlanCommands } from './apply/commands'
 import { applyPlan, classifyFiles } from './apply/index'
@@ -25,6 +26,8 @@ export interface GenerateProjectInput {
   packageManager: PackageManager
   /** Installed version (from the pre-flight), for a monorepo's `packageManager` field. */
   packageManagerVersion?: string
+  /** Project settings (tasks 5.1-5.3) from the config, a preset or remembered defaults. */
+  settings?: ProjectSettings
   options: GeneratorOptions
   logger: Logger
   prompter: Prompter
@@ -59,6 +62,7 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
     registry: input.registry,
     packageManager: input.packageManager,
     packageManagerVersion: input.packageManagerVersion,
+    settings: input.settings,
     options: { skipInstall: input.options.skipInstall, skipGit: input.options.skipGit }
   })
 

@@ -1,5 +1,5 @@
 <% const monorepo = it.modules.includes('layout-monorepo') %>
-<% const apiDir = monorepo ? '${workspaceFolder}/apps/api' : '${workspaceFolder}' %>
+<% const apiDir = monorepo ? `\${workspaceFolder}/${it.apps.backend.dir}` : '${workspaceFolder}' %>
 <% const configurations = [
   {
     // the debugger attaches to the API started by its own dev script (breakpoints in src/)
@@ -19,7 +19,7 @@
         request: 'launch',
         runtimeExecutable: it.packageManager,
         runtimeArgs: ['run', 'dev'],
-        cwd: '${workspaceFolder}/apps/web',
+        cwd: `\${workspaceFolder}/${it.apps.frontend.dir}`,
         console: 'integratedTerminal',
         skipFiles: ['<node_internals>/**']
       }]
@@ -30,8 +30,8 @@
         name: 'Debug the web app (browser)',
         type: 'chrome',
         request: 'launch',
-        url: 'http://localhost:3000',
-        webRoot: '${workspaceFolder}/apps/web'
+        url: `http://localhost:${it.apps.frontend.port}`,
+        webRoot: `\${workspaceFolder}/${it.apps.frontend.dir}`
       }]
     : [])
 ] %>

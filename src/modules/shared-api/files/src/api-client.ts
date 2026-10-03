@@ -39,9 +39,10 @@ export function createApiClient(options: ApiClientOptions) {
   ): Promise<ApiSuccessBody<T>> {
     const response = await send(`${options.baseUrl}${path}`, {
       method,
-      credentials: options.credentials,
-      headers: body === undefined ? undefined : { 'content-type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body)
+      ...(options.credentials === undefined ? {} : { credentials: options.credentials }),
+      ...(body === undefined
+        ? {}
+        : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     })
     const payload: unknown = await response.json().catch(() => undefined)
     if (isErrorBody(payload)) {

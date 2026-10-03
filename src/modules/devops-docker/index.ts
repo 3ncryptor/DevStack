@@ -12,7 +12,8 @@ const moduleDefinition: DevstackModule = {
   description: 'Production Dockerfiles and a docker compose file for the whole stack',
   files: [
     { path: 'Dockerfile', when: { not: { has: 'layout:monorepo' } } },
-    { path: 'apps/api/Dockerfile', when: { has: 'layout:monorepo' } }
+    // __api__: the API's folder in a monorepo, apps/api unless the settings name it otherwise
+    { path: '__api__/Dockerfile', when: { has: 'layout:monorepo' } }
   ],
   filesPath: moduleFilesPath('devops-docker')
 }

@@ -6,6 +6,7 @@ import { ResolutionError } from '../src/errors'
 import { testModule } from './helpers/modules'
 import { NODE_LANGUAGE } from '../src/adapters/language/node'
 import { packageManagerAdapter } from '../src/adapters/package-manager/index'
+import { DEFAULT_SETTINGS } from '../src/core/settings'
 
 const context: TemplateContext = {
   projectName: 'demo-app',
@@ -23,7 +24,13 @@ const context: TemplateContext = {
   moduleOptions: {},
   env: [],
   options: {},
-  slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' }
+  slots: { 'app.imports': "import cors from 'cors'", 'app.middleware': '' },
+  settings: DEFAULT_SETTINGS,
+  apps: {
+    backend: { dir: '', name: 'api', port: 3000 },
+    frontend: { dir: '', name: 'web', port: 3000 },
+    admin: { dir: '', name: 'admin', port: 3002 }
+  }
 }
 
 describe('renderTemplate', () => {

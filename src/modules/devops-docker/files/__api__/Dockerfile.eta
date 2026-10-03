@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Build from the repository root: docker build -f apps/api/Dockerfile .
+# Build from the repository root: docker build -f <%= it.apps.backend.dir %>/Dockerfile .
 <% const entry = it.modules.includes('framework-nest') ? 'dist/main.js' : 'dist/index.js' %>
 <% const pkg = it.packageNames.backend %>
 FROM <%= it.language.dockerBaseImage %> AS base
@@ -18,7 +18,7 @@ ENV HUSKY=0
 COPY --from=prune /app/out/json/ ./
 RUN <%= it.pm.installFrozen %>
 COPY --from=prune /app/out/full/ ./
-WORKDIR /app/apps/api
+WORKDIR /app/<%= it.apps.backend.dir %>
 <% if (it.modules.includes('orm-prisma')) { %>RUN <%= it.pm.exec %> prisma generate
 <% } %>RUN <%= it.pm.run %> build
 
@@ -27,17 +27,17 @@ COPY --from=prune /app/out/json/ ./
 RUN <%= it.pm.installProd %>
 
 FROM <%= it.language.dockerBaseImage %> AS runtime
-ENV NODE_ENV=production PORT=3001
+ENV NODE_ENV=production PORT=<%= it.apps.backend.port %>
 WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app ./
-COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
-WORKDIR /app/apps/api
+COPY --from=build --chown=node:node /app/<%= it.apps.backend.dir %>/dist ./<%= it.apps.backend.dir %>/dist
+WORKDIR /app/<%= it.apps.backend.dir %>
 <% if (it.modules.includes('database-sqlite')) { %># the SQLite file lives on a volume mounted here (docker-compose.yml)
 RUN mkdir -p /app/data && chown node:node /app/data
 <% } %># never run as root
 USER node
-EXPOSE 3001
+EXPOSE <%= it.apps.backend.port %>
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:3001/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+  CMD ["node", "-e", "fetch('http://127.0.0.1:<%= it.apps.backend.port %>/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
 # node directly (not a package-manager script) so SIGTERM reaches the app and it shuts down cleanly
 CMD ["node", "<%= entry %>"]

@@ -1833,6 +1833,19 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   lockfile (`pnpm@<probed version>`, likewise bun), not the newest major. Another version may vet
   a frozen lockfile differently (pnpm's minimum release age rejected packages a host pnpm 10 had
   locked), so the image build failed only on some days. Found by the compose checks.
+- **D-86 (2026-10-03)** — Project settings (tasks 5.1-5.3) are a layer of their own, recorded in
+  full in the manifest's `settings` so `add`/`remove` re-plan the same files. Code style drives
+  `.prettierrc` and every planned file is formatted with it (exit gate: two styles differ only in
+  formatting, compared with `objectWrap: collapse`). `strictest` adds `noUncheckedIndexedAccess`,
+  `exactOptionalPropertyTypes`, `noImplicitOverride` to every strict tsconfig; the templates were
+  fixed to compile on both tiers (Express, Fastify, Nest, Better Auth, sessions, Next.js, Vite).
+  App folder names and ports flow through `it.apps` and the `__api__` path token; compose
+  services take the app names while host-port variables stay `API_PORT`/`WEB_PORT`/`ADMIN_PORT`.
+  License (UNLICENSED default; MIT, Apache-2.0, ISC write LICENSE), author, description and the
+  initial commit toggle are metadata. `.editorconfig` is now generated (an A0.2 gap).
+  **CommonJS is dropped** from A6's module-system knob: every template is ESM with NodeNext
+  specifiers, Prisma 7's client, Next.js and Vite are ESM, tests use top-level await; a CJS
+  variant would double the template surface for a legacy target. Revisit only on demand.
 
 # §8. Open questions
 

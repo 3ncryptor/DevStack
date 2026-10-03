@@ -86,6 +86,8 @@ export interface Combination {
   finish?: boolean
   /** Full tier, with Docker running: docker compose up the whole stack and check the status page. */
   compose?: boolean
+  /** Project settings for the stack config (tasks 5.1-5.3), e.g. other app folder names. */
+  settings?: Record<string, unknown>
 }
 
 /** Ids become folder and project names, so keep them to safe kebab-case. */
@@ -113,7 +115,8 @@ export function parseMatrix(raw: unknown): Combination[] {
       ...(candidate.boot === undefined ? {} : { boot: candidate.boot }),
       ...(candidate.smoke === undefined ? {} : { smoke: candidate.smoke }),
       ...(candidate.finish === undefined ? {} : { finish: candidate.finish }),
-      ...(candidate.compose === undefined ? {} : { compose: candidate.compose })
+      ...(candidate.compose === undefined ? {} : { compose: candidate.compose }),
+      ...(candidate.settings === undefined ? {} : { settings: candidate.settings })
     }
     return hasPreset
       ? { id: candidate.id, preset: candidate.preset, ...extra }

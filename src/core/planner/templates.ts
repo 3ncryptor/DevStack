@@ -3,6 +3,14 @@ import { Eta } from 'eta'
 import type { LanguageAdapter } from '../../adapters/language/node'
 import type { DockerCommands } from '../../adapters/package-manager/index'
 import type { PlannedEnvVar } from '../../types/plan'
+import type { ResolvedSettings } from '../settings'
+
+/** An app of the project: folder (`apps/api`, or '' in the single layout), name and port. */
+export interface AppInfo {
+  dir: string
+  name: string
+  port: number
+}
 
 /** Only files ending in this suffix are rendered; the suffix is removed (D-10). */
 export const TEMPLATE_SUFFIX = '.eta'
@@ -41,6 +49,10 @@ export interface TemplateContext {
   options: Record<string, unknown>
   /** Resolved options of every selected module, e.g. the OAuth providers for login buttons. */
   moduleOptions: Readonly<Record<string, Readonly<Record<string, unknown>>>>
+  /** Project settings (tasks 5.1-5.3), e.g. `it.settings.style`. */
+  settings: ResolvedSettings
+  /** The apps by role, e.g. `it.apps.backend.dir` (`apps/api`) and `it.apps.backend.port`. */
+  apps: Readonly<Record<'backend' | 'frontend' | 'admin', AppInfo>>
 }
 
 // Templates render developer-controlled data into source code, so no HTML escaping; exact
