@@ -1,4 +1,4 @@
-import { BUILTIN_MODULES } from '../modules/index'
+import { BUILTIN_MODULES } from '../modules/registry'
 import type { DevstackModule } from '../types/module'
 import { validateModuleDefinition } from './validator'
 

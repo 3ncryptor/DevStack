@@ -14,7 +14,7 @@ import {
   type Probe
 } from '../src/core/doctor'
 import { CLI_PACKAGE } from '../src/core/manifest'
-import languageNode from '../src/modules/language-node/index'
+import languageNode from '../src/modules/node/language/node/index'
 
 /** A probe that answers from a table; anything not listed behaves like a missing binary. */
 function fakeProbe(answers: Record<string, string>): Probe & { calls: string[] } {

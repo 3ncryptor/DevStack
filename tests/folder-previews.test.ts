@@ -3,12 +3,13 @@ import path from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
+import { MODULE_FOLDERS } from '../src/modules/registry'
 import { PACKAGE_ROOT } from '../src/paths'
 import { FOLDER_PREVIEWS, previewNote } from '../src/prompts/wizard/folder-previews'
 
 /** Every folder a module's templates create, e.g. `src/features/`. */
 async function templateFolders(id: string): Promise<Set<string>> {
-  const root = path.join(PACKAGE_ROOT, 'src', 'modules', id, 'files')
+  const root = path.join(PACKAGE_ROOT, 'src', 'modules', MODULE_FOLDERS[id] ?? id, 'files')
   const entries = await readdir(root, { recursive: true, withFileTypes: true }).catch(() => [])
   return new Set(
     entries

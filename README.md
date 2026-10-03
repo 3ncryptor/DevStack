@@ -257,11 +257,13 @@ writes the files, and runs the commands. Versions come only from `src/catalog/no
 
 ### Add a module
 
-1. Create `src/modules/<id>/index.ts` exporting a `DevstackModule`, and register it in
-   `src/modules/index.ts`.
+1. Create `src/modules/<language>/<category>/<name>/index.ts` exporting a `DevstackModule`
+   (language-agnostic modules such as databases go under `common/`), and register it with its
+   folder in `src/modules/registry.ts`. The module's `id` is separate from its folder and never
+   changes once released.
 2. List packages by name. Add their versions to `src/catalog/node.ts`; a test rejects literal
    versions in modules.
-3. Put templates in `src/modules/<id>/files` (`filesPath: moduleFilesPath('<id>')`). Name a file
+3. Put templates in the module's `files/` folder (`filesPath: moduleFilesPath('node/orm/prisma')`). Name a file
    `*.eta` to render it; store `.gitignore` as `gitignore`.
 4. Contribute framework code through `slots` (`app.imports`, `app.middleware`), environment
    variables through `env`, and post-install steps through `commands`.

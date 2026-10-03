@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 
 import { describe, expect, it } from 'vitest'
 
-import { BUILTIN_MODULES } from '../src/modules/index'
+import { BUILTIN_MODULES } from '../src/modules/registry'
 
 describe('module template paths', () => {
   it('resolves an existing files directory for every module that declares one', () => {

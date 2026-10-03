@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { NODE_CATALOG, buildApprovalsFor } from '../src/catalog/node'
 import { TYPE_PAIRS } from '../src/catalog/pairs'
-import { BUILTIN_MODULES } from '../src/modules/index'
+import { BUILTIN_MODULES, MODULE_FOLDERS } from '../src/modules/registry'
 import { dependencyName } from '../src/types/module'
 import { PACKAGE_ROOT } from '../src/paths'
 
@@ -53,7 +53,7 @@ describe('module contract', () => {
     const offenders = BUILTIN_MODULES.map((moduleDefinition) => moduleDefinition.id).filter(
       (id) => {
         const source = readFileSync(
-          path.join(PACKAGE_ROOT, 'src', 'modules', id, 'index.ts'),
+          path.join(PACKAGE_ROOT, 'src', 'modules', MODULE_FOLDERS[id] ?? id, 'index.ts'),
           'utf8'
         )
         return literalVersion.test(source)

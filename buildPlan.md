@@ -925,7 +925,9 @@ src/
     package-manager/   npm.ts, pnpm.ts, yarn.ts, bun.ts, uv.ts, go.ts
     layout/            single.ts, monorepo.ts (+ turborepo, workspaces variants)
   catalog/             node.ts, python.ts, go.ts, pairs.ts
-  modules/<id>/        index.ts, files/, module.test.ts
+  modules/             registry.ts (every module with its folder), aliases.ts
+    common/<category>/<name>/   language-agnostic: database, cache, layout, repo (D-90)
+    node/<category>/<name>/     index.ts, files/ — framework, orm, auth, testing, devops, …
   presets/             builtin presets (json)
   types/               spec.ts, module.ts, plan.ts, diagnostics.ts
   utils/
@@ -1880,6 +1882,13 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   the resolver's diagnostics. stdout carries the protocol, so all progress and child-process
   output go to stderr. Exit gate verified with the SDK's client over real stdio: list, validate,
   plan, then `init` of the `backend-fastify` preset, installed and passing every gate.
+- **D-90 (2026-10-04)** — `src/modules` is organised by language, then category (owner): `node/`
+  for Node-specific modules (`node/framework/express`, `node/orm/prisma`, `node/architecture/api/
+clean`, …), `common/` for language-agnostic ones (databases, Redis, the monorepo layout, repo
+  extras), so Python and Go get trees of their own beside `node/`. Module ids are unchanged (they
+  are recorded in every project's manifest and in presets); `registry.ts` lists each module with
+  its folder and a contract test keeps `filesPath` and the folder in step. Generated output is
+  byte-identical (snapshots unchanged).
 
 # §8. Open questions
 

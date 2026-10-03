@@ -35,5 +35,7 @@ npm run build
 
 - Keep each module single-purpose.
 - Declare `requires`, `requiresAny`, and `conflictsWith` accurately.
-- Include templates under `src/modules/<module-name>/files`.
+- Put each module in `src/modules/<language>/<category>/<name>/` (`common/` for language-agnostic
+  ones such as databases), templates in its `files/` folder, and register it with its folder in
+  `src/modules/registry.ts`. Never rename a module's `id`; folders may move, ids may not.
 - Avoid adding framework-specific logic to unrelated modules.

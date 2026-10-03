@@ -8,7 +8,8 @@ import { loadModules } from '../src/core/module-loader'
 import { buildGenerationPlan } from '../src/core/planner/index'
 import { toProjectRelativePath } from '../src/core/planner/files'
 import { applyFixAction, resolveStack } from '../src/core/resolver/index'
-import { BUILTIN_MODULES } from '../src/modules/index'
+import { BUILTIN_MODULES, MODULE_FOLDERS } from '../src/modules/registry'
+import { moduleFilesPath } from '../src/paths'
 import { PACKAGE_ROOT } from '../src/paths'
 import type { Depth, DevstackModule } from '../src/types/module'
 import type { GenerationPlan } from '../src/types/plan'
@@ -102,9 +103,12 @@ describe.each(BUILTIN_MODULES.map((moduleDefinition) => [moduleDefinition.id, mo
   }
 )
 
-/** What a module definition may import: data and types, nothing that touches the machine. */
-// ../databases: the shared factory of the database modules, linted below with the same rule
-const ALLOWED_MODULE_IMPORTS = new Set(['../../paths', '../../types/module', 'zod', '../databases'])
+/**
+ * What a module definition may import: data and types, nothing that touches the machine. The
+ * relative depth depends on the folder (language/category/name), so the target is what counts.
+ * ../factory: the shared factory of the database modules, linted below with the same rule.
+ */
+const ALLOWED_MODULE_IMPORT = /^(zod|(\.\.\/)+(paths|types\/module)|\.\.\/factory)$/
 
 /**
  * Problems in one module source file: an import outside the allowed set, or dynamic loading. A
@@ -124,7 +128,7 @@ async function importProblems(dir: string, file: string): Promise<string[]> {
   return [
     ...specifiers
       .filter(
-        (specifier) => !ALLOWED_MODULE_IMPORTS.has(specifier) && !siblings.includes(specifier)
+        (specifier) => !ALLOWED_MODULE_IMPORT.test(specifier) && !siblings.includes(specifier)
       )
       .map((specifier) => `${file} imports ${specifier}`),
     ...(dynamic ? [`${file} loads code dynamically or reads process`] : []),
@@ -137,16 +141,37 @@ describe('module contract lint (task 1.7)', () => {
     '%s/index.ts imports only data and types (no fs, child processes or network)',
     async (id) => {
       expect(
-        await importProblems(path.join(PACKAGE_ROOT, 'src', 'modules', id), 'index.ts')
+        await importProblems(
+          path.join(PACKAGE_ROOT, 'src', 'modules', MODULE_FOLDERS[id] ?? id),
+          'index.ts'
+        )
       ).toEqual([])
     }
   )
 
   it('the shared database factory imports only types', async () => {
-    const source = await readFile(path.join(PACKAGE_ROOT, 'src', 'modules', 'databases.ts'), 'utf8')
+    const source = await readFile(
+      path.join(PACKAGE_ROOT, 'src', 'modules', 'common', 'database', 'factory.ts'),
+      'utf8'
+    )
     const specifiers = [...source.matchAll(/^\s*import[^'"]*['"]([^'"]+)['"]/gm)].map(
       (match) => match[1]
     )
-    expect(specifiers).toEqual(['../types/module'])
+    expect(specifiers).toEqual(['../../../types/module'])
   })
+})
+
+describe('module folders (language, then category)', () => {
+  it.each(BUILTIN_MODULES.map((moduleDefinition) => moduleDefinition.id))(
+    '%s lives in the folder the registry names, templates included',
+    (id) => {
+      const moduleDefinition = BUILTIN_MODULES.find((candidate) => candidate.id === id)
+      const folder = MODULE_FOLDERS[id] ?? ''
+
+      expect(folder).toMatch(/^(common|node)\/[a-z]+\/([a-z]+\/)?[a-z0-9-]+$/)
+      if (moduleDefinition?.filesPath !== undefined) {
+        expect(moduleDefinition.filesPath).toBe(moduleFilesPath(folder))
+      }
+    }
+  )
 })

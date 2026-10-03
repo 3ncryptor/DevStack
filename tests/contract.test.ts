@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { composeModules } from '../src/core/composer'
 import { loadModules } from '../src/core/module-loader'
 import { canonicalModuleId, MODULE_ALIASES } from '../src/modules/aliases'
-import { BUILTIN_MODULES } from '../src/modules/index'
+import { BUILTIN_MODULES } from '../src/modules/registry'
 import type { ModuleCategory } from '../src/types/module'
 
 /** Id prefixes allowed for each category in use (buildPlan B4: ids are category-prefixed). */
