@@ -7,6 +7,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Mongoose',
   category: 'orm',
   language: 'node',
+  wizard: { question: 'orm', order: 3 },
   agentsMd: {
     storage:
       'Define the schema and register the model on `connection` from `src/db/client.ts`, then implement the repository with it.'

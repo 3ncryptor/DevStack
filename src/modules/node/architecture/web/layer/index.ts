@@ -6,6 +6,12 @@ const moduleDefinition: DevstackModule = {
   title: 'Layer-based (web)',
   category: 'architecture',
   language: 'node',
+  wizard: {
+    question: 'frontendArchitecture',
+    order: 2,
+    label: 'Layer-based',
+    hint: 'components/, hooks/, utils/'
+  },
   // every web app gets these folders, the admin app included (D-64)
   target: 'frontend',
   depth: 'bare',

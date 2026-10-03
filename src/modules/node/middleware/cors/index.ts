@@ -9,6 +9,7 @@ const moduleDefinition: DevstackModule = {
   title: 'CORS',
   category: 'middleware',
   language: 'node',
+  wizard: { question: 'appSetup', order: 1, checked: true },
   description: 'CORS middleware for Express or NestJS APIs',
   requiresAny: ['http-framework'],
   dependencies: [

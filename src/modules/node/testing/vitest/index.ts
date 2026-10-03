@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Vitest',
   category: 'testing',
   language: 'node',
+  wizard: { question: 'tests', order: 1 },
   vscodeExtensions: ['vitest.explorer'],
   description: 'Vitest for the API tests (health, envelope, rate limiting), with Supertest',
   requiresAny: ['http-framework'],

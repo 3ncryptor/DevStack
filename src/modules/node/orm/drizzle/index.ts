@@ -14,6 +14,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Drizzle',
   category: 'orm',
   language: 'node',
+  wizard: { question: 'orm', order: 2 },
   agentsMd: {
     storage:
       'Add the table to `src/db/schema.ts`, run `db:generate` then `db:migrate`, and implement the repository with `db` from `src/db/client.ts`.'

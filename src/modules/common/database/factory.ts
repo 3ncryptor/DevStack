@@ -1,4 +1,9 @@
-import type { DatabaseTraits, DevstackModule, EnvDeclaration } from '../../../types/module'
+import type {
+  DatabaseTraits,
+  DevstackModule,
+  EnvDeclaration,
+  WizardChoice
+} from '../../../types/module'
 
 interface DatabaseSpec {
   id: string
@@ -8,6 +13,7 @@ interface DatabaseSpec {
   provides: readonly string[]
   url: Omit<EnvDeclaration, 'name' | 'required'>
   traits: DatabaseTraits
+  wizard: WizardChoice
   /** Files to add, e.g. .gitignore lines for a file database. */
   filesPath?: string
 }
@@ -35,6 +41,7 @@ export function databaseModule(spec: DatabaseSpec): DevstackModule {
         : [],
     env: [{ name: 'DATABASE_URL', required: true, ...spec.url }],
     database: spec.traits,
+    wizard: spec.wizard,
     ...(spec.filesPath === undefined ? {} : { filesPath: spec.filesPath })
   }
 }

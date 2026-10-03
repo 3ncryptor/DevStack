@@ -9,6 +9,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Helmet security headers',
   category: 'security',
   language: 'node',
+  wizard: { question: 'appSetup', order: 2, checked: true },
   description: 'Security headers via Helmet middleware for Express or NestJS',
   requiresAny: ['http-framework'],
   dependencies: [

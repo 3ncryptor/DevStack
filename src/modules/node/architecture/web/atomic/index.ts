@@ -6,6 +6,12 @@ const moduleDefinition: DevstackModule = {
   title: 'Atomic design (web)',
   category: 'architecture',
   language: 'node',
+  wizard: {
+    question: 'frontendArchitecture',
+    order: 3,
+    label: 'Atomic design',
+    hint: 'atoms, molecules, organisms'
+  },
   // every web app gets these folders, the admin app included (D-64)
   target: 'frontend',
   depth: 'bare',

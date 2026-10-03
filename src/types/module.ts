@@ -178,6 +178,36 @@ export interface DevstackModule {
   vscodeExtensions?: readonly string[]
   /** What AGENTS.md tells an AI assistant about this module (D-96). */
   agentsMd?: AgentsMdNotes
+  /** Where the guided wizard offers this module (D-96). */
+  wizard?: WizardChoice
+}
+
+/** Wizard questions whose choices are modules (D-96); each module says where it is offered. */
+export const WIZARD_QUESTIONS = [
+  'framework',
+  'frontend',
+  'styling',
+  'frontendArchitecture',
+  'database',
+  'orm',
+  'auth',
+  'logger',
+  'template',
+  'architecture',
+  'tests',
+  'appSetup',
+  'repoExtras'
+] as const
+export type WizardQuestion = (typeof WIZARD_QUESTIONS)[number]
+
+/** A module as a wizard choice: where, in which order, and how it reads if not by its title. */
+export interface WizardChoice {
+  question: WizardQuestion
+  order: number
+  label?: string
+  hint?: string
+  /** Pre-selected in a multi-select question. */
+  checked?: boolean
 }
 
 /** Lines a module adds to AGENTS.md; `{{api}}` in a layout line is the API's folder prefix. */
@@ -238,6 +268,15 @@ export const moduleDefinitionSchema = z.object({
   options: z.custom<z.ZodType>((value) => value instanceof z.ZodType).optional(),
   database: databaseTraitsSchema.optional(),
   vscodeExtensions: z.array(z.string().min(1)).optional(),
+  wizard: z
+    .strictObject({
+      question: z.enum(WIZARD_QUESTIONS),
+      order: z.number(),
+      label: z.string().min(1).optional(),
+      hint: z.string().min(1).optional(),
+      checked: z.boolean().optional()
+    })
+    .optional(),
   agentsMd: z
     .strictObject({
       layout: z.array(z.string().min(1)).optional(),

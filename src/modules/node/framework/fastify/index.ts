@@ -12,6 +12,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Fastify',
   category: 'framework',
   language: 'node',
+  wizard: { question: 'framework', order: 2 },
   provides: ['http-framework'],
   description: 'Fastify 5 HTTP server with the backend baseline',
   requires: ['language-node', 'core-backend'],

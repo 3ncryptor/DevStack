@@ -7,6 +7,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Plain JSON logs',
   category: 'observability',
   language: 'node',
+  wizard: { question: 'logger', order: 2, hint: 'no logging library' },
   description: 'JSON lines on stdout with no logging library, behind the same logger interface',
   requires: ['core-backend'],
   conflictsWith: ['obs-winston'],

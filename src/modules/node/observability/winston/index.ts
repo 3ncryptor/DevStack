@@ -7,6 +7,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Winston logger',
   category: 'observability',
   language: 'node',
+  wizard: { question: 'logger', order: 1, label: 'Winston' },
   description: 'Winston for JSON logs, behind the same logger interface as pino',
   requires: ['core-backend'],
   conflictsWith: ['obs-json-logs'],

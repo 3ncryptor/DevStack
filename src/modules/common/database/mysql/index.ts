@@ -3,6 +3,7 @@ import { databaseModule } from '../factory'
 export default databaseModule({
   id: 'database-mysql',
   title: 'MySQL',
+  wizard: { question: 'database', order: 2 },
   description: 'MySQL 8.4, with a compose service when Docker is selected',
   provides: ['db:mysql', 'db:sql'],
   traits: {

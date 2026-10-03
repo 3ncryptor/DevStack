@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Next.js',
   category: 'framework',
   language: 'node',
+  wizard: { question: 'frontend', order: 1 },
   target: 'frontend',
   provides: ['web-framework'],
   description:

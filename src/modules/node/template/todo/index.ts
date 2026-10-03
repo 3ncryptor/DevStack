@@ -31,6 +31,11 @@ const moduleDefinition: DevstackModule = {
   title: 'Todo app',
   category: 'template',
   language: 'node',
+  wizard: {
+    question: 'template',
+    order: 1,
+    hint: 'CRUD, filters, pagination, per user with auth, a page'
+  },
   description:
     'Todos end to end: CRUD with filters and cursor pagination, per user with auth, seed data, tests and a page',
   // written and tested on Postgres; other databases are a later port (D-77)

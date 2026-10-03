@@ -14,6 +14,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Prisma',
   category: 'orm',
   language: 'node',
+  wizard: { question: 'orm', order: 1 },
   vscodeExtensions: ['prisma.prisma'],
   agentsMd: {
     layout: [

@@ -25,7 +25,7 @@ export interface ResolutionResult {
  */
 export function resolveStack(
   requested: readonly string[],
-  registry: Map<string, DevstackModule>
+  registry: ReadonlyMap<string, DevstackModule>
 ): ResolutionResult {
   const tags = new Set(
     [...registry.values()].flatMap((moduleDefinition) => moduleDefinition.provides ?? [])

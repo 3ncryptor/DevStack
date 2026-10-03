@@ -10,6 +10,9 @@ const moduleDefinition: DevstackModule = {
   title: 'Flat',
   category: 'architecture',
   language: 'node',
+  wizard: { question: 'architecture', order: 4, label: 'Flat (no extra folders)' },
+  // Nest brings its own module layout
+  conflictsWith: ['framework-nest'],
   depth: 'bare',
   description: 'No extra architecture folders; features go in src/modules/<name>',
   requires: ['language-node']

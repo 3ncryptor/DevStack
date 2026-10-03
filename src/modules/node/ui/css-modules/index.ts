@@ -10,6 +10,7 @@ const moduleDefinition: DevstackModule = {
   title: 'CSS Modules',
   category: 'styling',
   language: 'node',
+  wizard: { question: 'styling', order: 2 },
   target: 'frontend',
   depth: 'bare',
   description: 'Locally scoped styles with CSS Modules (app/ui.module.css), no extra dependency',

@@ -11,6 +11,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Rate limiting',
   category: 'security',
   language: 'node',
+  wizard: { question: 'appSetup', order: 3, checked: true },
   description:
     'API rate limiting for Express or NestJS: fixed window, sliding window, token or leaky bucket',
   requiresAny: ['http-framework'],

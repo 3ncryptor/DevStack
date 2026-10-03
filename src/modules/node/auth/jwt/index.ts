@@ -50,6 +50,11 @@ const moduleDefinition: DevstackModule = {
   title: 'Email + password (JWT)',
   category: 'auth',
   language: 'node',
+  wizard: {
+    question: 'auth',
+    order: 1,
+    hint: 'httpOnly cookies, rotating refresh tokens, admin role'
+  },
   agentsMd: {
     conventions: [
       "- Protect routes with `requireAuth(deps.auth)`, admin routes with `requireRole('ADMIN')` after it; the web app's `RequireAuth` is for the user experience only."

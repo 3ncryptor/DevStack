@@ -50,7 +50,7 @@ describe('resolveStack with the built-in modules', () => {
 
   it('reports every problem in one pass, each with a fix', () => {
     const result = resolveStack(
-      ['framework-express', 'framework-nest', 'arch-clean', 'arch-mvc', 'framework-expres'],
+      ['framework-express', 'framework-fastify', 'arch-clean', 'arch-mvc', 'framework-expres'],
       registry
     )
 
@@ -166,7 +166,7 @@ describe('composeModules', () => {
     let caught: unknown
     try {
       composeModules(
-        ['framework-express', 'framework-nest', 'arch-clean', 'arch-mvc'],
+        ['framework-express', 'framework-fastify', 'arch-clean', 'arch-mvc'],
         loadModules(),
         'x'
       )

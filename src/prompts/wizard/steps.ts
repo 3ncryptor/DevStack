@@ -1,15 +1,15 @@
 import { PACKAGE_MANAGERS, type PackageManagerId } from '../../adapters/package-manager/index'
 import type { Choice, Prompter } from '../../intake/prompter'
-import type { DevstackModule, ModuleSystem } from '../../types/module'
+import type { ModuleSystem, WizardQuestion } from '../../types/module'
+import { fitsStack, moduleChoices, type Registry } from './choices'
 import { previewNote } from './folder-previews'
 
 /**
- * The wizard's questions as data, in the A0.2 order (D-34), limited to the modules that exist
- * today. Each step says when it applies, which modules its answer adds and how the review
- * screen shows it, so "Edit an answer" can re-ask one step and the rest follows.
+ * The wizard's questions as data, in the A0.2 order (D-34). A question about modules offers the
+ * ones that declare it (D-96) and fit the answers before it. Each step says when it applies,
+ * which modules its answer adds and how the review screen shows it, so "Edit an answer" can
+ * re-ask one step and the rest follows.
  */
-
-type Registry = ReadonlyMap<string, DevstackModule>
 
 export interface WizardAnswers {
   appType?: string
@@ -112,112 +112,47 @@ const APP_TYPES: Choice<string>[] = [
   { value: 'backend', label: 'Backend' },
   { value: FULLSTACK, label: 'Fullstack', hint: 'API + Next.js web app in a monorepo' }
 ]
-const FRONTENDS: Choice<string>[] = [
-  { value: 'framework-nextjs', label: 'Next.js' },
-  { value: 'framework-react-vite', label: 'React + Vite', hint: 'a single-page app' }
-]
-const STYLINGS: Choice<string>[] = [
-  { value: 'ui-tailwind', label: 'Tailwind CSS' },
-  { value: 'ui-css-modules', label: 'CSS Modules' },
-  { value: 'none', label: 'Plain CSS' }
-]
-const FRAMEWORKS: Choice<string>[] = [
-  { value: 'framework-express', label: 'Express' },
-  { value: 'framework-fastify', label: 'Fastify' },
-  { value: 'framework-nest', label: 'NestJS' }
-]
-/** Questions 5 and 6 (M4, D-77): SQL databases take Prisma or Drizzle, MongoDB takes Mongoose. */
-const DATABASES: Choice<string>[] = [
-  { value: 'database-postgres', label: 'PostgreSQL' },
-  { value: 'database-mysql', label: 'MySQL' },
-  { value: 'database-sqlite', label: 'SQLite', hint: 'a local file, no server' },
-  { value: 'database-mongodb', label: 'MongoDB' },
-  { value: NONE, label: 'None' }
-]
-const ORMS: Choice<string>[] = [
-  { value: 'orm-prisma', label: 'Prisma' },
-  { value: 'orm-drizzle', label: 'Drizzle' },
-  { value: 'orm-mongoose', label: 'Mongoose' }
-]
-const MONGODB = 'database-mongodb'
-/** Question 7: auth needs a database; Better Auth and sessions follow (M3, M4). */
-const AUTHS: Choice<string>[] = [
-  { value: NONE, label: 'None' },
-  {
-    value: 'auth-jwt',
-    label: 'Email + password (JWT)',
-    hint: 'httpOnly cookies, rotating refresh tokens, admin role'
-  },
-  {
-    value: 'auth-session',
-    label: 'Email + password (sessions in Redis)',
-    hint: 'like JWT, but logout ends the session at once; adds Redis'
-  },
-  {
-    value: 'auth-better-auth',
-    label: 'Better Auth',
-    hint: 'email + password, optional GitHub and Google sign-in, database sessions'
-  }
-]
-
-/** Question 16b (D-72, D-76): pino by default; Winston or plain JSON lines instead. */
-const LOGGERS: Choice<string>[] = [
-  { value: NONE, label: 'pino', hint: 'fast JSON logs (recommended)' },
-  { value: 'obs-winston', label: 'Winston' },
-  { value: 'obs-json-logs', label: 'Plain JSON logs', hint: 'no logging library' }
-]
-
-/** Question 10 (D-39): one domain end to end; Weather comes with M4. */
-const TEMPLATES: Choice<string>[] = [
-  { value: NONE, label: 'None (clean setup)' },
-  {
-    value: 'template-todo',
-    label: 'Todo app',
-    hint: 'CRUD, filters, pagination, per user with auth, a page'
-  }
-]
-
 /** Question 7b (D-38): social sign-in through Better Auth; credentials stay blank in .env. */
 const OAUTH_PROVIDERS: Choice<string>[] = [
   { value: 'github', label: 'GitHub' },
   { value: 'google', label: 'Google' }
 ]
 
-/** Question 18 (D-45): files around the code; all recommended. */
-const REPO_EXTRAS: Choice<string>[] = [
-  { value: 'repo-agents-md', label: 'AGENTS.md + CLAUDE.md', hint: 'context for AI assistants' },
-  { value: 'repo-vscode', label: 'VS Code setup', hint: 'format on save, extensions, debugging' },
-  {
-    value: 'repo-github-hygiene',
-    label: 'GitHub hygiene files',
-    hint: 'Dependabot, PR and issue templates, CODEOWNERS'
-  }
-]
+interface MultiselectStepDefinition {
+  key: 'appSetup' | 'repoExtras'
+  label: string
+  message: string
+  applies: (answers: WizardAnswers) => boolean
+  required?: boolean
+}
 
-const repoExtrasStep: WizardStep = {
-  key: 'repoExtras',
-  label: 'Repo extras',
-  applies: () => true,
-  ask: async (prompter, answers, environment) => {
-    const choices = availableIn(environment.registry, REPO_EXTRAS)
-    return {
-      ...answers,
-      repoExtras: await prompter.multiselect({
-        message: 'Repo extras',
+/** A multi-select of the modules that declare this question; their `checked` is the default. */
+function multiselectStep(definition: MultiselectStepDefinition): WizardStep {
+  const { key } = definition
+  return {
+    key,
+    label: definition.label,
+    applies: (answers) => definition.applies(answers),
+    ask: async (prompter, answers, environment) => {
+      const choices = moduleChoices(environment.registry, key)
+      const selected = await prompter.multiselect({
+        message: definition.message,
         choices,
         initialValues:
-          answers.repoExtras ??
-          rememberedList(environment, 'repoExtras', choices) ??
-          choices.map((choice) => choice.value),
-        required: false
+          answers[key] ??
+          rememberedList(environment, key, choices) ??
+          choices.filter((choice) => choice.checked).map((choice) => choice.value),
+        ...(definition.required === undefined ? {} : { required: definition.required })
       })
-    }
-  },
-  describe: (answers) =>
-    (answers.repoExtras ?? []).length === 0
-      ? 'None'
-      : (answers.repoExtras ?? []).map((id) => labelOf(REPO_EXTRAS, id)).join(', '),
-  modules: (answers) => [...(answers.repoExtras ?? [])]
+      return { ...answers, [key]: selected }
+    },
+    describe: (answers, environment) => {
+      const ids = answers[key] ?? []
+      const choices = moduleChoices(environment.registry, key)
+      return ids.length === 0 ? 'None' : ids.map((id) => labelOf(choices, id)).join(', ')
+    },
+    modules: (answers) => [...(answers[key] ?? [])]
+  }
 }
 
 const oauthProvidersStep: WizardStep = {
@@ -250,31 +185,6 @@ const oauthProvidersStep: WizardStep = {
     )
   })
 }
-const ARCHITECTURES: Choice<string>[] = [
-  { value: 'arch-feature', label: 'Feature-scoped', hint: 'src/features/<name> per domain' },
-  { value: 'arch-clean', label: 'Clean architecture' },
-  { value: 'arch-mvc', label: 'MVC' },
-  { value: 'arch-flat', label: 'Flat (no extra folders)' }
-]
-
-/** Question 4b (D-64): folders of every web app. */
-const FRONTEND_ARCHITECTURES: Choice<string>[] = [
-  {
-    value: 'arch-web-feature',
-    label: 'Feature-based',
-    hint: 'features/<name>, components/, hooks/'
-  },
-  { value: 'arch-web-layer', label: 'Layer-based', hint: 'components/, hooks/, utils/' },
-  { value: 'arch-web-atomic', label: 'Atomic design', hint: 'atoms, molecules, organisms' }
-]
-
-/** Question 12: the test runner; node:test needs nothing extra (D-60). */
-const TEST_RUNNERS: Choice<string>[] = [
-  { value: 'testing-vitest', label: 'Vitest' },
-  { value: 'testing-jest', label: 'Jest', hint: 'SWC for TypeScript' },
-  { value: NONE, label: "Node's built-in test runner", hint: 'node --test, no extra dependency' }
-]
-
 /** Question 16a (D-64): how rate limiting counts. */
 const RATE_LIMIT_ALGORITHMS: Choice<string>[] = [
   { value: 'fixed-window', label: 'Fixed window', hint: 'N per window; simplest' },
@@ -283,19 +193,6 @@ const RATE_LIMIT_ALGORITHMS: Choice<string>[] = [
   { value: 'leaky-bucket', label: 'Leaky bucket', hint: 'constant rate' }
 ]
 
-/** Question 16: what app.ts sets up. Security is pre-checked (D-36). */
-export const APP_SETUP_CHOICES: Array<Choice<string> & { checked: boolean }> = [
-  { value: 'middleware-cors', label: 'CORS', checked: true },
-  { value: 'security-helmet', label: 'Helmet security headers', checked: true },
-  { value: 'security-rate-limit', label: 'Rate limiting', checked: true },
-  { value: 'middleware-request-logger', label: 'Request logging', checked: true },
-  { value: 'middleware-compression', label: 'Response compression', checked: false },
-  { value: 'security-origin-checks', label: 'Origin allowlist (ALLOWED_ORIGINS)', checked: false }
-]
-
-const availableIn = (registry: Registry, choices: Choice<string>[]): Choice<string>[] =>
-  choices.filter((choice) => choice.value === NONE || registry.has(choice.value))
-
 const labelOf = (choices: Choice<string>[], value: string | undefined): string =>
   choices.find((choice) => choice.value === value)?.label ?? value ?? '—'
 
@@ -303,6 +200,13 @@ const yesNo = (value: boolean | undefined): string => (value === true ? 'Yes' : 
 
 const isModule = (value: string | undefined): value is string =>
   value !== undefined && value !== NONE
+
+/** The "no module" answer of a module question, e.g. pino as the logger. */
+interface NoneChoice {
+  label: string
+  hint?: string
+  first?: boolean
+}
 
 interface SelectStepDefinition {
   key:
@@ -321,24 +225,41 @@ interface SelectStepDefinition {
     | 'tests'
   label: string
   message: string
-  choices: Choice<string>[]
+  /** Fixed choices, or the modules that declare `question`; the answer is then a module id. */
+  choices: Choice<string>[] | { question: WizardQuestion; none?: NoneChoice }
   defaultValue: string
   applies: (answers: WizardAnswers) => boolean
-  /** Whether the chosen value is a module id that belongs in the stack. */
-  addsModule: boolean
   /** Show each choice's folder tree before asking (task 3.8). */
   preview?: boolean
-  /** Narrows the choices by earlier answers, e.g. the ORMs that fit the database. */
-  fits?: (value: string, answers: WizardAnswers) => boolean
 }
 
 function selectStep(definition: SelectStepDefinition): WizardStep {
-  // only module-valued choices depend on what the registry holds
-  const options = (answers: WizardAnswers, environment: StepEnvironment): Choice<string>[] =>
-    (definition.addsModule
-      ? availableIn(environment.registry, definition.choices)
-      : definition.choices
-    ).filter((choice) => definition.fits?.(choice.value, answers) ?? true)
+  const { choices } = definition
+  const addsModule = !Array.isArray(choices)
+  /** The modules of the question that fit the answers before this one. */
+  const fittingModules = (answers: WizardAnswers, registry: Registry): Choice<string>[] => {
+    if (Array.isArray(choices)) return []
+    const chosen = chosenBefore(definition.key, answers)
+    return moduleChoices(registry, choices.question).filter((choice) =>
+      fitsStack(registry, chosen, choice.value)
+    )
+  }
+  const options = (answers: WizardAnswers, environment: StepEnvironment): Choice<string>[] => {
+    if (Array.isArray(choices)) return choices
+    const modules = fittingModules(answers, environment.registry)
+    if (choices.none === undefined) return modules
+    const { first, ...none } = choices.none
+    return first === true
+      ? [{ value: NONE, ...none }, ...modules]
+      : [...modules, { value: NONE, ...none }]
+  }
+  const allChoices = (registry: Registry): Choice<string>[] =>
+    Array.isArray(choices)
+      ? choices
+      : [
+          ...moduleChoices(registry, choices.question),
+          ...(choices.none === undefined ? [] : [{ value: NONE, label: choices.none.label }])
+        ]
   // an earlier answer may rule out the previous or the default value (e.g. Prisma on MongoDB)
   const initialValue = (
     choices: Choice<string>[],
@@ -353,7 +274,10 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
   return {
     key: definition.key,
     label: definition.label,
-    applies: (answers) => definition.applies(answers),
+    // a module question with no module that fits is skipped, e.g. architectures under NestJS
+    applies: (answers, environment) =>
+      definition.applies(answers) &&
+      (!addsModule || fittingModules(answers, environment.registry).length > 0),
     options,
     ask: async (prompter, answers, environment) => {
       const choices = options(answers, environment)
@@ -365,10 +289,11 @@ function selectStep(definition: SelectStepDefinition): WizardStep {
       })
       return { ...answers, [definition.key]: value }
     },
-    describe: (answers) => labelOf(definition.choices, answers[definition.key]),
+    describe: (answers, environment) =>
+      labelOf(allChoices(environment.registry), answers[definition.key]),
     modules: (answers) => {
       const value = answers[definition.key]
-      return definition.addsModule && isModule(value) ? [value] : []
+      return addsModule && isModule(value) ? [value] : []
     }
   }
 }
@@ -394,7 +319,8 @@ function confirmStep({
   return {
     key,
     label,
-    applies: (answers) => applies(answers),
+    applies: (answers, environment) =>
+      applies(answers) && fitsStack(environment.registry, chosenBefore(key, answers), moduleId),
     ask: async (prompter, answers, environment) => ({
       ...answers,
       [key]: await prompter.confirm({
@@ -411,9 +337,6 @@ function confirmStep({
 const isBackend = (answers: WizardAnswers): boolean =>
   answers.appType === 'backend' || answers.appType === FULLSTACK
 const isFullstack = (answers: WizardAnswers): boolean => answers.appType === FULLSTACK
-/** Auth and the Todo template are written for Prisma on Postgres so far (D-77). */
-const onPostgresPrisma = (answers: WizardAnswers): boolean =>
-  answers.database === 'database-postgres' && answers.orm === 'orm-prisma'
 
 /** Question 2b (D-91): how the API's code is loaded; web apps stay ESM. */
 const MODULE_SYSTEM_CHOICES: Choice<ModuleSystem>[] = [
@@ -463,29 +386,6 @@ const packageManagerStep: WizardStep = {
   modules: () => []
 }
 
-const appSetupStep: WizardStep = {
-  key: 'appSetup',
-  label: 'App setup',
-  applies: (answers) => isModule(answers.framework),
-  ask: async (prompter, answers, environment) => {
-    const choices = availableIn(environment.registry, APP_SETUP_CHOICES)
-    const appSetup = await prompter.multiselect({
-      message: 'App setup (app.ts)',
-      choices,
-      initialValues:
-        answers.appSetup ??
-        rememberedList(environment, 'appSetup', choices) ??
-        APP_SETUP_CHOICES.filter((choice) => choice.checked).map((choice) => choice.value)
-    })
-    return { ...answers, appSetup }
-  },
-  describe: (answers) =>
-    (answers.appSetup ?? []).length === 0
-      ? 'None'
-      : (answers.appSetup ?? []).map((id) => labelOf(APP_SETUP_CHOICES, id)).join(', '),
-  modules: (answers) => [...(answers.appSetup ?? [])]
-}
-
 /** 16a: asked only when rate limiting is in the app setup; sets the module's option. */
 function rateLimitAlgorithmStep(): WizardStep {
   const step = selectStep({
@@ -494,8 +394,7 @@ function rateLimitAlgorithmStep(): WizardStep {
     message: 'Rate-limit algorithm',
     choices: RATE_LIMIT_ALGORITHMS,
     defaultValue: 'fixed-window',
-    applies: (answers) => (answers.appSetup ?? []).includes('security-rate-limit'),
-    addsModule: false
+    applies: (answers) => (answers.appSetup ?? []).includes('security-rate-limit')
   })
   return {
     ...step,
@@ -513,36 +412,32 @@ export const STEPS: readonly WizardStep[] = [
     message: 'App type',
     choices: APP_TYPES,
     defaultValue: 'backend',
-    applies: () => true,
-    addsModule: false
+    applies: () => true
   }),
   selectStep({
     key: 'framework',
     label: 'Framework',
     message: 'Backend framework',
-    choices: FRAMEWORKS,
+    choices: { question: 'framework' },
     defaultValue: 'framework-express',
-    applies: isBackend,
-    addsModule: true
+    applies: isBackend
   }),
   moduleSystemStep,
   selectStep({
     key: 'frontend',
     label: 'Frontend',
     message: 'Frontend framework',
-    choices: FRONTENDS,
+    choices: { question: 'frontend' },
     defaultValue: 'framework-nextjs',
-    applies: isFullstack,
-    addsModule: true
+    applies: isFullstack
   }),
   selectStep({
     key: 'styling',
     label: 'Styling',
     message: 'Styling',
-    choices: STYLINGS,
+    choices: { question: 'styling', none: { label: 'Plain CSS' } },
     defaultValue: 'ui-tailwind',
-    applies: isFullstack,
-    addsModule: true
+    applies: isFullstack
   }),
   confirmStep({
     key: 'admin',
@@ -550,37 +445,34 @@ export const STEPS: readonly WizardStep[] = [
     message: 'Add an admin frontend? (apps/admin on port 3002, same API)',
     moduleId: 'app-admin',
     defaultValue: false,
-    // the admin app is a second Next.js app for now (D-64, D-79)
-    applies: (answers) => isFullstack(answers) && answers.frontend === 'framework-nextjs'
+    // the admin app is a second Next.js app for now (D-64, D-79); app-admin requires it
+    applies: isFullstack
   }),
   selectStep({
     key: 'frontendArchitecture',
     label: 'Frontend architecture',
     message: 'Frontend architecture',
-    choices: FRONTEND_ARCHITECTURES,
+    choices: { question: 'frontendArchitecture' },
     preview: true,
     defaultValue: 'arch-web-feature',
-    applies: isFullstack,
-    addsModule: true
+    applies: isFullstack
   }),
   selectStep({
     key: 'database',
     label: 'Database',
     message: 'Database',
-    choices: DATABASES,
+    choices: { question: 'database', none: { label: 'None' } },
     defaultValue: 'database-postgres',
-    applies: isBackend,
-    addsModule: true
+    applies: isBackend
   }),
   selectStep({
     key: 'orm',
     label: 'ORM',
     message: 'ORM',
-    choices: ORMS,
+    // only the ORMs the database supports, e.g. Mongoose on MongoDB
+    choices: { question: 'orm' },
     defaultValue: 'orm-prisma',
-    applies: (answers) => isModule(answers.database),
-    addsModule: true,
-    fits: (value, answers) => (value === 'orm-mongoose') === (answers.database === MONGODB)
+    applies: (answers) => isModule(answers.database)
   }),
   confirmStep({
     key: 'redis',
@@ -594,44 +486,41 @@ export const STEPS: readonly WizardStep[] = [
     key: 'auth',
     label: 'Auth',
     message: 'Authentication',
-    choices: AUTHS,
+    // the auth modules require Prisma on Postgres for now (M3, M4, D-77)
+    choices: { question: 'auth', none: { label: 'None', first: true } },
     defaultValue: NONE,
-    // auth modules: Express, Fastify or Nest, with Prisma on Postgres (M3, M4, D-77)
-    applies: (answers) => isModule(answers.framework) && onPostgresPrisma(answers),
-    addsModule: true
+    applies: (answers) => isModule(answers.framework)
   }),
   oauthProvidersStep,
   selectStep({
     key: 'logger',
     label: 'Logger',
     message: 'Logger',
-    choices: LOGGERS,
+    choices: {
+      question: 'logger',
+      none: { label: 'pino', hint: 'fast JSON logs (recommended)', first: true }
+    },
     defaultValue: NONE,
-    applies: (answers) => isModule(answers.framework),
-    addsModule: true
+    applies: (answers) => isModule(answers.framework)
   }),
   selectStep({
     key: 'template',
     label: 'App template',
     message: 'App template',
-    choices: TEMPLATES,
+    // Todo requires Express and Prisma on Postgres for now (M3, D-77)
+    choices: { question: 'template', none: { label: 'None (clean setup)', first: true } },
     defaultValue: NONE,
-    // Todo needs a database; Express + Prisma on Postgres for now (M3, D-77)
-    applies: (answers) => answers.framework === 'framework-express' && onPostgresPrisma(answers),
-    addsModule: true
+    applies: (answers) => isModule(answers.framework)
   }),
   packageManagerStep,
   selectStep({
     key: 'architecture',
     label: 'Architecture',
     message: 'Backend architecture',
-    choices: ARCHITECTURES,
+    choices: { question: 'architecture' },
     preview: true,
     defaultValue: 'arch-feature',
-    // NestJS brings its own module layout
-    applies: (answers) =>
-      answers.framework === 'framework-express' || answers.framework === 'framework-fastify',
-    addsModule: true
+    applies: (answers) => isModule(answers.framework)
   }),
   confirmStep({
     key: 'preCommit',
@@ -644,10 +533,12 @@ export const STEPS: readonly WizardStep[] = [
     key: 'tests',
     label: 'Tests',
     message: 'Test runner',
-    choices: TEST_RUNNERS,
+    choices: {
+      question: 'tests',
+      none: { label: "Node's built-in test runner", hint: 'node --test, no extra dependency' }
+    },
     defaultValue: 'testing-vitest',
-    applies: (answers) => isModule(answers.framework),
-    addsModule: true
+    applies: (answers) => isModule(answers.framework)
   }),
   confirmStep({
     key: 'docker',
@@ -665,7 +556,12 @@ export const STEPS: readonly WizardStep[] = [
     // the Nest variant (@nestjs/swagger) comes later
     applies: (answers) => isModule(answers.framework)
   }),
-  appSetupStep,
+  multiselectStep({
+    key: 'appSetup',
+    label: 'App setup',
+    message: 'App setup (app.ts)',
+    applies: (answers) => isModule(answers.framework)
+  }),
   rateLimitAlgorithmStep(),
   confirmStep({
     key: 'apiVersioning',
@@ -689,9 +585,16 @@ export const STEPS: readonly WizardStep[] = [
       'Add an asyncHandler() wrapper for routes? (Express 5 forwards async errors without it)',
     moduleId: 'middleware-async-handler',
     defaultValue: false,
-    applies: (answers) => answers.framework === 'framework-express'
+    // the wrapper requires Express
+    applies: (answers) => isModule(answers.framework)
   }),
-  repoExtrasStep
+  multiselectStep({
+    key: 'repoExtras',
+    label: 'Repo extras',
+    message: 'Repo extras',
+    applies: () => true,
+    required: false
+  })
 ]
 
 /** Options the answers set, per module id; steps that do not apply set nothing. */
@@ -727,39 +630,61 @@ export function modulesFromAnswers(answers: WizardAnswers, registry: Registry): 
   return [...new Set([...ALWAYS_INCLUDED, ...layout, ...chosen, ...webExtras])]
 }
 
-const firstOf = (modules: readonly string[], choices: Choice<string>[]): string | undefined =>
-  choices.find((choice) => modules.includes(choice.value))?.value
+/**
+ * The modules the answers before `key` choose, which a choice must fit. Earlier steps are taken
+ * as answered, without asking whether they apply, so no step depends on a later one.
+ */
+function chosenBefore(key: keyof WizardAnswers, answers: WizardAnswers): string[] {
+  const index = STEPS.findIndex((step) => step.key === key)
+  return [
+    ...ALWAYS_INCLUDED,
+    ...(isFullstack(answers) ? ['layout-monorepo'] : []),
+    ...STEPS.slice(0, index).flatMap((step) => step.modules(answers))
+  ]
+}
+
+/** The selected modules that answer a question, in the question's order. */
+const selectedFor = (
+  modules: readonly string[],
+  registry: Registry,
+  question: WizardQuestion
+): string[] =>
+  moduleChoices(registry, question)
+    .map((choice) => choice.value)
+    .filter((id) => modules.includes(id))
 
 /** Pre-fills every answer from a module list, e.g. a preset (A0.2 #0). */
-export function answersFromModules(modules: readonly string[]): WizardAnswers {
-  const frontend = firstOf(modules, FRONTENDS)
+export function answersFromModules(modules: readonly string[], registry: Registry): WizardAnswers {
+  // the last selected choice wins: a later one builds on an earlier one (sessions on JWT)
+  const select = (question: WizardQuestion): string | undefined =>
+    selectedFor(modules, registry, question).at(-1)
+  const frontend = select('frontend')
   return {
     appType: frontend === undefined ? 'backend' : FULLSTACK,
-    framework: firstOf(modules, FRAMEWORKS),
+    framework: select('framework'),
     frontend,
-    styling: frontend === undefined ? undefined : (firstOf(modules, STYLINGS) ?? NONE),
+    styling: frontend === undefined ? undefined : (select('styling') ?? NONE),
     admin: modules.includes('app-admin'),
-    frontendArchitecture: firstOf(modules, FRONTEND_ARCHITECTURES),
+    frontendArchitecture: select('frontendArchitecture'),
     apiVersioning: modules.includes('api-versioning'),
-    tests: firstOf(modules, TEST_RUNNERS) ?? NONE,
+    tests: select('tests') ?? NONE,
     apiDocs: modules.includes('api-docs-scalar'),
     ci: modules.includes('devops-github-actions'),
     // a module list carries no options: a preset with rate limiting starts from the default
     rateLimitAlgorithm: modules.includes('security-rate-limit') ? 'fixed-window' : undefined,
-    database: firstOf(modules, DATABASES) ?? NONE,
-    orm: firstOf(modules, ORMS),
+    database: select('database') ?? NONE,
+    orm: select('orm'),
     redis: modules.includes('cache-redis'),
-    // auth-session comes with auth-jwt, which it builds on
-    auth: modules.includes('auth-session') ? 'auth-session' : (firstOf(modules, AUTHS) ?? NONE),
+    auth: select('auth') ?? NONE,
     // a module list carries no options: providers start unselected
     oauthProviders: [],
-    template: firstOf(modules, TEMPLATES) ?? NONE,
-    logger: firstOf(modules, LOGGERS) ?? NONE,
-    repoExtras: REPO_EXTRAS.map((choice) => choice.value).filter((id) => modules.includes(id)),
-    architecture: firstOf(modules, ARCHITECTURES) ?? 'arch-flat',
+    template: select('template') ?? NONE,
+    logger: select('logger') ?? NONE,
+    repoExtras: selectedFor(modules, registry, 'repoExtras'),
+    architecture: select('architecture') ?? 'arch-flat',
     preCommit: modules.includes('quality-husky'),
     docker: modules.includes('devops-docker'),
     asyncHandler: modules.includes('middleware-async-handler'),
-    appSetup: APP_SETUP_CHOICES.map((choice) => choice.value).filter((id) => modules.includes(id))
+    appSetup: selectedFor(modules, registry, 'appSetup')
   }
 }

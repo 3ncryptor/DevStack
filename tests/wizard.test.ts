@@ -5,9 +5,9 @@ import { PRESETS } from '../src/core/presets'
 import { resolveStack } from '../src/core/resolver/index'
 import { Aborted } from '../src/errors'
 import type { SelectPrompt } from '../src/intake/prompter'
+import { moduleChoices } from '../src/prompts/wizard/choices'
 import {
   answersFromModules,
-  APP_SETUP_CHOICES,
   modulesFromAnswers,
   type WizardAnswers
 } from '../src/prompts/wizard/steps'
@@ -19,6 +19,7 @@ import {
   type WizardServices
 } from '../src/prompts/wizard/index'
 import { AnswerPrompter } from './helpers/answer-prompter'
+import { testModule } from './helpers/modules'
 
 const registry = loadModules()
 
@@ -111,6 +112,41 @@ const NEST: ReadonlyArray<readonly [string, unknown]> = [
   [Q.ci, false],
   [Q.repoExtras, []]
 ]
+
+describe('choices from module metadata (D-96)', () => {
+  it('offers a new module where it declares itself, with no wizard change', async () => {
+    const cockroach = testModule({
+      id: 'database-cockroach',
+      title: 'CockroachDB',
+      category: 'database',
+      provides: ['db:postgres', 'db:sql'],
+      wizard: { question: 'database', order: 5, hint: 'Postgres-compatible' }
+    })
+    const prompter = new AnswerPrompter(NEST)
+    const offered = offeredFor(prompter, Q.database)
+
+    await runWizard(
+      prompter,
+      { ...CONTEXT, registry: new Map([...registry, [cockroach.id, cockroach]]) },
+      fakeServices()
+    )
+
+    expect(offered[0]).toContain('database-cockroach:Postgres-compatible')
+  })
+
+  it('offers only the ORMs that fit the database, and takes a single fit without asking', async () => {
+    const onPostgres = new AnswerPrompter([...NEST.slice(0, 1), [Q.database, 'database-postgres']])
+    const onMongo = new AnswerPrompter([...NEST.slice(0, 1), [Q.database, 'database-mongodb']])
+    const offered = offeredFor(onPostgres, Q.orm)
+
+    await runWizard(onPostgres, CONTEXT, fakeServices())
+    const mongo = await runWizard(onMongo, CONTEXT, fakeServices())
+
+    expect(offered[0]).toEqual(['orm-prisma:', 'orm-drizzle:'])
+    expect(onMongo.asked).not.toContain(Q.orm)
+    expect(mongo.modules).toContain('orm-mongoose')
+  })
+})
 
 describe('module system question (D-91)', () => {
   it('asks it for a backend and returns the choice as a setting', async () => {
@@ -240,12 +276,12 @@ describe('guided wizard (A0.2 order)', () => {
   })
 
   it('pre-fills the auth answer from a module list', () => {
-    expect(answersFromModules(['framework-express', 'orm-prisma', 'auth-jwt']).auth).toBe(
+    expect(answersFromModules(['framework-express', 'orm-prisma', 'auth-jwt'], registry).auth).toBe(
       'auth-jwt'
     )
-    expect(answersFromModules(['framework-express', 'database-postgres', 'orm-prisma']).auth).toBe(
-      'none'
-    )
+    expect(
+      answersFromModules(['framework-express', 'database-postgres', 'orm-prisma'], registry).auth
+    ).toBe('none')
   })
 
   it('picks a step with a single compatible option without asking (ORM)', async () => {
@@ -378,7 +414,10 @@ describe('questions added for D-64 and M2', () => {
   })
 
   it('pre-fills the fullstack answers from its modules', () => {
-    const answers = answersFromModules(['framework-express', 'framework-nextjs', 'layout-monorepo'])
+    const answers = answersFromModules(
+      ['framework-express', 'framework-nextjs', 'layout-monorepo'],
+      registry
+    )
 
     expect(answers).toMatchObject({
       appType: 'fullstack',
@@ -617,7 +656,7 @@ describe('answers ↔ modules', () => {
   it.each(Object.keys(PRESETS))('round-trips the %s preset', (name) => {
     const modules = PRESETS[name]?.modules ?? []
 
-    expect(sorted(modulesFromAnswers(answersFromModules(modules), registry))).toEqual(
+    expect(sorted(modulesFromAnswers(answersFromModules(modules, registry), registry))).toEqual(
       sorted(modules)
     )
   })
@@ -625,7 +664,7 @@ describe('answers ↔ modules', () => {
   it('resolves every combination of answers without a diagnostic', () => {
     // every dimension with a rule between modules; independent ones (CI, styling, frontend
     // folders) are fixed, since they cannot change whether a stack resolves
-    const appSetups = [[], APP_SETUP_CHOICES.map((choice) => choice.value)]
+    const appSetups = [[], moduleChoices(registry, 'appSetup').map((choice) => choice.value)]
     /** Every combination of the given values, one answers object each. */
     const product = (dimensions: Record<string, readonly unknown[]>): WizardAnswers[] =>
       Object.entries(dimensions).reduce<WizardAnswers[]>(

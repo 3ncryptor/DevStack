@@ -6,6 +6,12 @@ const moduleDefinition: DevstackModule = {
   title: 'GitHub hygiene files',
   category: 'repo',
   language: 'node',
+  wizard: {
+    question: 'repoExtras',
+    order: 3,
+    hint: 'Dependabot, PR and issue templates, CODEOWNERS',
+    checked: true
+  },
   target: 'root',
   depth: 'bare',
   description: 'Dependabot, a pull request template, bug and feature issue templates, CODEOWNERS',

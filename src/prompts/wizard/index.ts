@@ -97,7 +97,7 @@ function presetAnswers(
     preset?.settings?.moduleSystem ??
     context.defaultModuleSystem ??
     (context.remembered?.['moduleSystem'] === 'cjs' ? 'cjs' : 'esm')
-  return { ...answersFromModules(modules), moduleSystem }
+  return { ...answersFromModules(modules, context.registry), moduleSystem }
 }
 
 async function startingAnswers(prompter: Prompter, context: WizardContext): Promise<Start> {

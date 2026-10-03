@@ -9,6 +9,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Response compression',
   category: 'middleware',
   language: 'node',
+  wizard: { question: 'appSetup', order: 5, checked: false },
   description: 'Response compression middleware',
   requiresAny: ['http-framework'],
   dependencies: [

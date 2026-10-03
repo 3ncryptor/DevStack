@@ -11,6 +11,7 @@ const moduleDefinition: DevstackModule = {
   title: 'React + Vite',
   category: 'framework',
   language: 'node',
+  wizard: { question: 'frontend', order: 2, hint: 'a single-page app' },
   target: 'frontend',
   provides: ['web-framework'],
   description:

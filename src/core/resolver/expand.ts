@@ -10,7 +10,7 @@ export interface Expansion {
 
 function unknownModule(
   id: string,
-  registry: Map<string, DevstackModule>,
+  registry: ReadonlyMap<string, DevstackModule>,
   owner?: string
 ): Diagnostic {
   const suggestion = closestId(id, [...registry.keys(), ...Object.keys(MODULE_ALIASES)])
@@ -35,7 +35,7 @@ function unknownModule(
  */
 export function expandSelection(
   requested: readonly string[],
-  registry: Map<string, DevstackModule>,
+  registry: ReadonlyMap<string, DevstackModule>,
   isTag: (name: string) => boolean
 ): Expansion {
   const selected = new Map<string, DevstackModule>()

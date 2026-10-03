@@ -9,6 +9,7 @@ const moduleDefinition: DevstackModule = {
   title: 'HTTP request logger (morgan)',
   category: 'middleware',
   language: 'node',
+  wizard: { question: 'appSetup', order: 4, label: 'Request logging', checked: true },
   description: 'HTTP request logging using Morgan',
   requiresAny: ['http-framework'],
   dependencies: [{ name: 'morgan', when: NOT_FASTIFY }],

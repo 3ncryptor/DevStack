@@ -17,6 +17,7 @@ const moduleDefinition: DevstackModule = {
   title: 'NestJS',
   category: 'framework',
   language: 'node',
+  wizard: { question: 'framework', order: 3 },
   provides: ['http-framework'],
   description: 'NestJS application starter',
   requires: ['language-node', 'core-backend'],

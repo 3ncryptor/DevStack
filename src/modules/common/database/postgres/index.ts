@@ -3,6 +3,7 @@ import { databaseModule } from '../factory'
 export default databaseModule({
   id: 'database-postgres',
   title: 'PostgreSQL',
+  wizard: { question: 'database', order: 1 },
   description: 'PostgreSQL 18, with a compose service when Docker is selected',
   provides: ['db:postgres', 'db:sql'],
   traits: {

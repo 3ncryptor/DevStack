@@ -11,6 +11,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Jest',
   category: 'testing',
   language: 'node',
+  wizard: { question: 'tests', order: 2, hint: 'SWC for TypeScript' },
   description: 'Jest for the API tests (health, envelope, rate limiting, auth), with Supertest',
   requiresAny: ['http-framework'],
   conflictsWith: ['testing-vitest'],

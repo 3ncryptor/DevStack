@@ -9,6 +9,7 @@ const moduleDefinition: DevstackModule = {
   title: 'AGENTS.md + CLAUDE.md',
   category: 'repo',
   language: 'node',
+  wizard: { question: 'repoExtras', order: 1, hint: 'context for AI assistants', checked: true },
   target: 'root',
   depth: 'bare',
   description: 'Context for AI coding assistants: stack, commands, layout, conventions'

@@ -123,6 +123,11 @@ const moduleDefinition: DevstackModule = {
   title: 'Better Auth',
   category: 'auth',
   language: 'node',
+  wizard: {
+    question: 'auth',
+    order: 3,
+    hint: 'email + password, optional GitHub and Google sign-in, database sessions'
+  },
   agentsMd: {
     conventions: [
       "- Protect routes with `requireAuth(deps.auth)`, admin routes with `requireRole('ADMIN')` after it; the web app's `RequireAuth` is for the user experience only."

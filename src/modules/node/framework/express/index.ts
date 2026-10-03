@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Express',
   category: 'framework',
   language: 'node',
+  wizard: { question: 'framework', order: 1 },
   provides: ['http-framework'],
   description: 'Express HTTP server setup',
   requires: ['language-node', 'core-backend'],

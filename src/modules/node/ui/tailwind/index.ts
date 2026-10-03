@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Tailwind CSS',
   category: 'styling',
   language: 'node',
+  wizard: { question: 'styling', order: 1 },
   vscodeExtensions: ['bradlc.vscode-tailwindcss'],
   target: 'frontend',
   depth: 'bare',

@@ -11,6 +11,12 @@ const moduleDefinition: DevstackModule = {
   title: 'Sessions in Redis',
   category: 'security',
   language: 'node',
+  wizard: {
+    question: 'auth',
+    order: 2,
+    label: 'Email + password (sessions in Redis)',
+    hint: 'like JWT, but logout ends the session at once; adds Redis'
+  },
   description:
     'Opaque session ids in Redis instead of JWT access tokens: logout and a reused refresh token end sessions at once',
   requires: ['auth-jwt', 'cache-redis'],

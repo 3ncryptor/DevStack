@@ -3,6 +3,7 @@ import { databaseModule } from '../factory'
 export default databaseModule({
   id: 'database-mongodb',
   title: 'MongoDB',
+  wizard: { question: 'database', order: 4 },
   description: 'MongoDB 8, with a compose service when Docker is selected',
   provides: ['db:mongodb'],
   traits: {

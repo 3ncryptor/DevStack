@@ -4,6 +4,7 @@ import { databaseModule } from '../factory'
 export default databaseModule({
   id: 'database-sqlite',
   title: 'SQLite',
+  wizard: { question: 'database', order: 3, hint: 'a local file, no server' },
   description: 'SQLite in a local file: no server to run',
   provides: ['db:sqlite', 'db:sql'],
   traits: {
