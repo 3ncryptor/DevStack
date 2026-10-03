@@ -99,10 +99,13 @@ async function applyAndInstall(
   if (options.dryRun) return undefined
   const outcome = await applyChanges(newPlan, changes, { force: options.force })
   if (!options.skipInstall) {
-    // install updates the lockfile; then the new modules' own steps (e.g. prisma generate)
+    // install updates the lockfile. Post-install steps regenerate code from the project's files
+    // (prisma generate after auth adds the User model), so they all run again; other steps run
+    // for the new modules only
     const commands = newPlan.commands.filter(
       (command) =>
         command.phase === 'install' ||
+        command.phase === 'postInstall' ||
         (command.module !== undefined && added.includes(command.module))
     )
     await runPlanCommands({ ...newPlan, commands }, options.logger, options.commandOutput)
