@@ -4,10 +4,10 @@ import { defineConfig } from 'drizzle-kit'
 // Plain JavaScript so the typed ESLint config can lint it without a tsconfig entry.
 // db:generate writes SQL migrations to drizzle/ from the schema; db:migrate applies them.
 export default defineConfig({
-  dialect: '<%= it.modules.includes('database-mysql') ? 'mysql' : it.modules.includes('database-sqlite') ? 'sqlite' : 'postgresql' %>',
+  dialect: '<%= it.database.dialect %>',
   schema: './src/db/schema.ts',
   out: './drizzle',
-<% if (it.modules.includes('database-sqlite')) { %>
+<% if (it.database.dialect === 'sqlite') { %>
   dbCredentials: { url: (process.env.DATABASE_URL ?? '').replace(/^file:/, '') }
 <% } else { %>
   dbCredentials: { url: process.env.DATABASE_URL ?? '' }

@@ -280,7 +280,8 @@ async function targetOutput(
     slots: context.slots,
     moduleOptions: context.moduleOptions,
     settings: context.settings,
-    apps: appsOf(context)
+    apps: appsOf(context),
+    database: context.modules.find((moduleDefinition) => moduleDefinition.database)?.database
   }
   const files: PlannedFile[] = [
     generatedFile('package.json', `${JSON.stringify(packageJson, null, 2)}\n`),

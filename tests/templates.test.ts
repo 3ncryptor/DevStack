@@ -30,7 +30,8 @@ const context: TemplateContext = {
     backend: { dir: '', name: 'api', port: 3000 },
     frontend: { dir: '', name: 'web', port: 3000 },
     admin: { dir: '', name: 'admin', port: 3002 }
-  }
+  },
+  database: undefined
 }
 
 describe('renderTemplate', () => {

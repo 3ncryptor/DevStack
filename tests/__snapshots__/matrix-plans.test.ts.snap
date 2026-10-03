@@ -10305,7 +10305,7 @@ exports[`e2e combination plans (D-96) > fastify-sqlite-drizzle plans as recorded
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "529562015bb1c141",
+      "sha256": "3b3a441c2e0d0d6a",
       "strategy": "create",
     },
     {

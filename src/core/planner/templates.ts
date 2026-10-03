@@ -2,6 +2,7 @@ import { Eta } from 'eta'
 
 import type { LanguageAdapter } from '../../adapters/language/node'
 import type { DockerCommands } from '../../adapters/package-manager/index'
+import type { DatabaseTraits } from '../../types/module'
 import type { PlannedEnvVar } from '../../types/plan'
 import type { ResolvedSettings } from '../settings'
 
@@ -53,6 +54,8 @@ export interface TemplateContext {
   settings: ResolvedSettings
   /** The apps by role, e.g. `it.apps.backend.dir` (`apps/api`) and `it.apps.backend.port`. */
   apps: Readonly<Record<'backend' | 'frontend' | 'admin', AppInfo>>
+  /** The selected database's traits (D-96), e.g. `it.database?.dialect`; undefined without one. */
+  database: DatabaseTraits | undefined
 }
 
 // Templates render developer-controlled data into source code, so no HTML escaping; exact

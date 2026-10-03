@@ -9,7 +9,7 @@ generator client {
 
 // The connection URL lives in prisma.config.mjs (Prisma 7).
 datasource db {
-  provider = "<%= it.modules.includes('database-mysql') ? 'mysql' : it.modules.includes('database-sqlite') ? 'sqlite' : 'postgresql' %>"
+  provider = "<%= it.database.dialect %>"
 }
 
 // Add your models here, then run the db:migrate script.

@@ -1,4 +1,4 @@
-import type { DevstackModule, EnvDeclaration } from '../../../types/module'
+import type { DatabaseTraits, DevstackModule, EnvDeclaration } from '../../../types/module'
 
 interface DatabaseSpec {
   id: string
@@ -7,8 +7,7 @@ interface DatabaseSpec {
   /** Capability tags, e.g. `db:postgres` and `db:sql`, which ORMs require. */
   provides: readonly string[]
   url: Omit<EnvDeclaration, 'name' | 'required'>
-  /** A compose service named `db` (devops-docker); SQLite is a file and has none. */
-  hasComposeService: boolean
+  traits: DatabaseTraits
   /** Files to add, e.g. .gitignore lines for a file database. */
   filesPath?: string
 }
@@ -27,13 +26,15 @@ export function databaseModule(spec: DatabaseSpec): DevstackModule {
     description: spec.description,
     requires: ['language-node'],
     provides: spec.provides,
-    scripts: spec.hasComposeService
-      ? [
-          { name: 'db:up', run: 'docker compose up -d db', when: { has: 'devops-docker' } },
-          { name: 'db:down', run: 'docker compose down', when: { has: 'devops-docker' } }
-        ]
-      : [],
+    scripts:
+      spec.traits.compose.kind === 'service'
+        ? [
+            { name: 'db:up', run: 'docker compose up -d db', when: { has: 'devops-docker' } },
+            { name: 'db:down', run: 'docker compose down', when: { has: 'devops-docker' } }
+          ]
+        : [],
     env: [{ name: 'DATABASE_URL', required: true, ...spec.url }],
+    database: spec.traits,
     ...(spec.filesPath === undefined ? {} : { filesPath: spec.filesPath })
   }
 }

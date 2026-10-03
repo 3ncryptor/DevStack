@@ -1,6 +1,6 @@
-<% if (it.modules.includes('database-mysql')) { %>
+<% if (it.database.dialect === 'mysql') { %>
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-<% } else if (it.modules.includes('database-sqlite')) { %>
+<% } else if (it.database.dialect === 'sqlite') { %>
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 <% } else { %>
 import { PrismaPg } from '@prisma/adapter-pg'
@@ -8,12 +8,12 @@ import { PrismaPg } from '@prisma/adapter-pg'
 
 import { PrismaClient } from '../generated/prisma/client.js'
 
-<% if (it.modules.includes('database-mysql')) { %>
+<% if (it.database.dialect === 'mysql') { %>
 /** One client per process. Prisma 7 connects to MySQL through the MariaDB driver adapter. */
 export const prisma = new PrismaClient({
   adapter: new PrismaMariaDb(process.env.DATABASE_URL ?? '')
 })
-<% } else if (it.modules.includes('database-sqlite')) { %>
+<% } else if (it.database.dialect === 'sqlite') { %>
 /** One client per process. Prisma 7 opens the SQLite file through better-sqlite3. */
 export const prisma = new PrismaClient({
   adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? '' })

@@ -1,7 +1,11 @@
 import { z } from 'zod'
 
 import type { CatalogName } from '../catalog/node'
+import { databaseTraitsSchema, type DatabaseTraits } from './database'
 import type { PackageJsonFragment } from './package-json'
+
+// modules import their contract from this file alone (module contract lint)
+export type { DatabaseTraits } from './database'
 
 /** An environment variable a module needs (buildPlan B10). */
 export interface EnvDeclaration {
@@ -168,6 +172,8 @@ export interface DevstackModule {
   slots?: readonly SlotContribution[]
   /** Zod schema with defaults for this module's options; templates read them as `it.options`. */
   options?: z.ZodType<Record<string, unknown>>
+  /** A database module's description for ORMs and Docker (D-96). */
+  database?: DatabaseTraits
 }
 
 const MODULE_ID = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -218,6 +224,7 @@ export const moduleDefinitionSchema = z.object({
   filesPath: z.string().optional(),
   exposesSlots: z.array(z.string()).optional(),
   options: z.custom<z.ZodType>((value) => value instanceof z.ZodType).optional(),
+  database: databaseTraitsSchema.optional(),
   env: z
     .array(
       z.object({

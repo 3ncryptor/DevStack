@@ -32,8 +32,8 @@ WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app ./
 COPY --from=build --chown=node:node /app/<%= it.apps.backend.dir %>/dist ./<%= it.apps.backend.dir %>/dist
 WORKDIR /app/<%= it.apps.backend.dir %>
-<% if (it.modules.includes('database-sqlite')) { %># the SQLite file lives on a volume mounted here (docker-compose.yml)
-RUN mkdir -p /app/data && chown node:node /app/data
+<% if (it.database?.compose.kind === 'file') { %># the database file lives on a volume mounted here (docker-compose.yml)
+RUN mkdir -p <%= it.database.compose.dataDir %> && chown node:node <%= it.database.compose.dataDir %>
 <% } %># never run as root
 USER node
 EXPOSE <%= it.apps.backend.port %>

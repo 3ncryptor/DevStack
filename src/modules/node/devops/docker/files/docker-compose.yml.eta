@@ -1,23 +1,15 @@
-<% const databases = {
-  'database-postgres': { url: 'postgresql://postgres:postgres@db:5432/devstack', volume: 'postgres_data' },
-  'database-mysql': { url: 'mysql://root:mysql@db:3306/devstack', volume: 'mysql_data' },
-  'database-mongodb': { url: 'mongodb://db:27017/devstack', volume: 'mongo_data' }
-} -%>
-<% const databaseId = Object.keys(databases).find((id) => it.modules.includes(id)) -%>
-<% const database = databaseId === undefined ? undefined : databases[databaseId] -%>
+<% const database = it.database?.compose -%>
 <% const redis = it.modules.includes('cache-redis') -%>
-<% const sqlite = it.modules.includes('database-sqlite') -%>
-<% const dependsOn = [...(database ? ['db'] : []), ...(redis ? ['redis'] : [])] -%>
+<% const dependsOn = [...(database?.kind === 'service' ? ['db'] : []), ...(redis ? ['redis'] : [])] -%>
 <% const connections = () => [
   ...(database ? [`      DATABASE_URL: ${database.url}`] : []),
-  ...(sqlite ? ['      DATABASE_URL: file:/app/data/dev.db'] : []),
   ...(redis ? ['      REDIS_URL: redis://redis:6379'] : []),
   ...(dependsOn.length > 0 ? ['    depends_on:'] : []),
   ...dependsOn.flatMap((service) => [`      ${service}:`, '        condition: service_healthy']),
-  // the SQLite file outlives the container
-  ...(sqlite ? ['    volumes:', '      - sqlite_data:/app/data'] : [])
+  // a file database outlives the container
+  ...(database?.kind === 'file' ? ['    volumes:', `      - ${database.volume}:${database.dataDir}`] : [])
 ].map((line) => `${line}\n`).join('') -%>
-<% const volumes = [...(database ? [database.volume] : []), ...(redis ? ['redis_data'] : []), ...(sqlite ? ['sqlite_data'] : [])] -%>
+<% const volumes = [...(database ? [database.volume] : []), ...(redis ? ['redis_data'] : [])] -%>
 <% const monorepo = it.modules.includes('layout-monorepo') -%>
 <% const api = it.apps.backend -%>
 <% const webApps = monorepo && it.modules.includes('devops-docker-web') ? [['frontend', 'WEB'], ...(it.modules.includes('app-admin') ? [['admin', 'ADMIN']] : [])].map(([role, hostVar]) => ({ ...it.apps[role], hostVar })) : [] -%>
@@ -67,58 +59,12 @@ services:
       PORT: <%= api.port %>
 <%~ connections() -%>
 <% } -%>
-<% if (databaseId === 'database-postgres') { -%>
+<% if (database?.kind === 'service') { -%>
 
   db:
-    image: postgres:18-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: devstack
-    ports:
-      - '${POSTGRES_PORT:-5432}:5432'
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d devstack']
-      interval: 5s
-      # first start (initializing the data directory) may be slow; failures then do not count
-      start_period: 60s
-      timeout: 3s
-      retries: 10
-    volumes:
-      - postgres_data:/var/lib/postgresql
-<% } else if (databaseId === 'database-mysql') { -%>
-
-  db:
-    image: mysql:8.4
-    environment:
-      MYSQL_ROOT_PASSWORD: mysql
-      MYSQL_DATABASE: devstack
-    ports:
-      - '${MYSQL_PORT:-3306}:3306'
-    healthcheck:
-      # over TCP: the server MySQL runs during first-start initialization listens on the socket only
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-pmysql']
-      interval: 5s
-      start_period: 60s
-      timeout: 3s
-      retries: 20
-    volumes:
-      - mysql_data:/var/lib/mysql
-<% } else if (databaseId === 'database-mongodb') { -%>
-
-  db:
-    image: mongo:8
-    ports:
-      - '${MONGO_PORT:-27017}:27017'
-    healthcheck:
-      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
-      interval: 5s
-      start_period: 60s
-      # mongosh is a Node program and starts slowly on a busy machine
-      timeout: 15s
-      retries: 10
-    volumes:
-      - mongo_data:/data/db
+<% for (const line of database.definition) { -%>
+    <%= line %>
+<% } -%>
 <% } -%>
 <% if (redis) { -%>
 
