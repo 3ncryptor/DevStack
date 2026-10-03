@@ -9,20 +9,27 @@ import { handleShutdownSignals } from './lib/shutdown.js'
 
 const env = loadEnvOrExit()
 const logger = createLogger(env.LOG_LEVEL)
-// composition root (B17.6): concrete adapters are chosen here, so tests can pass in-memory ones
-const app = await createApp({
-  logger,
-  readinessChecks,
-  <%~ it.slots['index.deps'] %>
-})
 
-try {
-  // every interface, so the app is reachable inside a container too
-  await app.listen({ port: env.PORT, host: '0.0.0.0' })
-} catch (error: unknown) {
-  logger.fatal({ err: error }, `could not listen on port ${env.PORT}`)
-  process.exit(1)
+// a function, not top-level await, so the same code runs as ESM and as CommonJS (task 5.2)
+async function main(): Promise<void> {
+  // composition root (B17.6): concrete adapters are chosen here, so tests can pass in-memory ones
+  const app = await createApp({
+    logger,
+    readinessChecks,
+    <%~ it.slots['index.deps'] %>
+  })
+  try {
+    // every interface, so the app is reachable inside a container too
+    await app.listen({ port: env.PORT, host: '0.0.0.0' })
+  } catch (error: unknown) {
+    logger.fatal({ err: error }, `could not listen on port ${env.PORT}`)
+    process.exit(1)
+  }
+  void reportReadiness(readinessChecks, logger)
+  handleShutdownSignals({ logger, disposers, close: () => app.close() })
 }
-void reportReadiness(readinessChecks, logger)
 
-handleShutdownSignals({ logger, disposers, close: () => app.close() })
+main().catch((error: unknown) => {
+  logger.fatal({ err: error }, 'could not start')
+  process.exit(1)
+})

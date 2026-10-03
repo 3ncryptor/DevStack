@@ -138,6 +138,49 @@ describe('TS strictness (task 5.2)', () => {
   })
 })
 
+describe('module system (D-91)', () => {
+  const typeOf = (result: GenerationPlan, file: string): unknown =>
+    (JSON.parse(content(result, file)) as { type?: string }).type
+  const scriptsOf = (result: GenerationPlan, file: string): Record<string, string> =>
+    (JSON.parse(content(result, file)) as { scripts: Record<string, string> }).scripts
+
+  it('is ESM unless CommonJS is chosen', async () => {
+    const esm = await plan(BACKEND)
+    const cjs = await plan(BACKEND, { moduleSystem: 'cjs' })
+
+    expect(typeOf(esm, 'package.json')).toBe('module')
+    expect(typeOf(cjs, 'package.json')).toBe('commonjs')
+    expect(content(esm, 'prisma/schema.prisma')).not.toContain('moduleFormat')
+    expect(content(cjs, 'prisma/schema.prisma')).toContain('moduleFormat = "cjs"')
+  })
+
+  it('switches only the API in a monorepo; the web app and shared package stay ESM', async () => {
+    const result = await plan(FULLSTACK, { moduleSystem: 'cjs' })
+
+    expect(typeOf(result, 'apps/api/package.json')).toBe('commonjs')
+    expect(typeOf(result, 'apps/web/package.json')).not.toBe('commonjs')
+    expect(typeOf(result, 'packages/shared/package.json')).toBe('module')
+  })
+
+  it("runs Nest with SWC's require hook and Jest's tests as CommonJS", async () => {
+    const nest = await plan(['framework-nest', 'obs-winston'], { moduleSystem: 'cjs' })
+    const jest = await plan(['framework-express', 'testing-jest'], { moduleSystem: 'cjs' })
+
+    expect(scriptsOf(nest, 'package.json')).toMatchObject({
+      dev: 'node --watch --import ./scripts/ts-resolve.mjs -r @swc-node/register src/main.ts',
+      test: 'node --import ./scripts/ts-resolve.mjs -r @swc-node/register --test "tests/**/*.test.ts"'
+    })
+    expect(paths(nest)).toContain('scripts/ts-resolve.mjs')
+    expect(content(jest, 'jest.config.mjs')).not.toContain('extensionsToTreatAsEsm')
+  })
+
+  it('is recorded in the manifest, so add and remove keep it', async () => {
+    const result = await plan(BACKEND, { moduleSystem: 'cjs' })
+
+    expect(content(result, '.devstack/stack.json')).toContain('"moduleSystem": "cjs"')
+  })
+})
+
 describe('naming and metadata (task 5.3)', () => {
   it('names the apps and their ports everywhere: folders, compose, Dockerfiles, env, CI', async () => {
     const result = await plan(FULLSTACK, {

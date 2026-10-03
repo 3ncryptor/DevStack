@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import type { ReadinessCheck } from '../src/lib/readiness.js'
 import { testApp } from './helpers/app.js'
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /health reports the process is alive', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /health reports the process is alive', async () => {
   const app = await testApp()
 
   const response = await app.inject({ method: 'GET', url: '/health' })
@@ -14,7 +14,7 @@ import { testApp } from './helpers/app.js'
   assert.equal(response.json<{ status: string }>().status, 'ok')
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /ready is 200 when every check passes', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /ready is 200 when every check passes', async () => {
   const healthy: ReadinessCheck = { name: 'db', check: () => Promise.resolve() }
   const app = await testApp({ readinessChecks: [healthy] })
 
@@ -24,7 +24,7 @@ import { testApp } from './helpers/app.js'
   assert.deepEqual(response.json(), { status: 'ok', checks: { db: 'ok' } })
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /ready is 503 with per-check status when a check fails', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /ready is 503 with per-check status when a check fails', async () => {
   const failing: ReadinessCheck = { name: 'db', check: () => Promise.reject(new Error('down')) }
   const app = await testApp({ readinessChecks: [failing] })
 
@@ -34,7 +34,7 @@ import { testApp } from './helpers/app.js'
   assert.deepEqual(response.json(), { status: 'error', checks: { db: 'error' } })
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('unknown routes get the error envelope with the request id', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('unknown routes get the error envelope with the request id', async () => {
   const app = await testApp()
 
   const response = await app.inject({
@@ -51,7 +51,7 @@ import { testApp } from './helpers/app.js'
   })
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('malformed JSON is a 400 in the envelope, not a 500', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('malformed JSON is a 400 in the envelope, not a 500', async () => {
   const app = await testApp({}, (instance) => {
     instance.post('/echo', (request) => request.body)
   })

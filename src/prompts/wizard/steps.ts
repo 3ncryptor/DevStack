@@ -1,6 +1,6 @@
 import { PACKAGE_MANAGERS, type PackageManagerId } from '../../adapters/package-manager/index'
 import type { Choice, Prompter } from '../../intake/prompter'
-import type { DevstackModule } from '../../types/module'
+import type { DevstackModule, ModuleSystem } from '../../types/module'
 import { previewNote } from './folder-previews'
 
 /**
@@ -14,6 +14,7 @@ type Registry = ReadonlyMap<string, DevstackModule>
 export interface WizardAnswers {
   appType?: string
   framework?: string
+  moduleSystem?: ModuleSystem
   frontend?: string
   styling?: string
   admin?: boolean
@@ -46,6 +47,10 @@ export interface StepEnvironment {
   fixedPackageManager?: PackageManagerId
   /** From the pre-flight; managers missing here are marked "not installed". */
   installedPackageManagers?: ReadonlySet<PackageManagerId>
+  /** From the settings (config, preset, remembered); pre-selects the module system. */
+  defaultModuleSystem?: ModuleSystem
+  /** Set by --module-system; the question is then skipped. */
+  fixedModuleSystem?: ModuleSystem
   /**
    * Remembered answers (task 5.4): pre-selected, never taken as answered, so every question is
    * still asked. A remembered value that no longer fits is ignored.
@@ -266,7 +271,7 @@ const FRONTEND_ARCHITECTURES: Choice<string>[] = [
 /** Question 12: the test runner; node:test needs nothing extra (D-60). */
 const TEST_RUNNERS: Choice<string>[] = [
   { value: 'testing-vitest', label: 'Vitest' },
-  { value: 'testing-jest', label: 'Jest', hint: 'native ESM mode, SWC for TypeScript' },
+  { value: 'testing-jest', label: 'Jest', hint: 'SWC for TypeScript' },
   { value: NONE, label: "Node's built-in test runner", hint: 'node --test, no extra dependency' }
 ]
 
@@ -410,6 +415,32 @@ const isFullstack = (answers: WizardAnswers): boolean => answers.appType === FUL
 const onPostgresPrisma = (answers: WizardAnswers): boolean =>
   answers.database === 'database-postgres' && answers.orm === 'orm-prisma'
 
+/** Question 2b (D-91): how the API's code is loaded; web apps stay ESM. */
+const MODULE_SYSTEM_CHOICES: Choice<ModuleSystem>[] = [
+  { value: 'esm', label: 'ES modules', hint: 'import/export, "type": "module" (recommended)' },
+  { value: 'cjs', label: 'CommonJS', hint: 'require() at run time, "type": "commonjs"' }
+]
+
+const moduleSystemStep: WizardStep = {
+  key: 'moduleSystem',
+  label: 'Module system',
+  applies: (answers, environment) =>
+    isModule(answers.framework) && environment.fixedModuleSystem === undefined,
+  ask: async (prompter, answers, environment) => ({
+    ...answers,
+    moduleSystem: await prompter.select<ModuleSystem>({
+      message: 'Module system (the source is TypeScript either way)',
+      choices: MODULE_SYSTEM_CHOICES,
+      initialValue:
+        answers.moduleSystem ??
+        environment.defaultModuleSystem ??
+        (rememberedText(environment, 'moduleSystem') === 'cjs' ? 'cjs' : 'esm')
+    })
+  }),
+  describe: (answers) => labelOf(MODULE_SYSTEM_CHOICES, answers.moduleSystem ?? 'esm'),
+  modules: () => []
+}
+
 const packageManagerStep: WizardStep = {
   key: 'packageManager',
   label: 'Package manager',
@@ -494,6 +525,7 @@ export const STEPS: readonly WizardStep[] = [
     applies: isBackend,
     addsModule: true
   }),
+  moduleSystemStep,
   selectStep({
     key: 'frontend',
     label: 'Frontend',

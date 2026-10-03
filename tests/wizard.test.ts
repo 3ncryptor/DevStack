@@ -34,6 +34,7 @@ const Q = {
   preset: 'Start from a preset?',
   appType: 'App type',
   framework: 'Backend framework',
+  moduleSystem: 'Module system (the source is TypeScript either way)',
   frontend: 'Frontend framework',
   styling: 'Styling',
   admin: 'Add an admin frontend? (apps/admin on port 3002, same API)',
@@ -111,6 +112,43 @@ const NEST: ReadonlyArray<readonly [string, unknown]> = [
   [Q.repoExtras, []]
 ]
 
+describe('module system question (D-91)', () => {
+  it('asks it for a backend and returns the choice as a setting', async () => {
+    const prompter = new AnswerPrompter([...NEST, [Q.moduleSystem, 'cjs']])
+
+    const result = await runWizard(prompter, CONTEXT, fakeServices())
+
+    expect(prompter.asked).toContain(Q.moduleSystem)
+    expect(result.settings).toEqual({ moduleSystem: 'cjs' })
+  })
+
+  it('is not asked when --module-system fixes it, nor for a preset, which pre-fills it', async () => {
+    const fixed = new AnswerPrompter(NEST)
+    const fromPreset = new AnswerPrompter()
+
+    await runWizard(fixed, { ...CONTEXT, fixedModuleSystem: 'cjs' }, fakeServices())
+    const preset = await runWizard(
+      fromPreset,
+      { ...CONTEXT, presetModules: ['framework-express'], defaultModuleSystem: 'cjs' },
+      fakeServices()
+    )
+
+    expect(fixed.asked).not.toContain(Q.moduleSystem)
+    expect(fromPreset.asked).not.toContain(Q.moduleSystem)
+    expect(preset.settings).toEqual({ moduleSystem: 'cjs' })
+  })
+
+  it('takes a remembered answer for a preset', async () => {
+    const result = await runWizard(
+      new AnswerPrompter(),
+      { ...CONTEXT, presetModules: ['framework-express'], remembered: { moduleSystem: 'cjs' } },
+      fakeServices()
+    )
+
+    expect(result.settings).toEqual({ moduleSystem: 'cjs' })
+  })
+})
+
 describe('guided wizard (A0.2 order)', () => {
   it('asks the applicable questions in order, with their defaults', async () => {
     const prompter = new AnswerPrompter()
@@ -121,6 +159,7 @@ describe('guided wizard (A0.2 order)', () => {
       Q.preset,
       Q.appType,
       Q.framework,
+      Q.moduleSystem,
       Q.database,
       Q.orm,
       Q.redis,

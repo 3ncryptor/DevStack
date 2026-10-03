@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { PACKAGE_MANAGERS } from '../adapters/package-manager/index'
+import { MODULE_SYSTEMS } from '../core/settings'
 
 export const cliOptionSchema = z.strictObject({
   preset: z.string().optional(),
@@ -10,6 +11,8 @@ export const cliOptionSchema = z.strictObject({
   pm: z.enum(PACKAGE_MANAGERS).optional(),
   /** `bare` or `wired`; beats the config, default wired. */
   depth: z.enum(['bare', 'wired']).optional(),
+  /** `esm` or `cjs` for the backend (D-91); beats the config and the wizard. */
+  moduleSystem: z.enum(MODULE_SYSTEMS).optional(),
   yes: z.boolean().default(false),
   advanced: z.boolean().default(false),
   inPlace: z.boolean().default(false),

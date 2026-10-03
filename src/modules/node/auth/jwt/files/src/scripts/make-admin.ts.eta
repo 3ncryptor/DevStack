@@ -11,7 +11,9 @@ if (email === undefined || email === '') {
   process.exit(1)
 }
 
-try {
+// a function, not top-level await, so the same code runs as ESM and as CommonJS (task 5.2)
+async function main(): Promise<void> {
+  try {
   const user = await prismaAuthRepositories.users.setRole(email, 'ADMIN')
   if (user === null) {
     console.error(`No user with the email ${email}; register first, then run this again.`)
@@ -20,6 +22,12 @@ try {
     // the new role is in the user's next access token, at their next refresh or login
     console.log(`${user.email} is now an admin.`)
   }
-} finally {
-  await disconnectDatabase()
+  } finally {
+    await disconnectDatabase()
+  }
 }
+
+main().catch((error: unknown) => {
+  console.error(error)
+  process.exitCode = 1
+})

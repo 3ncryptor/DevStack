@@ -10,7 +10,8 @@ const context: ConditionContext = {
   present: new Set(['language-node', 'framework-express', 'http-framework']),
   framework: 'framework-express',
   options: { limit: 100 },
-  depth: 'wired'
+  depth: 'wired',
+  moduleSystem: 'esm'
 }
 
 describe('evaluateCondition', () => {
@@ -24,6 +25,8 @@ describe('evaluateCondition', () => {
     [{ option: 'limit', equals: 5 }, false],
     [{ depth: 'wired' }, true],
     [{ depth: 'bare' }, false],
+    [{ moduleSystem: 'esm' }, true],
+    [{ moduleSystem: 'cjs' }, false],
     [{ not: { has: 'orm-prisma' } }, true],
     [{ all: [{ has: 'http-framework' }, { depth: 'wired' }] }, true],
     [{ all: [{ has: 'http-framework' }, { depth: 'bare' }] }, false],

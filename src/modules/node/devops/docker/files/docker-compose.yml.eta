@@ -80,6 +80,8 @@ services:
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d devstack']
       interval: 5s
+      # first start (initializing the data directory) may be slow; failures then do not count
+      start_period: 60s
       timeout: 3s
       retries: 10
     volumes:
@@ -97,6 +99,7 @@ services:
       # over TCP: the server MySQL runs during first-start initialization listens on the socket only
       test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-pmysql']
       interval: 5s
+      start_period: 60s
       timeout: 3s
       retries: 20
     volumes:
@@ -110,7 +113,9 @@ services:
     healthcheck:
       test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
       interval: 5s
-      timeout: 5s
+      start_period: 60s
+      # mongosh is a Node program and starts slowly on a busy machine
+      timeout: 15s
       retries: 10
     volumes:
       - mongo_data:/data/db
@@ -124,6 +129,7 @@ services:
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
+      start_period: 60s
       timeout: 3s
       retries: 10
     volumes:

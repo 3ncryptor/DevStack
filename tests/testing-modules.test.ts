@@ -27,7 +27,7 @@ describe('testing-vitest (task 3.5)', () => {
 
     expect(scripts(result).test).toBe('vitest run')
     expect(content(result, 'tests/health.test.ts')).toContain("import { test } from 'vitest'")
-    expect(content(result, 'tests/health.test.ts')).not.toContain('await test(')
+    expect(content(result, 'tests/health.test.ts')).not.toContain('void test(')
     expect(content(result, 'vitest.config.ts')).toContain('defineConfig')
   })
 
@@ -35,7 +35,7 @@ describe('testing-vitest (task 3.5)', () => {
     const result = await plan(['framework-express'])
 
     expect(content(result, 'tests/health.test.ts')).toContain("import { test } from 'node:test'")
-    expect(content(result, 'tests/health.test.ts')).toContain('await test(')
+    expect(content(result, 'tests/health.test.ts')).toContain('void test(')
   })
 
   it('compiles Nest tests with SWC so decorator metadata survives', async () => {

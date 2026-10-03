@@ -1,5 +1,5 @@
 <% const runner = it.modules.includes('testing-vitest') ? 'vitest' : it.modules.includes('testing-jest') ? '@jest/globals' : 'node:test' %>
-<% const awaitTest = runner === 'node:test' ? 'await ' : '' %>
+<% const awaitTest = runner === 'node:test' ? 'void ' : '' %>
 import assert from 'node:assert/strict'
 import { test } from '<%= runner %>'
 

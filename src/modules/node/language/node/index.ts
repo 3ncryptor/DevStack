@@ -15,7 +15,8 @@ const moduleDefinition: DevstackModule = {
   devDependencies: ['@types/node', 'tsx', 'typescript'],
   filesPath: moduleFilesPath('node/language/node'),
   packageJson: {
-    // generated projects are ESM (D-53); NodeNext resolution needs .js import extensions
+    // ESM (D-53), or CommonJS for the server when chosen (D-91, set by the planner); NodeNext
+    // resolution needs .js import extensions either way
     type: 'module',
     scripts: {
       // tsconfig.json also covers tests/ for typecheck and lint; the build compiles src/ only

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { InputError } from '../errors'
+import type { ModuleSystem } from '../types/module'
 
 /**
  * Project settings (buildPlan A6 layer 2, tasks 5.1-5.3): how the generated code looks and what
@@ -11,6 +12,9 @@ import { InputError } from '../errors'
 
 export const LICENSES = ['UNLICENSED', 'MIT', 'Apache-2.0', 'ISC'] as const
 export type License = (typeof LICENSES)[number]
+
+/** ESM (default) or CommonJS for the backend's code (D-91); frontends stay ESM. */
+export const MODULE_SYSTEMS = ['esm', 'cjs'] as const
 
 export const STRICTNESS = ['standard', 'strictest'] as const
 export type Strictness = (typeof STRICTNESS)[number]
@@ -45,6 +49,7 @@ const portsSchema = z.strictObject({ backend: port, frontend: port, admin: port 
 export const settingsSchema = z.strictObject({
   style: styleSchema.partial().optional(),
   strictness: z.enum(STRICTNESS).optional(),
+  moduleSystem: z.enum(MODULE_SYSTEMS).optional(),
   apps: appsSchema.partial().optional(),
   ports: portsSchema.partial().optional(),
   license: z.enum(LICENSES).optional(),
@@ -59,6 +64,7 @@ export type CodeStyle = z.infer<typeof styleSchema>
 export interface ResolvedSettings {
   style: CodeStyle
   strictness: Strictness
+  moduleSystem: ModuleSystem
   /** Folder names under apps/ in a monorepo. */
   apps: z.infer<typeof appsSchema>
   /** Ports chosen explicitly; the rest follow the layout (D-30: 3000, or api 3001 in a monorepo). */
@@ -80,13 +86,21 @@ export const DEFAULT_SETTINGS: ResolvedSettings = {
     useTabs: false
   },
   strictness: 'standard',
+  moduleSystem: 'esm',
   apps: { backend: 'api', frontend: 'web', admin: 'admin' },
   ports: {},
   license: 'UNLICENSED',
   initialCommit: true
 }
 
-const SCALARS = ['strictness', 'license', 'author', 'description', 'initialCommit'] as const
+const SCALARS = [
+  'strictness',
+  'moduleSystem',
+  'license',
+  'author',
+  'description',
+  'initialCommit'
+] as const
 
 /** Merges partial settings without filling defaults; later sources win, field by field. */
 export function mergeSettings(

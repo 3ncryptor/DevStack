@@ -10,7 +10,9 @@ if (email === undefined || email === '') {
   process.exit(1)
 }
 
-try {
+// a function, not top-level await, so the same code runs as ESM and as CommonJS (task 5.2)
+async function main(): Promise<void> {
+  try {
   // Better Auth's admin plugin reads the role from the user row on every request
   const { count } = await prisma.user.updateMany({ where: { email }, data: { role: 'admin' } })
   if (count === 0) {
@@ -22,6 +24,12 @@ try {
       `${email} is now an admin. Email addresses are not verified: make sure this account is yours (log in with it).`
     )
   }
-} finally {
-  await disconnectDatabase()
+  } finally {
+    await disconnectDatabase()
+  }
 }
+
+main().catch((error: unknown) => {
+  console.error(error)
+  process.exitCode = 1
+})

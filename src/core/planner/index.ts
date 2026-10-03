@@ -1,6 +1,6 @@
 import path from 'node:path'
 
-import type { Condition, Depth, DevstackModule } from '../../types/module'
+import type { Condition, Depth, DevstackModule, ModuleSystem } from '../../types/module'
 import type { PackageJson } from '../../types/package-json'
 import type { GenerationPlan, PlannedEnvVar, PlannedFile } from '../../types/plan'
 import { NODE_LANGUAGE } from '../../adapters/language/node'
@@ -78,18 +78,29 @@ const MERGE_STRATEGIES: Readonly<Record<string, PlannedFile['strategy']>> = {
   '.dockerignore': 'line-merge'
 }
 
-/** Whether a file, slot fragment or script rule of a module applies to this stack and depth. */
+/** What a rule is judged against besides the stack: the depth and the module system. */
+interface RuleScope {
+  depth: Depth
+  moduleSystem: ModuleSystem
+}
+
+/** Whether a file, slot fragment or script rule of a module applies to this stack and scope. */
 function ruleIncluded(
   modules: readonly DevstackModule[],
   moduleDefinition: DevstackModule,
   rule: { depth?: Depth; when?: Condition } | undefined,
   moduleOptions: ResolvedModuleOptions,
-  depth: Depth,
+  scope: RuleScope,
   target?: string
 ): boolean {
-  if (!includedAtDepth(rule?.depth ?? moduleDepth(moduleDefinition), depth)) return false
+  if (!includedAtDepth(rule?.depth ?? moduleDepth(moduleDefinition), scope.depth)) return false
   if (rule?.when === undefined) return true
-  const context = conditionContextFor(modules, moduleOptions[moduleDefinition.id] ?? {}, depth)
+  const context = conditionContextFor(
+    modules,
+    moduleOptions[moduleDefinition.id] ?? {},
+    scope.depth,
+    scope.moduleSystem
+  )
   return evaluateCondition(rule.when, { ...context, target })
 }
 
@@ -99,11 +110,11 @@ function withScriptRules(
   modules: readonly DevstackModule[],
   targetModules: readonly DevstackModule[],
   moduleOptions: ResolvedModuleOptions,
-  depth: Depth
+  scope: RuleScope
 ): PackageJson {
   const extra = targetModules.flatMap((moduleDefinition) =>
     (moduleDefinition.scripts ?? [])
-      .filter((rule) => ruleIncluded(modules, moduleDefinition, rule, moduleOptions, depth))
+      .filter((rule) => ruleIncluded(modules, moduleDefinition, rule, moduleOptions, scope))
       .map((rule): [string, string] => [rule.name, rule.run])
   )
   if (extra.length === 0) return packageJson
@@ -122,6 +133,24 @@ function withPorts(packageJson: PackageJson, port: number): PackageJson {
   return { ...packageJson, scripts }
 }
 
+/**
+ * The module system of the server (D-91): language-node makes a package ESM; under CommonJS the
+ * server's package becomes `"type": "commonjs"`. Web apps (Next.js, Vite) and the shared package
+ * stay ESM whatever the setting.
+ */
+function withModuleType(
+  packageJson: PackageJson,
+  targetModules: readonly DevstackModule[],
+  moduleSystem: ModuleSystem
+): PackageJson {
+  const ids = new Set(targetModules.map((moduleDefinition) => moduleDefinition.id))
+  const isServer =
+    ids.has('language-node') &&
+    !targetModules.some((moduleDefinition) => moduleDefinition.provides?.includes('web-framework'))
+  if (moduleSystem === 'esm' || !isServer) return packageJson
+  return { ...packageJson, type: 'commonjs' }
+}
+
 /** Fallback when the installed version is unknown (dry runs); a real run passes the probed one. */
 const FALLBACK_PM_VERSIONS: Readonly<Record<PackageManager, string>> = {
   npm: '11.6.2',
@@ -136,15 +165,24 @@ const WORKSPACE_GLOBS = ['apps/*', 'packages/*']
 function targetPackageJson(input: PlanInput, target: Target, context: PlanContext): PackageJson {
   const withSettings = (packageJson: PackageJson): PackageJson =>
     target.role === 'root' ? { ...packageJson, ...packageMetadata(context.settings) } : packageJson
-  const composed = withPorts(
-    withScriptRules(
-      composeProjectPackageJson(target.packageName, target.modules, context.modules),
-      context.modules,
-      target.modules,
-      context.moduleOptions,
-      context.depth
+  const composed = withModuleType(
+    withPorts(
+      withScriptRules(
+        composeProjectPackageJson(
+          target.packageName,
+          target.modules,
+          context.modules,
+          context.settings.moduleSystem
+        ),
+        context.modules,
+        target.modules,
+        context.moduleOptions,
+        scopeOf(context)
+      ),
+      portOf(target.role, context.monorepo, context.settings)
     ),
-    portOf(target.role, context.monorepo, context.settings)
+    target.modules,
+    context.settings.moduleSystem
   )
   if (!context.monorepo) return withSettings(composed)
   const shared = context.targets.find((candidate) => candidate.role === 'shared')
@@ -185,6 +223,11 @@ interface PlanContext {
   settings: ResolvedSettings
 }
 
+const scopeOf = (context: PlanContext): RuleScope => ({
+  depth: context.depth,
+  moduleSystem: context.settings.moduleSystem
+})
+
 interface TargetOutput {
   files: PlannedFile[]
   env: PlannedEnvVar[]
@@ -205,7 +248,7 @@ async function targetOutput(
         moduleDefinition,
         { when: declaration.when },
         context.moduleOptions,
-        context.depth,
+        scopeOf(context),
         target.role
       )
     ),
@@ -256,7 +299,7 @@ async function targetOutput(
         moduleDefinition,
         moduleDefinition.files?.find((rule) => rule.path === outputPath),
         context.moduleOptions,
-        context.depth,
+        scopeOf(context),
         target.role
       )
     files.push(
@@ -360,18 +403,26 @@ const withMergeStrategy = (file: PlannedFile): PlannedFile => {
 
 /** Resolves the stack and describes everything generation will write and run (buildPlan B3). */
 export async function buildGenerationPlan(input: PlanInput): Promise<GenerationPlan> {
-  const composition = composeModules(input.selectedModuleNames, input.registry, input.projectName)
+  const settings = resolveSettings(input.settings)
+  const composition = composeModules(
+    input.selectedModuleNames,
+    input.registry,
+    input.projectName,
+    settings.moduleSystem
+  )
   const modules = composition.orderedModules
   const moduleOptions = resolveModuleOptions(modules, input.moduleOptions ?? {})
   const depth = plannedDepth(input)
-  const settings = resolveSettings(input.settings)
   assertDistinctPorts(settings, isMonorepo(modules))
   const targets = planTargets(input.projectName, modules, settings)
   const domainsDir = modules.some((moduleDefinition) => moduleDefinition.id === 'arch-feature')
     ? 'features'
     : 'modules'
   const slots = renderSlots(modules, (moduleDefinition, fragment) =>
-    ruleIncluded(modules, moduleDefinition, fragment, moduleOptions, depth)
+    ruleIncluded(modules, moduleDefinition, fragment, moduleOptions, {
+      depth,
+      moduleSystem: settings.moduleSystem
+    })
   )
   const context: PlanContext = {
     targets,

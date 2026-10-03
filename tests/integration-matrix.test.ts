@@ -41,7 +41,8 @@ const combinations = matrix.flatMap((combination) => {
     ),
     framework: modules.find((moduleDefinition) => moduleDefinition.category === 'framework')?.id,
     options: {},
-    depth: combination.depth ?? 'wired'
+    depth: combination.depth ?? 'wired',
+    moduleSystem: combination.settings?.['moduleSystem'] === 'cjs' ? 'cjs' : 'esm'
   }
   const targets = [
     'backend',

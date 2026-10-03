@@ -18,6 +18,7 @@ interface InitFlags {
   preset?: string
   pm?: string
   depth?: string
+  moduleSystem?: string
   config?: string
   yes: boolean
   advanced: boolean
@@ -53,6 +54,7 @@ program
     'bare (config and tooling only) or wired (default, adds integration code)'
   )
   .option('--pm <name>', 'Package manager for the project: npm, pnpm, yarn or bun')
+  .option('--module-system <system>', 'esm (default) or cjs (CommonJS) for the backend')
   .option('--config <file>', "Generate from a stack config, e.g. a project's .devstack/stack.json")
   .option('--yes', 'Skip interactive prompts and use defaults', false)
   .option('--advanced', 'Enable advanced module selection mode', false)
@@ -67,13 +69,14 @@ program
   .option('--dry-run', 'Show what would be written and run, then stop', false)
   .option('--print-plan [format]', 'Print the plan as text or json and write nothing')
   .action(async (projectName: string | undefined, flags: InitFlags) => {
-    const { printPlan, pm, depth, ...rest } = flags
+    const { printPlan, pm, depth, moduleSystem, ...rest } = flags
     await runCreateDevstack({
       projectName,
       options: {
         ...rest,
         pm: pm as CliOptions['pm'],
         depth: depth as CliOptions['depth'],
+        moduleSystem: moduleSystem as CliOptions['moduleSystem'],
         printPlan: printPlan as CliOptions['printPlan']
       }
     })
@@ -84,6 +87,7 @@ interface PlanFlags {
   config?: string
   pm?: string
   depth?: string
+  moduleSystem?: string
   json: boolean
 }
 
@@ -97,6 +101,7 @@ program
   .option('--config <file>', 'Plan a stack config, e.g. .devstack/stack.json')
   .option('--pm <name>', 'Package manager: npm, pnpm, yarn or bun')
   .option('--depth <level>', 'bare or wired')
+  .option('--module-system <system>', 'esm or cjs')
   .option('--json', 'Print the plan as JSON', false)
   .action(async (projectName: string | undefined, flags: PlanFlags) => {
     await runCreateDevstack({
@@ -106,6 +111,7 @@ program
         config: flags.config,
         pm: flags.pm as CliOptions['pm'],
         depth: flags.depth as CliOptions['depth'],
+        moduleSystem: flags.moduleSystem as CliOptions['moduleSystem'],
         yes: true,
         printPlan: flags.json ? 'json' : 'text'
       }

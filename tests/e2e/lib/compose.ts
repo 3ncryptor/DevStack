@@ -56,7 +56,10 @@ export async function composeCheck(
       ['compose', '-p', name, 'up', '--build', '--detach', '--wait'],
       options
     )
-    if (!up.ok) return { step, ok: false, durationMs: Date.now() - startedAt, detail: up.output }
+    if (!up.ok) {
+      const detail = `${up.output}\n${await containerLogs(name, options)}`
+      return { step, ok: false, durationMs: Date.now() - startedAt, detail }
+    }
 
     const problem = existsSync(path.join(projectDir, webDir))
       ? await webProblem(ports.WEB_PORT)
@@ -66,6 +69,22 @@ export async function composeCheck(
     // this compose project only: its containers, network, the images it built, its volume
     await run('docker', ['compose', '-p', name, 'down', '--rmi', 'local', '--volumes'], options)
   }
+}
+
+const LOG_LINES = '60'
+
+/** What the containers did: their states and last log lines, so a failure can be diagnosed. */
+async function containerLogs(
+  name: string,
+  options: { cwd: string; timeoutMs: number; env: Record<string, string> }
+): Promise<string> {
+  const states = await run('docker', ['compose', '-p', name, 'ps', '--all'], options)
+  const logs = await run(
+    'docker',
+    ['compose', '-p', name, 'logs', '--no-color', '--tail', LOG_LINES],
+    options
+  )
+  return `${states.output}\n${logs.output}`
 }
 
 const fetchText = (url: string): Promise<string> =>

@@ -27,7 +27,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "da607275cf174f8c",
+      "sha256": "0797bb3f2c4393c0",
       "strategy": "create",
     },
     {
@@ -105,13 +105,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
     {
       "mode": "644",
       "path": "docker-compose.yml",
-      "sha256": "e8c32fe7bfa2488b",
+      "sha256": "83d64eb6569e5794",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "93f1b713082211fd",
+      "sha256": "2a11990b96a90b95",
       "strategy": "create",
     },
     {
@@ -381,7 +381,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "faa04cfc77dc2751",
+      "sha256": "770726739f6f0434",
       "strategy": "create",
     },
     {
@@ -645,13 +645,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "tests/api-response.test.ts",
-      "sha256": "7fe6aff12dafe4d7",
+      "sha256": "b1798c5e29ec644c",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "tests/health.test.ts",
-      "sha256": "de56c3fe751d1e2c",
+      "sha256": "eca7401004b8bb13",
       "strategy": "create",
     },
     {
@@ -663,7 +663,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "tests/rate-limit.test.ts",
-      "sha256": "684a56e818aca9e7",
+      "sha256": "4eaff743a53d0a92",
       "strategy": "create",
     },
     {
@@ -726,7 +726,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "c82913b35f0ff469",
+      "sha256": "f986fba7556c55e0",
       "strategy": "create",
     },
     {
@@ -804,13 +804,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": "docker-compose.yml",
-      "sha256": "5ae2a2d0af701613",
+      "sha256": "fe0d4c33205ab0f9",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "93f1b713082211fd",
+      "sha256": "2a11990b96a90b95",
       "strategy": "create",
     },
     {
@@ -876,7 +876,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": "src/index.ts",
-      "sha256": "3253803486512349",
+      "sha256": "589650039b16ded1",
       "strategy": "create",
     },
     {
@@ -1002,7 +1002,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": "tests/docs.test.ts",
-      "sha256": "7003fa0d2c55d8a0",
+      "sha256": "e8e6265ffd376e33",
       "strategy": "create",
     },
     {
@@ -1101,7 +1101,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "a5c8c45493fb88b3",
+      "sha256": "d229048219e425b6",
       "strategy": "create",
     },
     {
@@ -1179,13 +1179,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "docker-compose.yml",
-      "sha256": "5ae2a2d0af701613",
+      "sha256": "fe0d4c33205ab0f9",
       "strategy": "create",
     },
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "0ff79fda451971e6",
+      "sha256": "a7db72bb0174aad2",
       "strategy": "create",
     },
     {
@@ -1341,7 +1341,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "src/main.ts",
-      "sha256": "3c7339794160575c",
+      "sha256": "73d851362a18a9b7",
       "strategy": "create",
     },
     {
@@ -1449,7 +1449,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "src/scripts/make-admin.ts",
-      "sha256": "2f94f167571d9b7c",
+      "sha256": "1ebcb9810eae9766",
       "strategy": "create",
     },
     {
@@ -1473,7 +1473,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "tests/auth.db.test.ts",
-      "sha256": "2d6c98c146ee5543",
+      "sha256": "1416a48c77e3a8b9",
       "strategy": "create",
     },
     {
@@ -1485,7 +1485,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "tests/docs.test.ts",
-      "sha256": "6fd21de33c6e5f5f",
+      "sha256": "febcf1e95105b5ae",
       "strategy": "create",
     },
     {
@@ -1586,7 +1586,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "5559141874be820c",
+      "sha256": "5645df135af25afc",
       "strategy": "create",
     },
     {
@@ -1724,7 +1724,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/Dockerfile",
-      "sha256": "3e64ccdbab529f3c",
+      "sha256": "44f77961b13e8393",
       "strategy": "create",
     },
     {
@@ -2084,7 +2084,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "docker-compose.yml",
-      "sha256": "71dcbdc02e741595",
+      "sha256": "36d61bf66f11fbb5",
       "strategy": "create",
     },
     {
@@ -2211,7 +2211,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "2454d4240ada3272",
+      "sha256": "27ccf6563062b777",
       "strategy": "create",
     },
     {
@@ -2349,7 +2349,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "apps/api/Dockerfile",
-      "sha256": "3e64ccdbab529f3c",
+      "sha256": "44f77961b13e8393",
       "strategy": "create",
     },
     {
@@ -2571,7 +2571,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "apps/api/src/scripts/make-admin.ts",
-      "sha256": "2f94f167571d9b7c",
+      "sha256": "1ebcb9810eae9766",
       "strategy": "create",
     },
     {
@@ -2607,7 +2607,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "apps/api/tests/auth.db.test.ts",
-      "sha256": "b38c302f07e8757b",
+      "sha256": "9a642792331ec500",
       "strategy": "create",
     },
     {
@@ -2859,7 +2859,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "docker-compose.yml",
-      "sha256": "71dcbdc02e741595",
+      "sha256": "36d61bf66f11fbb5",
       "strategy": "create",
     },
     {

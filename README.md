@@ -22,7 +22,7 @@ Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
 
 ## What you get
 
-- **Express 5, Fastify 5 or NestJS 12** on ESM TypeScript (NodeNext), built around `createApp(deps)` so tests
+- **Express 5, Fastify 5 or NestJS 12** on TypeScript (NodeNext), ESM or CommonJS, built around `createApp(deps)` so tests
   need no open port:
   - environment validated with Zod at startup, every missing or invalid variable listed at once;
   - pino JSON logs with a request id per request (echoed in `x-request-id`);
@@ -103,7 +103,8 @@ create-devstack-app mcp                           # serve DevStack to AI assista
 ```
 
 The wizard first checks your machine (Node.js version, package managers, git identity), then
-asks only the questions that apply: framework, database and ORM, package manager, architecture,
+asks only the questions that apply: framework, module system (ESM or CommonJS), database and
+ORM, package manager, architecture,
 pre-commit hooks, Docker and what `app.ts` sets up. ESLint, Prettier and TypeScript are always
 configured. Nothing is written until the review screen, where you can generate, change any
 answer, save the stack as a named preset, remember your answers as defaults, or cancel. A
@@ -117,6 +118,7 @@ project with one of those names needs the explicit form: `create-devstack-app in
 | `--preset <name>`           | Start from a preset, built in or your own (`presets list`); you still see the review screen unless you pass `--yes` |
 | `--pm <name>`               | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm)      |
 | `--depth <level>`           | `wired` (default): integration code included. `bare`: config, tooling and folders only                              |
+| `--module-system <system>`  | `esm` (default) or `cjs`: how the API's code is loaded. Web apps stay ESM                                           |
 | `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                         |
 | `--yes`                     | Accept defaults, never ask. Never overwrites existing files                                                         |
 | `--force`                   | Overwrite existing files. Originals are backed up first                                                             |
@@ -159,6 +161,7 @@ A config can also carry `settings`, recorded with every project:
 "settings": {
   "style": { "semi": true, "singleQuote": false, "tabWidth": 4, "printWidth": 100 },
   "strictness": "strictest",
+  "moduleSystem": "cjs",
   "apps": { "backend": "server", "frontend": "site" },
   "ports": { "backend": 4000 },
   "license": "MIT",
@@ -168,7 +171,8 @@ A config can also carry `settings`, recorded with every project:
 ```
 
 The code style goes into `.prettierrc` and every generated file follows it; `strictest` adds
-`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` and `noImplicitOverride`; `apps` and
+`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` and `noImplicitOverride`;
+`moduleSystem: "cjs"` makes the API CommonJS (the source stays TypeScript); `apps` and
 `ports` rename the monorepo's apps everywhere (folders, compose, Dockerfiles, env).
 
 Every generated project records its own config in `.devstack/stack.json`; passing it to

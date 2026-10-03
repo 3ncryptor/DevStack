@@ -1,5 +1,16 @@
 import { moduleFilesPath } from '../../../../paths'
-import type { DevstackModule } from '../../../../types/module'
+import type { DevstackModule, ModuleSystem } from '../../../../types/module'
+
+const MODULE_SYSTEMS = ['esm', 'cjs'] as const
+
+/**
+ * SWC compiles Nest's decorators at run time: an ESM loader hook, or under CommonJS the require
+ * hook plus scripts/ts-resolve.mjs, which maps the sources' `.js` specifiers to `.ts` (D-91).
+ */
+const SWC_REGISTER: Readonly<Record<ModuleSystem, string>> = {
+  esm: '--import @swc-node/register/esm-register',
+  cjs: '--import ./scripts/ts-resolve.mjs -r @swc-node/register'
+}
 
 const moduleDefinition: DevstackModule = {
   id: 'framework-nest',
@@ -19,7 +30,10 @@ const moduleDefinition: DevstackModule = {
   // SWC keeps decorator metadata in dev, which Nest's dependency injection needs (D-51)
   // unplugin-swc: Vitest compiles Nest tests with SWC, which keeps decorator metadata
   devDependencies: ['@swc-node/register', '@swc/core', '@types/express', 'unplugin-swc'],
-  files: [{ path: 'vitest.config.ts', when: { has: 'testing-vitest' }, depth: 'wired' }],
+  files: [
+    { path: 'vitest.config.ts', when: { has: 'testing-vitest' }, depth: 'wired' },
+    { path: 'scripts/ts-resolve.mjs', when: { moduleSystem: 'cjs' }, depth: 'wired' }
+  ],
   exposesSlots: [
     'app.imports',
     'app.middleware',
@@ -43,20 +57,29 @@ const moduleDefinition: DevstackModule = {
   filesPath: moduleFilesPath('node/framework/nest'),
   // wired only: at bare there is no src/main.ts and language-node's src/index.ts scripts apply
   scripts: [
-    {
-      name: 'dev',
-      run: 'node --watch --import @swc-node/register/esm-register src/main.ts',
-      depth: 'wired',
-      // with pino, core-backend's dev script pipes this through pino-pretty
-      when: { any: [{ has: 'obs-winston' }, { has: 'obs-json-logs' }] }
-    },
-    { name: 'start', run: 'node dist/main.js', depth: 'wired' },
-    {
-      name: 'test',
-      run: 'node --import @swc-node/register/esm-register --test "tests/**/*.test.ts"',
-      depth: 'wired',
-      when: { not: { any: [{ has: 'testing-vitest' }, { has: 'testing-jest' }] } }
-    }
+    ...MODULE_SYSTEMS.flatMap((moduleSystem) => [
+      {
+        name: 'dev',
+        run: `node --watch ${SWC_REGISTER[moduleSystem]} src/main.ts`,
+        depth: 'wired' as const,
+        // with pino, core-backend's dev script pipes this through pino-pretty
+        when: {
+          all: [{ any: [{ has: 'obs-winston' }, { has: 'obs-json-logs' }] }, { moduleSystem }]
+        }
+      },
+      {
+        name: 'test',
+        run: `node ${SWC_REGISTER[moduleSystem]} --test "tests/**/*.test.ts"`,
+        depth: 'wired' as const,
+        when: {
+          all: [
+            { not: { any: [{ has: 'testing-vitest' }, { has: 'testing-jest' }] } },
+            { moduleSystem }
+          ]
+        }
+      }
+    ]),
+    { name: 'start', run: 'node dist/main.js', depth: 'wired' }
   ]
 }
 

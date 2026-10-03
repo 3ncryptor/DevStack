@@ -4,7 +4,12 @@ import { buildApprovalsFor, isCatalogName, NODE_CATALOG } from '../catalog/node'
 import { TYPE_PAIRS } from '../catalog/pairs'
 import { ResolutionError } from '../errors'
 import { CLI_PACKAGE } from './manifest'
-import { dependencyName, type DependencyEntry, type DevstackModule } from '../types/module'
+import {
+  dependencyName,
+  type DependencyEntry,
+  type DevstackModule,
+  type ModuleSystem
+} from '../types/module'
 import { conditionContextFor, evaluateCondition } from './planner/conditions'
 import type { DependencyMap, PackageJson } from '../types/package-json'
 import { formatDiagnostics, resolveStack } from './resolver/index'
@@ -27,11 +32,12 @@ interface DependencyNames {
  */
 function collectDependencyNames(
   modules: readonly DevstackModule[],
-  stack: readonly DevstackModule[]
+  stack: readonly DevstackModule[],
+  moduleSystem: ModuleSystem
 ): DependencyNames {
   const dependencies = new Map<string, string>()
   const devDependencies = new Map<string, string>()
-  const context = conditionContextFor(stack, {}, 'wired')
+  const context = conditionContextFor(stack, {}, 'wired', moduleSystem)
   const applies = (entry: DependencyEntry): boolean =>
     typeof entry === 'string' || evaluateCondition(entry.when, context)
   for (const moduleDefinition of modules) {
@@ -71,7 +77,8 @@ export function composeProjectPackageJson(
   projectName: string,
   modules: DevstackModule[],
   /** Every module of the project, for conditional dependencies; a target passes its own subset. */
-  stack: readonly DevstackModule[] = modules
+  stack: readonly DevstackModule[],
+  moduleSystem: ModuleSystem
 ): PackageJson {
   const basePackageJson: PackageJson = {
     name: projectName,
@@ -89,7 +96,7 @@ export function composeProjectPackageJson(
     basePackageJson
   )
 
-  const names = collectDependencyNames(modules, stack)
+  const names = collectDependencyNames(modules, stack, moduleSystem)
   return {
     ...withFragments,
     dependencies: toVersionMap(names.dependencies),
@@ -100,7 +107,8 @@ export function composeProjectPackageJson(
 export function composeModules(
   selectedModuleNames: string[],
   registry: Map<string, DevstackModule>,
-  projectName: string
+  projectName: string,
+  moduleSystem: ModuleSystem = 'esm'
 ): CompositionResult {
   const resolution = resolveStack(selectedModuleNames, registry)
   const errors = resolution.diagnostics.filter((diagnostic) => diagnostic.severity === 'error')
@@ -111,7 +119,12 @@ export function composeModules(
   }
   const orderedModules = resolution.modules
 
-  const packageJson = composeProjectPackageJson(projectName, orderedModules)
+  const packageJson = composeProjectPackageJson(
+    projectName,
+    orderedModules,
+    orderedModules,
+    moduleSystem
+  )
   const installed = [
     ...Object.keys(packageJson.dependencies ?? {}),
     ...Object.keys(packageJson.devDependencies ?? {})

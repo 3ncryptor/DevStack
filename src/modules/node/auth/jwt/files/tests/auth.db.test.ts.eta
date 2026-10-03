@@ -12,12 +12,15 @@ import { prismaAuthRepositories } from '../src/db/repositories/auth.repository.p
 import { TEST_AUTH_CONFIG } from './helpers/auth.js'
 
 /** The flow against the real database (B17.5), once it is up and migrated. */
-const ready = await prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`.then(
-  () => true,
-  () => false
-)
+const databaseReady = (): Promise<boolean> =>
+  prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`.then(
+    () => true,
+    () => false
+  )
 const SKIPPED = 'database not reachable or not migrated: run db:up, then db:migrate'
 const email = `db-test-${randomUUID()}@example.com`
+// checked inside the test, not with top-level await, so this runs as ESM and as CommonJS
+let ready = false
 
 <% if (vitest || it.modules.includes('testing-jest')) { %>afterAll<% } else { %>after<% } %>(async () => {
   if (ready) await prisma.user.deleteMany({ where: { email } })
@@ -25,12 +28,27 @@ const email = `db-test-${randomUUID()}@example.com`
 })
 
 <% if (it.modules.includes('testing-jest')) { %>
-// Jest has no skipIf: the test or its skipped twin, with the reason in the name
-;(ready ? test : test.skip)(`register, login, refresh and logout on Postgres${ready ? '' : ` (${SKIPPED})`}`, async () => {
+test('register, login, refresh and logout on Postgres (passes without checking when the database is not up)', async () => {
+  ready = await databaseReady()
+  // Jest cannot skip from inside a test; without a migrated database there is nothing to check
+  if (!ready) {
+    console.info(SKIPPED)
+    return
+  }
 <% } else if (vitest) { %>
-test.skipIf(!ready)(`register, login, refresh and logout on Postgres${ready ? '' : ` (${SKIPPED})`}`, async () => {
+test('register, login, refresh and logout on Postgres', async (context) => {
+  ready = await databaseReady()
+  if (!ready) {
+    context.skip(SKIPPED)
+    return
+  }
 <% } else { %>
-await test('register, login, refresh and logout on Postgres', { skip: ready ? false : SKIPPED }, async () => {
+void test('register, login, refresh and logout on Postgres', async (t) => {
+  ready = await databaseReady()
+  if (!ready) {
+    t.skip(SKIPPED)
+    return
+  }
 <% } %>
   const auth = createAuthService({ ...prismaAuthRepositories, config: TEST_AUTH_CONFIG })
 

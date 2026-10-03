@@ -1,4 +1,4 @@
-import type { Condition, DevstackModule, Depth } from '../../types/module'
+import type { Condition, DevstackModule, Depth, ModuleSystem } from '../../types/module'
 
 /** What a condition is evaluated against (buildPlan B4): the resolved stack, seen from one module. */
 export interface ConditionContext {
@@ -9,6 +9,7 @@ export interface ConditionContext {
   /** Resolved options of the module the condition belongs to. */
   options: Readonly<Record<string, unknown>>
   depth: Depth
+  moduleSystem: ModuleSystem
   /** Role of the target a file is rendered for; unset for slots and scripts. */
   target?: string
 }
@@ -19,6 +20,7 @@ export function evaluateCondition(condition: Condition, context: ConditionContex
   if ('not' in condition) return !evaluateCondition(condition.not, context)
   if ('has' in condition) return context.present.has(condition.has)
   if ('framework' in condition) return context.framework === condition.framework
+  if ('moduleSystem' in condition) return context.moduleSystem === condition.moduleSystem
   if ('option' in condition) return Object.is(context.options[condition.option], condition.equals)
   if ('target' in condition) return context.target === condition.target
   return context.depth === condition.depth
@@ -40,7 +42,8 @@ export function moduleDepth(moduleDefinition: DevstackModule): Depth {
 export function conditionContextFor(
   modules: readonly DevstackModule[],
   options: Readonly<Record<string, unknown>>,
-  depth: Depth
+  depth: Depth,
+  moduleSystem: ModuleSystem
 ): ConditionContext {
   return {
     present: new Set(
@@ -51,6 +54,7 @@ export function conditionContextFor(
     ),
     framework: modules.find((moduleDefinition) => moduleDefinition.category === 'framework')?.id,
     options,
-    depth
+    depth,
+    moduleSystem
   }
 }

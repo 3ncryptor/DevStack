@@ -82,7 +82,7 @@ export const NODE_CATALOG = {
   // vitest's peer; yarn classic does not install peers on its own
   vite: { version: '^8.3.2' },
   'unplugin-swc': { version: '^2.0.0' },
-  // Jest 30 with SWC for TypeScript and native ESM (M4, D-75); verified 2026-10-02
+  // Jest 30 with SWC for TypeScript, ESM or CommonJS (M4, D-75, D-91); verified 2026-10-02
   jest: { version: '^30.5.2' },
   '@jest/globals': { version: '^30.5.2' },
   '@swc/jest': { version: '^0.2.39' },

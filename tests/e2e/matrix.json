@@ -891,5 +891,141 @@
         "remove": ["cache-redis"]
       }
     ]
+  },
+  {
+    "id": "cjs-nest-node-test",
+    "modules": [
+      "language-node",
+      "quality-eslint",
+      "quality-prettier",
+      "framework-nest",
+      "database-mongodb",
+      "orm-mongoose",
+      "middleware-cors",
+      "security-helmet"
+    ],
+    "settings": {
+      "moduleSystem": "cjs"
+    }
+  },
+  {
+    "id": "cjs-nest-jest-winston",
+    "modules": [
+      "language-node",
+      "quality-eslint",
+      "quality-prettier",
+      "framework-nest",
+      "database-postgres",
+      "orm-prisma",
+      "auth-jwt",
+      "cache-redis",
+      "obs-winston",
+      "testing-jest",
+      "security-rate-limit"
+    ],
+    "settings": {
+      "moduleSystem": "cjs"
+    }
+  },
+  {
+    "id": "cjs-fastify-session-docs",
+    "modules": [
+      "language-node",
+      "quality-eslint",
+      "quality-prettier",
+      "framework-fastify",
+      "database-postgres",
+      "orm-prisma",
+      "auth-session",
+      "api-docs-scalar",
+      "api-versioning",
+      "security-rate-limit",
+      "middleware-request-logger",
+      "testing-vitest"
+    ],
+    "settings": {
+      "moduleSystem": "cjs"
+    }
+  },
+  {
+    "id": "cjs-fastify-mysql-drizzle-jest",
+    "modules": [
+      "language-node",
+      "quality-eslint",
+      "quality-prettier",
+      "framework-fastify",
+      "database-mysql",
+      "orm-drizzle",
+      "obs-json-logs",
+      "testing-jest"
+    ],
+    "settings": {
+      "moduleSystem": "cjs"
+    }
+  },
+  {
+    "id": "cjs-express-better-auth-todo",
+    "modules": [
+      "language-node",
+      "quality-eslint",
+      "quality-prettier",
+      "framework-express",
+      "database-postgres",
+      "orm-prisma",
+      "auth-better-auth",
+      "template-todo",
+      "api-docs-scalar",
+      "testing-jest",
+      "devops-docker",
+      "middleware-cors"
+    ],
+    "settings": {
+      "moduleSystem": "cjs"
+    },
+    "compose": true
+  },
+  {
+    "id": "cjs-express-sqlite-drizzle-strictest",
+    "modules": [
+      "language-node",
+      "quality-eslint",
+      "quality-prettier",
+      "framework-express",
+      "database-sqlite",
+      "orm-drizzle",
+      "testing-vitest",
+      "middleware-async-handler"
+    ],
+    "settings": {
+      "moduleSystem": "cjs",
+      "strictness": "strictest"
+    }
+  },
+  {
+    "id": "cjs-fullstack-preset",
+    "preset": "fullstack-next-express",
+    "settings": {
+      "moduleSystem": "cjs"
+    }
+  },
+  {
+    "id": "cjs-express-add-auth",
+    "modules": [
+      "language-node",
+      "quality-eslint",
+      "quality-prettier",
+      "framework-express",
+      "database-postgres",
+      "orm-prisma",
+      "testing-vitest"
+    ],
+    "settings": {
+      "moduleSystem": "cjs"
+    },
+    "evolve": [
+      {
+        "add": ["auth-jwt", "template-todo"]
+      }
+    ]
   }
 ]

@@ -1,5 +1,6 @@
 import type { PackageManagerId } from '../../adapters/package-manager/index'
 import { PRESETS, type ResolvedPreset } from '../../core/presets'
+import type { ProjectSettings } from '../../core/settings'
 import { applyFixAction } from '../../core/resolver/index'
 import type { Prompter } from '../../intake/prompter'
 import type { Depth } from '../../types/module'
@@ -34,6 +35,8 @@ export interface StackSelection {
   moduleOptions: Record<string, Record<string, unknown>>
   /** The user preset picked in question 0, whose settings and options the project takes. */
   preset?: ResolvedPreset
+  /** Settings the answers set (the module system), over the preset's. */
+  settings?: ProjectSettings
 }
 
 const CUSTOM = 'custom'
@@ -80,9 +83,26 @@ interface Start {
   preset?: ResolvedPreset
 }
 
+/**
+ * A preset's answers: its modules, and the module system from the flag, the preset, the settings
+ * or the remembered answer, else ESM. Editable on the review screen like every answer.
+ */
+function presetAnswers(
+  modules: readonly string[],
+  context: WizardContext,
+  preset?: ResolvedPreset
+): WizardAnswers {
+  const moduleSystem =
+    context.fixedModuleSystem ??
+    preset?.settings?.moduleSystem ??
+    context.defaultModuleSystem ??
+    (context.remembered?.['moduleSystem'] === 'cjs' ? 'cjs' : 'esm')
+  return { ...answersFromModules(modules), moduleSystem }
+}
+
 async function startingAnswers(prompter: Prompter, context: WizardContext): Promise<Start> {
   if (context.presetModules !== undefined) {
-    return { answers: answersFromModules(context.presetModules) }
+    return { answers: presetAnswers(context.presetModules, context) }
   }
   const saved = context.userPresets ?? []
   const choice = await prompter.select({
@@ -103,11 +123,11 @@ async function startingAnswers(prompter: Prompter, context: WizardContext): Prom
     initialValue: CUSTOM
   })
   const builtIn = PRESETS[choice]
-  if (builtIn !== undefined) return { answers: answersFromModules(builtIn.modules) }
+  if (builtIn !== undefined) return { answers: presetAnswers(builtIn.modules, context) }
   const mine = saved.find((preset) => `user:${preset.name}` === choice)
   return mine === undefined
     ? { answers: {} }
-    : { answers: answersFromModules(mine.modules), preset: mine }
+    : { answers: presetAnswers(mine.modules, context, mine), preset: mine }
 }
 
 const packageManagerOf = (answers: WizardAnswers, context: WizardContext): PackageManagerId =>
@@ -167,11 +187,15 @@ export async function runWizard(
     services
   )
   const { modules, packageManager } = draft(reviewed)
+  const asked = STEPS.some((step) => step.key === 'moduleSystem' && step.applies(reviewed, context))
   return {
     modules,
     packageManager,
     moduleOptions: moduleOptionsFromAnswers(reviewed, context.registry),
-    ...(start.preset === undefined ? {} : { preset: start.preset })
+    ...(start.preset === undefined ? {} : { preset: start.preset }),
+    ...(asked && reviewed.moduleSystem !== undefined
+      ? { settings: { moduleSystem: reviewed.moduleSystem } }
+      : {})
   }
 }
 

@@ -37,8 +37,13 @@ export interface ModuleCommand {
 export type Depth = 'bare' | 'wired'
 
 /** Evaluated against the resolved stack when planning (buildPlan B4). */
+/** How the generated backend's code is loaded (task 5.2): ESM by default, or CommonJS. */
+export type ModuleSystem = 'esm' | 'cjs'
+
 export type Condition =
   | { has: string }
+  /** The project's module system, e.g. Nest's dev script differs under CommonJS. */
+  | { moduleSystem: ModuleSystem }
   | { framework: string }
   | { option: string; equals: unknown }
   | { depth: Depth }
@@ -172,6 +177,7 @@ const conditionSchema: z.ZodType<Condition> = z.lazy(() =>
   z.union([
     z.strictObject({ has: z.string().min(1) }),
     z.strictObject({ framework: z.string().min(1) }),
+    z.strictObject({ moduleSystem: z.enum(['esm', 'cjs']) }),
     z.strictObject({ option: z.string().min(1), equals: z.unknown() }),
     z.strictObject({ depth: depthSchema }),
     z.strictObject({ target: z.enum(MODULE_TARGETS) }),

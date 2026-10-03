@@ -3,8 +3,8 @@ import type { DevstackModule } from '../../../../types/module'
 
 /**
  * Jest for the API tests (M4, D-75): the same generated tests as Vitest and node:test, with
- * `test` from @jest/globals. The project is ESM, so Jest runs in its native ESM mode, and SWC
- * compiles TypeScript (with decorator metadata, which Nest needs).
+ * `test` from @jest/globals. SWC compiles TypeScript (with decorator metadata, which Nest needs);
+ * an ESM project's tests run as ES modules, a CommonJS project's as CommonJS (D-91).
  */
 const moduleDefinition: DevstackModule = {
   id: 'testing-jest',
@@ -18,7 +18,8 @@ const moduleDefinition: DevstackModule = {
   scripts: [
     {
       name: 'test',
-      // the flag is what turns on Jest's ESM support; the path works on every OS
+      // the flag turns on Jest's ESM support: ESM tests, and under CommonJS the loading of
+      // ESM-only packages such as jose (Node 24.9+); the path works on every OS
       run: 'node --experimental-vm-modules node_modules/jest/bin/jest.js',
       depth: 'wired'
     }

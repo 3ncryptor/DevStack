@@ -1,6 +1,10 @@
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
+<% if (it.settings.moduleSystem === 'cjs') { -%>
+  // the project is CommonJS; the default ESM client uses import.meta
+  moduleFormat = "cjs"
+<% } -%>
 }
 
 // The connection URL lives in prisma.config.mjs (Prisma 7).

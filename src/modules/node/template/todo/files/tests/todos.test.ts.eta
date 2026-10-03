@@ -1,5 +1,5 @@
 <% const vitest = it.modules.includes('testing-vitest') %>
-<% const awaitTest = vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>
+<% const awaitTest = vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>
 <% const base = it.modules.includes('api-versioning') ? '/v1' : '' %>
 <% const jwt = it.modules.includes('auth-jwt') %>
 <% const authed = jwt || it.modules.includes('auth-better-auth') %>

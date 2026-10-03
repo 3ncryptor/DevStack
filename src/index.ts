@@ -107,6 +107,8 @@ interface StackChoice {
   packageManager?: PackageManagerId
   /** A user preset picked in the wizard's question 0 (task 5.5). */
   preset?: ResolvedPreset
+  /** Settings the wizard's answers set, e.g. the module system. */
+  settings?: ProjectSettings
 }
 
 async function presetFor(options: CliOptions, home: string): Promise<ResolvedPreset | undefined> {
@@ -378,10 +380,13 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     )
   }
 
+  const flagSettings: ProjectSettings =
+    options.moduleSystem === undefined ? {} : { moduleSystem: options.moduleSystem }
   const settingsBeforeWizard = mergeSettings(
     remembered.settings,
     preset?.settings,
-    config?.settings
+    config?.settings,
+    flagSettings
   )
   const rememberedAnswerSet = rememberedAnswers(remembered)
   const choice = await selectStack(
@@ -399,6 +404,10 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
       defaultPackageManager: detected.id,
       fixedPackageManager,
       installedPackageManagers: environment?.installedPackageManagers,
+      ...(settingsBeforeWizard.moduleSystem === undefined
+        ? {}
+        : { defaultModuleSystem: settingsBeforeWizard.moduleSystem }),
+      ...(options.moduleSystem === undefined ? {} : { fixedModuleSystem: options.moduleSystem }),
       ...(rememberedAnswerSet === undefined ? {} : { remembered: rememberedAnswerSet })
     },
     wizardServices(registry, target.projectDir, options, environment?.installedPackageManagers, {
@@ -408,7 +417,14 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
   )
   // a user preset picked in the wizard brings its settings and module options too
   const chosenPreset = preset ?? choice.preset
-  const settings = mergeSettings(remembered.settings, chosenPreset?.settings, config?.settings)
+  // precedence: flags > wizard answers > config > preset > remembered
+  const settings = mergeSettings(
+    remembered.settings,
+    chosenPreset?.settings,
+    config?.settings,
+    choice.settings,
+    flagSettings
+  )
   if (options.github !== undefined && settings.initialCommit === false) {
     throw new InputError('--github needs the initial commit; the settings turn it off.')
   }

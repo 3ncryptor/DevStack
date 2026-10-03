@@ -1289,7 +1289,7 @@ cannot read another user's todo.
 | #   | Task                                                                                                                                                                                                                                                                                                                                       | Effort |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
 | 5.1 | Code style knobs (semicolons, quotes, tabs, trailing commas, width) → Prettier config, and generated files formatted at plan time to match. _(Landed 2026-10-03 (M5, D-86): code style settings drive `.prettierrc` and every planned file; exit gate tested.)_                                                                            | M      |
-| 5.2 | TS strictness tiers and ESM/CJS choice applied to every `tsconfig`/manifest. _(Landed 2026-10-03 (M5, D-86): `standard`/`strictest`, templates fixed for strictest; CommonJS dropped (ESM only).)_                                                                                                                                         | S      |
+| 5.2 | TS strictness tiers and ESM/CJS choice applied to every `tsconfig`/manifest. _(Landed 2026-10-03 (M5, D-86): `standard`/`strictest`, templates fixed for strictest. CommonJS added 2026-10-04 (D-91).)_                                                                                                                                    | S      |
 | 5.3 | Naming and metadata: app folder names, port, license, author, initial commit toggle. _(Landed 2026-10-03 (M5, D-86): app folder names and ports, license, author, description, initial commit toggle; `.editorconfig`.)_                                                                                                                   | S      |
 | 5.4 | Remembered defaults `~/.config/devstack/config.json`; precedence flags > config file > preset > defaults; `devstack config set/get`. _(Landed 2026-10-03 (M5, D-87): `~/.config/devstack/config.json`, `config path                                                                                                                        | list   | get  | set                                                     | unset`, wizard pre-selection, review "Remember as my defaults".)_ | S   |
 | 5.5 | User presets: `devstack presets save <name>` from any wizard result. _(Landed 2026-10-03 (M5, D-87): `presets list                                                                                                                                                                                                                         | show   | save | delete`; `--preset` and question 0 find user presets.)_ | S                                                                 |
@@ -1845,9 +1845,7 @@ msg)`, `child()`, `level`, `silent`), so request ids, error handlers, shutdown, 
   services take the app names while host-port variables stay `API_PORT`/`WEB_PORT`/`ADMIN_PORT`.
   License (UNLICENSED default; MIT, Apache-2.0, ISC write LICENSE), author, description and the
   initial commit toggle are metadata. `.editorconfig` is now generated (an A0.2 gap).
-  **CommonJS is dropped** from A6's module-system knob: every template is ESM with NodeNext
-  specifiers, Prisma 7's client, Next.js and Vite are ESM, tests use top-level await; a CJS
-  variant would double the template surface for a legacy target. Revisit only on demand.
+  ~~**CommonJS is dropped** from A6's module-system knob~~ (reversed by D-91 on the owner's request).
 - **D-87 (2026-10-03)** — Remembered defaults and user presets (tasks 5.4, 5.5) live in
   `~/.config/devstack` (`XDG_CONFIG_HOME`, `%APPDATA%`; `DEVSTACK_CONFIG_HOME` for tests and CI,
   which the unit tests and the e2e harness always set, so a developer's own defaults never leak
@@ -1889,6 +1887,26 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   are recorded in every project's manifest and in presets); `registry.ts` lists each module with
   its folder and a contract test keeps `filesPath` and the folder in step. Generated output is
   byte-identical (snapshots unchanged).
+- **D-91 (2026-10-04, reverses D-86's "CommonJS dropped")** — The backend can be CommonJS (owner):
+  `settings.moduleSystem` is `esm` (default) or `cjs`, set by the wizard's "Module system"
+  question (asked when there is a backend framework), `--module-system`, a config or a preset, and
+  recorded in the manifest so `add`/`remove` keep it. The templates stay one set: the source is
+  TypeScript with NodeNext `.js` specifiers either way, and `"type": "commonjs"` makes `tsc` emit
+  `require()`. ESM-only packages (jose, Better Auth, Scalar) load through Node's `require(esm)`,
+  which is why the engines floor (Node 24) matters. What differs is small and declared with a
+  new `{ moduleSystem }` condition or `it.settings.moduleSystem`: the API's package `type`
+  (web apps and `packages/shared` stay ESM), Nest's SWC hook (`-r @swc-node/register`, whose ESM hook always emits ESM, plus
+  `scripts/ts-resolve.mjs`, a synchronous `module.registerHooks` resolver that maps the sources'
+  `.js` specifiers to `.ts`), Jest's
+  config (no `extensionsToTreatAsEsm`; `--experimental-vm-modules` stays, since it is what lets
+  Jest's CommonJS runtime `require()` ESM-only packages, on Node 24.9+) and Prisma's
+  `moduleFormat = "cjs"` (the ESM client uses `import.meta`). Templates no longer use top-level
+  await, which CommonJS cannot run: entry points and scripts use `main().catch(...)`, and the
+  node:test files `void` their `test()` calls. The module system is part of the condition
+  context everywhere it is evaluated, so no call site falls back to ESM silently. CommonJS
+  combinations cover Express, Fastify and Nest; Vitest, Jest and node:test; Prisma, Drizzle and
+  Mongoose; JWT, sessions and Better Auth; the Todo template, API docs, Winston and JSON logs,
+  a fullstack preset and `add` on a CommonJS project.
 
 # §8. Open questions
 

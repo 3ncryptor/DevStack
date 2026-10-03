@@ -3,7 +3,7 @@
  * matrix combination, and checks that the generated project passes its own gates.
  *
  *   npx tsx tests/e2e/harness.ts [--tier smoke|full] [--pm npm|pnpm|yarn|bun|all]
- *                                [--concurrency <n>] [--only <id>] [--keep] [--report <file>]
+ *                                [--concurrency <n>] [--only <id,...>] [--keep] [--report <file>]
  *                                [--sample <n> [--seed <s>]]
  *
  * smoke (default): the combinations marked `smoke`, on one package manager, in parallel; fast
@@ -162,10 +162,21 @@ function toStep(step: string, result: { ok: boolean; durationMs: number }, detai
   return { step, ok: result.ok, durationMs: result.durationMs, detail: result.ok ? '' : detail }
 }
 
-/** A preset, or an inline module list written out as a stack config and passed with --config. */
+/**
+ * A preset, or an inline module list written out as a stack config and passed with --config. A
+ * preset takes only the module system, as the --module-system flag.
+ */
 async function stackArgs(combination: Combination, projectsDir: string): Promise<string[]> {
   if (combination.preset !== undefined) {
-    return ['--preset', combination.preset]
+    const { moduleSystem, ...other } = combination.settings ?? {}
+    if (Object.keys(other).length > 0) {
+      throw new Error(`${combination.id}: a preset combination takes only settings.moduleSystem`)
+    }
+    return [
+      '--preset',
+      combination.preset,
+      ...(typeof moduleSystem === 'string' ? ['--module-system', moduleSystem] : [])
+    ]
   }
   const configFile = path.join(projectsDir, `${combination.id}.stack.json`)
   const config = {
@@ -621,9 +632,14 @@ async function selectCombinations(args: HarnessArgs): Promise<Combination[]> {
     console.log(`sampling ${args.sample} stacks with --seed ${seed}`)
     return sampleCombinations(args.sample, seed)
   }
-  return parseMatrix(await readJson(path.join(import.meta.dirname, 'matrix.json')))
-    .filter((combination) => args.tier === 'full' || combination.smoke === true)
-    .filter((combination) => args.only === undefined || combination.id === args.only)
+  return (
+    parseMatrix(await readJson(path.join(import.meta.dirname, 'matrix.json')))
+      .filter((combination) => args.tier === 'full' || combination.smoke === true)
+      // --only a,b,c: those combinations
+      .filter(
+        (combination) => args.only === undefined || args.only.split(',').includes(combination.id)
+      )
+  )
 }
 
 async function main(): Promise<void> {

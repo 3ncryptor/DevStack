@@ -26,7 +26,9 @@ const env = loadEnvOrExit()
 loadEnvOrExit()
 <% } %>
 
-try {
+// a function, not top-level await, so the same code runs as ESM and as CommonJS (task 5.2)
+async function main(): Promise<void> {
+  try {
 <% if (authed) { %>
   const password = env.SEED_DEMO_PASSWORD
   if (password === undefined || password === '') {
@@ -61,6 +63,12 @@ try {
   }
   console.log(`Seeded ${SAMPLE_TODOS.length} todos.`)
 <% } %>
-} finally {
-  await disconnectDatabase()
+  } finally {
+    await disconnectDatabase()
+  }
 }
+
+main().catch((error: unknown) => {
+  console.error(error)
+  process.exitCode = 1
+})

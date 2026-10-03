@@ -11,17 +11,24 @@ import { handleShutdownSignals } from './lib/shutdown.js'
 
 const env = loadEnvOrExit()
 const logger = createLogger(env.LOG_LEVEL)
-// composition root (B17.6): concrete adapters are chosen here, so tests can pass in-memory ones
-const app = await createApp({
-  logger,
-  readinessChecks,
-  <%~ it.slots['index.deps'] %>
+
+// a function, not top-level await, so the same code runs as ESM and as CommonJS (task 5.2)
+async function main(): Promise<void> {
+  // composition root (B17.6): concrete adapters are chosen here, so tests can pass in-memory ones
+  const app = await createApp({
+    logger,
+    readinessChecks,
+    <%~ it.slots['index.deps'] %>
+  })
+  await app.listen(env.PORT)
+  logger.info(`listening on http://localhost:${env.PORT}`)
+  void reportReadiness(readinessChecks, logger)
+  // app.close() runs Nest's shutdown hooks; our handler exits 0 afterwards, where
+  // enableShutdownHooks() would re-raise the signal instead (D-55).
+  handleShutdownSignals({ logger, disposers, close: () => app.close() })
+}
+
+main().catch((error: unknown) => {
+  logger.fatal({ err: error }, 'could not start')
+  process.exit(1)
 })
-
-await app.listen(env.PORT)
-logger.info(`listening on http://localhost:${env.PORT}`)
-void reportReadiness(readinessChecks, logger)
-
-// app.close() runs Nest's shutdown hooks; our handler exits 0 afterwards, where
-// enableShutdownHooks() would re-raise the signal instead (D-55).
-handleShutdownSignals({ logger, disposers, close: () => app.close() })

@@ -9,14 +9,14 @@ import { testApp } from './helpers/app.js'
 
 const appWith = (readinessChecks: readonly ReadinessCheck[] = []) => testApp({ readinessChecks })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /health reports the process is alive', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /health reports the process is alive', async () => {
   const response = await request(appWith()).get('/health')
 
   assert.equal(response.status, 200)
   assert.equal((response.body as { status: string }).status, 'ok')
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /ready is 200 when every check passes', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /ready is 200 when every check passes', async () => {
   const healthy: ReadinessCheck = { name: 'db', check: () => Promise.resolve() }
 
   const response = await request(appWith([healthy])).get('/ready')
@@ -25,7 +25,7 @@ const appWith = (readinessChecks: readonly ReadinessCheck[] = []) => testApp({ r
   assert.deepEqual(response.body as unknown, { status: 'ok', checks: { db: 'ok' } })
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /ready is 503 with per-check status when a check fails', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /ready is 503 with per-check status when a check fails', async () => {
   const failing: ReadinessCheck = { name: 'db', check: () => Promise.reject(new Error('down')) }
 
   const response = await request(appWith([failing])).get('/ready')
@@ -34,7 +34,7 @@ const appWith = (readinessChecks: readonly ReadinessCheck[] = []) => testApp({ r
   assert.deepEqual(response.body as unknown, { status: 'error', checks: { db: 'error' } })
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('unknown routes get the error envelope with the request id', async () => {
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('unknown routes get the error envelope with the request id', async () => {
   const response = await request(appWith()).get('/missing').set('x-request-id', 'test-id')
 
   assert.equal(response.status, 404)

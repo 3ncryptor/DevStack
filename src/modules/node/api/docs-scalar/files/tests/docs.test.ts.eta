@@ -8,20 +8,23 @@ import request from 'supertest'
 
 import { testApp } from './helpers/app.js'
 
-<% if (fastify) { %>
-// Supertest drives Fastify through its HTTP server once the app is ready
+<% if (fastify || nest) { %>
+// Supertest drives the app through its HTTP server once it is ready (built per test, not with
+// top-level await, so this runs as ESM and as CommonJS)
+const server = async () => <%= fastify ? '(await testApp()).server' : '(await testApp()).getHttpServer()' %>
+<% } else { %>
+const app = testApp()
 <% } %>
-const app = <%= fastify ? '(await testApp()).server' : nest ? '(await testApp()).getHttpServer()' : 'testApp()' %>
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /openapi.json serves the OpenAPI document', async () => {
-  const response = await request(app).get('/openapi.json')
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /openapi.json serves the OpenAPI document', async () => {
+  const response = await request(<%= fastify || nest ? 'await server()' : 'app' %>).get('/openapi.json')
 
   assert.equal(response.status, 200)
   assert.equal((response.body as { openapi: string }).openapi, '3.1.0')
 })
 
-<%= vitest || it.modules.includes('testing-jest') ? '' : 'await ' %>test('GET /docs serves the API reference', async () => {
-<%~ fastify ? "  // Fastify's Scalar plugin serves the reference at /docs/ and redirects /docs there\n" : '' %>  const response = await request(app).get('<%= fastify ? '/docs/' : '/docs' %>')
+<%= vitest || it.modules.includes('testing-jest') ? '' : 'void ' %>test('GET /docs serves the API reference', async () => {
+<%~ fastify ? "  // Fastify's Scalar plugin serves the reference at /docs/ and redirects /docs there\n" : '' %>  const response = await request(<%= fastify || nest ? 'await server()' : 'app' %>).get('<%= fastify ? '/docs/' : '/docs' %>')
 
   assert.equal(response.status, 200)
   assert.match(response.text, /openapi\.json/)

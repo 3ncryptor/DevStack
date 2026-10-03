@@ -39,7 +39,13 @@ const moduleDefinition: DevstackModule = {
     {
       name: 'dev',
       run: 'node --watch --import @swc-node/register/esm-register src/main.ts | pino-pretty',
-      when: { all: [PINO, NEST] }
+      when: { all: [PINO, NEST, { moduleSystem: 'esm' }] }
+    },
+    {
+      name: 'dev',
+      // ts-resolve.mjs comes with framework-nest under CommonJS (D-91)
+      run: 'node --watch --import ./scripts/ts-resolve.mjs -r @swc-node/register src/main.ts | pino-pretty',
+      when: { all: [PINO, NEST, { moduleSystem: 'cjs' }] }
     }
   ],
   exposesSlots: ['lifecycle.imports', 'app.readiness', 'app.shutdown'],

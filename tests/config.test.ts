@@ -103,6 +103,7 @@ describe('.devstack/stack.json manifest', () => {
           useTabs: false
         },
         strictness: 'standard',
+        moduleSystem: 'esm',
         apps: { backend: 'api', frontend: 'web', admin: 'admin' },
         ports: { backend: 3000 },
         license: 'UNLICENSED',
