@@ -54,7 +54,7 @@ describe('package manager adapters', () => {
       expect(adapter.install()).toEqual(install)
       expect(adapter.exec('husky')).toEqual(exec)
       expect(adapter.hookCommand('lint-staged')).toBe(hook)
-      expect(adapter.docker.installFrozen).toBe(frozen)
+      expect(adapter.docker('1.0.0').installFrozen).toBe(frozen)
       expect(adapter.run('dev')).toEqual(['run', 'dev'])
     }
   )
@@ -115,5 +115,17 @@ describe('--pm', () => {
         prompter: new ScriptedPrompter([])
       })
     ).rejects.toThrow(InputError)
+  })
+})
+
+describe('Docker installs the package manager that wrote the lockfile', () => {
+  it('pins pnpm and bun to the probed version, so the frozen install vets it the same way', () => {
+    expect(packageManagerAdapter('pnpm').docker('10.26.2').setup).toBe(
+      'RUN npm install --global pnpm@10.26.2'
+    )
+    expect(packageManagerAdapter('bun').docker('1.3.0').setup).toBe(
+      'RUN npm install --global bun@1.3.0'
+    )
+    expect(packageManagerAdapter('npm').docker('11.6.2').setup).toBe('')
   })
 })

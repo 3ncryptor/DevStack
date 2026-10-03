@@ -73,7 +73,9 @@ const moduleDefinition: DevstackModule = {
       secret: true,
       generate: 'secret',
       // 32 bytes of base64 is 43 characters: HS256 wants a 256-bit key
-      schema: 'z.string().min(43)'
+      schema: 'z.string().min(43)',
+      // with auth-session the access token is a Redis session id: nothing is signed (D-78)
+      when: { not: { has: 'auth-session' } }
     },
     {
       name: 'JWT_ACCESS_TTL_MINUTES',

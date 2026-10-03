@@ -46,7 +46,9 @@ const moduleDefinition: DevstackModule = {
     {
       name: 'dev',
       run: 'node --watch --import @swc-node/register/esm-register src/main.ts',
-      depth: 'wired'
+      depth: 'wired',
+      // with pino, core-backend's dev script pipes this through pino-pretty
+      when: { any: [{ has: 'obs-winston' }, { has: 'obs-json-logs' }] }
     },
     { name: 'start', run: 'node dist/main.js', depth: 'wired' },
     {

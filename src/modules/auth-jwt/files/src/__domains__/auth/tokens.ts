@@ -5,6 +5,8 @@ import { errors, jwtVerify, SignJWT } from 'jose'
 import { ROLES, type Role } from './auth.repository.js'
 
 const ALGORITHM = 'HS256'
+/** 256 bits, the HS256 key size; a shorter secret is guessable offline from any token. */
+const MIN_SECRET_LENGTH = 32
 const REFRESH_TOKEN_BYTES = 32
 
 /** What an access token proves: who the caller is and their role when it was issued. */
@@ -33,6 +35,9 @@ const isRole = (value: unknown): value is Role => ROLES.includes(value as Role)
 
 /** Short-lived HS256 JWTs (D-66); only HS256 is accepted when verifying. */
 export function createAccessTokens(secret: string, ttlMinutes: number): AccessTokens {
+  if (secret.length < MIN_SECRET_LENGTH) {
+    throw new Error(`The JWT secret must be at least ${MIN_SECRET_LENGTH} characters`)
+  }
   const key = new TextEncoder().encode(secret)
   return {
     async sign(claims, now) {

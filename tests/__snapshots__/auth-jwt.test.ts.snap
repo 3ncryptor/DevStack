@@ -56,7 +56,7 @@ exports[`auth-jwt (B17.5, D-66) > matches the recorded plan for the fullstack pr
   },
   {
     "path": "apps/api/src/features/auth/tokens.ts",
-    "sha256": "be6e11f1f0905697",
+    "sha256": "d62a3e3b88706b73",
   },
   {
     "path": "apps/api/src/index.ts",

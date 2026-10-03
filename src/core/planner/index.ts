@@ -197,7 +197,9 @@ async function targetOutput(
   const templateContext: Omit<TemplateContext, 'options'> = {
     projectName: input.projectName,
     packageManager: input.packageManager,
-    pm: packageManagerAdapter(input.packageManager).docker,
+    pm: packageManagerAdapter(input.packageManager).docker(
+      input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager]
+    ),
     language: NODE_LANGUAGE,
     modules: context.modules.map((moduleDefinition) => moduleDefinition.id),
     domainsDir: context.domainsDir,

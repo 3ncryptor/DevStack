@@ -10,7 +10,7 @@ import { packageManagerAdapter } from '../src/adapters/package-manager/index'
 const context: TemplateContext = {
   projectName: 'demo-app',
   packageManager: 'pnpm',
-  pm: packageManagerAdapter('pnpm').docker,
+  pm: packageManagerAdapter('pnpm').docker('10.18.0'),
   language: NODE_LANGUAGE,
   modules: [],
   target: 'root',

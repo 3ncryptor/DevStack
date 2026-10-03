@@ -73,6 +73,8 @@ export const NODE_CATALOG = {
 
   // backend baseline (B17.2)
   pino: { version: '^10.3.1' },
+  // dev scripts only: readable logs while developing (task 4.3); verified 2026-10-03
+  'pino-pretty': { version: '^13.1.3' },
   winston: { version: '^3.19.0' },
   zod: { version: '^4.6.5' },
   supertest: { version: '^7.3.0' },

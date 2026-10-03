@@ -29,7 +29,11 @@ export interface PackageManagerAdapter {
   run(script: string): string[]
   /** Shell line for a git hook file. */
   hookCommand(binary: string): string
-  docker: DockerCommands
+  /**
+   * Dockerfile lines for the version that wrote the lockfile: another version may resolve or
+   * vet the lockfile differently (e.g. pnpm's minimum release age) and fail the frozen install.
+   */
+  docker(version: string): DockerCommands
 }
 
 const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
@@ -40,7 +44,7 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
     exec: (binary, args = []) => ['exec', '--', binary, ...args],
     run: (script) => ['run', script],
     hookCommand: (binary) => `npx --no -- ${binary}`,
-    docker: {
+    docker: () => ({
       setup: '',
       manifests: 'package.json package-lock.json',
       installFrozen: 'npm ci',
@@ -49,7 +53,7 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
       installProd: 'npm ci --omit=dev --omit=optional --ignore-scripts',
       exec: 'npx --no --',
       run: 'npm run'
-    }
+    })
   },
   pnpm: {
     id: 'pnpm',
@@ -58,14 +62,14 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
     exec: (binary, args = []) => ['exec', binary, ...args],
     run: (script) => ['run', script],
     hookCommand: (binary) => `pnpm exec ${binary}`,
-    docker: {
-      setup: 'RUN npm install --global pnpm@12',
+    docker: (version) => ({
+      setup: `RUN npm install --global pnpm@${version}`,
       manifests: 'package.json pnpm-lock.yaml pnpm-workspace.yaml',
       installFrozen: 'pnpm install --frozen-lockfile',
       installProd: 'pnpm install --frozen-lockfile --prod --ignore-scripts',
       exec: 'pnpm exec',
       run: 'pnpm run'
-    }
+    })
   },
   yarn: {
     id: 'yarn',
@@ -74,14 +78,15 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
     exec: (binary, args = []) => [binary, ...args],
     run: (script) => ['run', script],
     hookCommand: (binary) => `yarn ${binary}`,
-    docker: {
+    // yarn 1 ships with the Node.js images
+    docker: () => ({
       setup: '',
       manifests: 'package.json yarn.lock',
       installFrozen: 'yarn install --frozen-lockfile',
       installProd: 'yarn install --frozen-lockfile --production --ignore-scripts',
       exec: 'yarn',
       run: 'yarn run'
-    }
+    })
   },
   bun: {
     id: 'bun',
@@ -90,14 +95,14 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
     exec: (binary, args = []) => ['x', binary, ...args],
     run: (script) => ['run', script],
     hookCommand: (binary) => `bunx ${binary}`,
-    docker: {
-      setup: 'RUN npm install --global bun',
+    docker: (version) => ({
+      setup: `RUN npm install --global bun@${version}`,
       manifests: 'package.json bun.lock',
       installFrozen: 'bun install --frozen-lockfile',
       installProd: 'bun install --frozen-lockfile --production --ignore-scripts',
       exec: 'bunx',
       run: 'bun run'
-    }
+    })
   }
 }
 

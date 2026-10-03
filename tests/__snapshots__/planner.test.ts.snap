@@ -117,13 +117,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the api-mongo prese
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "8ba2584fad8dc3ee",
+      "sha256": "2a1dafd0b81036ad",
       "strategy": "json-merge",
     },
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "755ed2de4a9b0f4b",
+      "sha256": "f943385f52a13d8a",
       "strategy": "skip-if-exists",
     },
     {
@@ -447,7 +447,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "99a25e07d253abef",
+      "sha256": "afe720205b403588",
       "strategy": "json-merge",
     },
     {
@@ -465,7 +465,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend preset 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "0ab2ec0576b284af",
+      "sha256": "0435e2f82431a1f0",
       "strategy": "skip-if-exists",
     },
     {
@@ -810,13 +810,13 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-fastify
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "425554d6392706ed",
+      "sha256": "465c23096344d6ea",
       "strategy": "json-merge",
     },
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "0c4757f85a9c6f7c",
+      "sha256": "873c753ad3e1323f",
       "strategy": "skip-if-exists",
     },
     {
@@ -1179,7 +1179,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "9fe8ddbfa1874d3a",
+      "sha256": "e03bc85f74f604ed",
       "strategy": "json-merge",
     },
     {
@@ -1197,7 +1197,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "febde0e862b017b7",
+      "sha256": "7cf2ee76b768009b",
       "strategy": "skip-if-exists",
     },
     {
@@ -1407,7 +1407,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "src/modules/auth/tokens.ts",
-      "sha256": "be6e11f1f0905697",
+      "sha256": "d62a3e3b88706b73",
       "strategy": "create",
     },
     {
@@ -1700,7 +1700,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": "apps/api/package.json",
-      "sha256": "e483240d44788a66",
+      "sha256": "e3e74e230e11fd23",
       "strategy": "json-merge",
     },
     {
@@ -2319,7 +2319,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "apps/api/package.json",
-      "sha256": "3f47dc633ce15f98",
+      "sha256": "14e7888a792427dd",
       "strategy": "json-merge",
     },
     {
@@ -2421,7 +2421,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "apps/api/src/features/auth/tokens.ts",
-      "sha256": "be6e11f1f0905697",
+      "sha256": "d62a3e3b88706b73",
       "strategy": "create",
     },
     {

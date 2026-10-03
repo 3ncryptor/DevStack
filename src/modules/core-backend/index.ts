@@ -1,10 +1,12 @@
 import { moduleFilesPath } from '../../paths'
 import type { Condition, DevstackModule } from '../../types/module'
 
-/** Express and Nest (platform-express) share the Express request pipeline. */
 /** Winston or plain JSON logs: they bring their own lib/logger.ts. */
 const OTHER_LOGGER: Condition = { any: [{ has: 'obs-winston' }, { has: 'obs-json-logs' }] }
+const PINO: Condition = { not: OTHER_LOGGER }
+const NEST: Condition = { framework: 'framework-nest' }
 
+/** Express and Nest (platform-express) share the Express request pipeline. */
 const ON_EXPRESS: Condition = {
   any: [{ framework: 'framework-express' }, { framework: 'framework-nest' }]
 }
@@ -26,7 +28,20 @@ const moduleDefinition: DevstackModule = {
   ],
   // pino is the default logger; the logger modules replace lib/logger.ts (D-76)
   dependencies: [{ name: 'pino', when: { not: OTHER_LOGGER } }, 'zod'],
-  devDependencies: ['supertest', '@types/supertest'],
+  devDependencies: ['supertest', '@types/supertest', { name: 'pino-pretty', when: PINO }],
+  // pino's JSON lines made readable while developing; start, tests and production stay JSON
+  scripts: [
+    {
+      name: 'dev',
+      run: 'tsx watch src/index.ts | pino-pretty',
+      when: { all: [PINO, { not: NEST }] }
+    },
+    {
+      name: 'dev',
+      run: 'node --watch --import @swc-node/register/esm-register src/main.ts | pino-pretty',
+      when: { all: [PINO, NEST] }
+    }
+  ],
   exposesSlots: ['lifecycle.imports', 'app.readiness', 'app.shutdown'],
   env: [
     {
