@@ -92,7 +92,12 @@ export async function sampleCombinations(count: number, seed: number): Promise<C
       const options = selection.moduleOptions[id]
       return options === undefined ? id : { id, options }
     })
-    combinations.push({ id: `sample-${seed}-${index}`, modules })
+    // the wizard's settings (the module system) go into the stack config like the modules
+    combinations.push({
+      id: `sample-${seed}-${index}`,
+      modules,
+      ...(selection.settings === undefined ? {} : { settings: selection.settings })
+    })
   }
   return combinations
 }

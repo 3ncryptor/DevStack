@@ -4,7 +4,7 @@
 <% const { github } = it.options %>
 <% const fastify = it.modules.includes('framework-fastify') %>
 <% const nest = it.modules.includes('framework-nest') %>
-<% const awaitApp = fastify || nest ? 'void ' : '' %>
+<% const awaitApp = fastify || nest ? 'await ' : '' %>
 <%~ nest ? "import 'reflect-metadata'\n\n" : '' %>import assert from 'node:assert/strict'
 <% if (vitest) { %>import { test } from 'vitest'<% } else if (it.modules.includes('testing-jest')) { %>import { test } from '@jest/globals'<% } else { %>import { test } from 'node:test'<% } %>
 
