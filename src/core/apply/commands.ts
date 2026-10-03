@@ -2,7 +2,7 @@ import { access } from 'node:fs/promises'
 
 import { execa, ExecaError } from 'execa'
 
-import { ApplyError } from '../../errors'
+import { CommandFailedError } from '../../errors'
 import type { GenerationPlan, PlannedCommand } from '../../types/plan'
 import type { Logger } from '../../utils/logger'
 import { resolveInside } from '../project-name'
@@ -22,6 +22,12 @@ async function shouldSkip(plan: GenerationPlan, command: PlannedCommand): Promis
  * else, e.g. the MCP protocol (task 5.7).
  */
 export type CommandOutput = 'inherit' | 'stderr'
+
+/** A command as the user would type it in the project folder. */
+function commandLine(command: PlannedCommand): string {
+  const line = [command.command, ...command.args].join(' ')
+  return command.cwd === undefined ? line : `(cd ${command.cwd} && ${line})`
+}
 
 async function runOne(command: PlannedCommand, cwd: string, output: CommandOutput): Promise<void> {
   if (output === 'inherit') {
@@ -45,7 +51,7 @@ export async function runPlanCommands(
   logger: Logger,
   output: CommandOutput = 'inherit'
 ): Promise<void> {
-  for (const command of plan.commands) {
+  for (const [index, command] of plan.commands.entries()) {
     if (await shouldSkip(plan, command)) {
       logger.debug(`Skipping "${command.description}": ${command.skipIfExists} already exists.`)
       continue
@@ -55,9 +61,10 @@ export async function runPlanCommands(
       await runOne(command, resolveInside(plan.projectDir, command.cwd ?? '.'), output)
     } catch (error: unknown) {
       const reason = error instanceof ExecaError ? error.shortMessage : String(error)
-      throw new ApplyError(
-        `Command failed: ${[command.command, ...command.args].join(' ')}\n${reason}\n` +
+      throw new CommandFailedError(
+        `Command failed: ${commandLine(command)}\n${reason}\n` +
           'The project files were written; fix the problem and re-run this command in the project.',
+        plan.commands.slice(index).map(commandLine),
         { cause: error }
       )
     }

@@ -93,7 +93,8 @@ create-devstack-app my-app --preset backend --print-plan json
 
 create-devstack-app plan --preset backend         # what init would write and run
 create-devstack-app modules list                  # every module, by category
-create-devstack-app doctor                        # check Node.js, package managers, git, Docker
+create-devstack-app doctor                        # Node.js, package managers, git, Docker; in a
+                                                  # project, dependencies that differ from the catalog
 
 create-devstack-app add security-rate-limit       # in a project: add modules later
 create-devstack-app remove cache-redis            # in a project: remove them again
@@ -108,7 +109,9 @@ ORM, package manager, architecture,
 pre-commit hooks, Docker and what `app.ts` sets up. ESLint, Prettier and TypeScript are always
 configured. Nothing is written until the review screen, where you can generate, change any
 answer, save the stack as a named preset, remember your answers as defaults, or cancel. A
-missing package manager is caught there too, before any file is written.
+missing package manager is caught there too, before any file is written. If installing fails
+after the files are written, they stay: the summary says "Not verified" and lists the commands
+to run again, and what to check if one fails again.
 
 `plan`, `modules`, `doctor`, `add`, `remove`, `config`, `presets` and `mcp` are commands, so a
 project with one of those names needs the explicit form: `create-devstack-app init doctor`.

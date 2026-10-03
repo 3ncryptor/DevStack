@@ -1288,9 +1288,10 @@ end-to-end.
   folder plus one registry line. Typed adapter interfaces replace code that branches on module
   ids (templates checking `it.modules.includes('framework-fastify')`, wizard choice lists and
   presets naming ids); the wizard's choices come from module metadata. Design and order: D-96.
-- `devstack doctor` reports drift against the catalog (D-93).
+- `devstack doctor` reports drift against the catalog (D-93). _(Landed 2026-10-04: in a project, every planned dependency whose range differs from the catalog; the user's own packages are not compared.)_
 - Install failure after the files are written (D-95): files stay, the summary says Not verified
-  with the exact retry and debugging commands.
+  with the exact retry and debugging commands. _(Landed 2026-10-04: a failed command is a
+  `CommandFailedError` carrying the commands left to run.)_
 - Catalog/LTS policy (D-97): monthly catalog refresh, Node default follows the current LTS.
 - Release gate (D-81): the full matrix and a sampling run pass once before the tag; the owner
   makes the go/no-go call after it.

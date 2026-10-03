@@ -74,6 +74,23 @@ describe('buildSummary', () => {
     expect(summary).toContain('npm install')
   })
 
+  it('reports a failed install as Not verified, with the commands to run again (D-95)', async () => {
+    const plan = await planFor(BACKEND_MODULES)
+    const failed = { verification: { status: 'skipped' as const, reason: 'pnpm install failed' } }
+
+    const summary = buildSummary(
+      plan,
+      noResult,
+      { inPlace: false, skipInstall: false, retry: ['pnpm install', 'pnpm exec prisma generate'] },
+      failed
+    )
+
+    expect(summary).toContain('Not verified: pnpm install failed')
+    expect(summary).toMatch(/cd summary-app\n\s+pnpm install\n\s+pnpm exec prisma generate/)
+    expect(summary).toContain('If a step fails again:')
+    expect(summary).toContain('doctor')
+  })
+
   it('lists required variables and warns about permissive defaults', async () => {
     const plan = await planFor(BACKEND_MODULES)
 

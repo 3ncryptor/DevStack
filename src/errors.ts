@@ -38,6 +38,18 @@ export class ApplyError extends DevstackError {
   readonly exitCode = EXIT_CODE.applyFailed
 }
 
+/** A planned command failed after the files were written (D-95). */
+export class CommandFailedError extends ApplyError {
+  constructor(
+    message: string,
+    /** Command lines still to run, the failed one first, as a user would type them. */
+    readonly remaining: readonly string[],
+    options?: ErrorOptions
+  ) {
+    super(message, options)
+  }
+}
+
 /** The user cancelled a prompt or declined to continue. */
 export class Aborted extends DevstackError {
   readonly exitCode = EXIT_CODE.aborted

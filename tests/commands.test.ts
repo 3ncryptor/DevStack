@@ -1,10 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+import { afterAll, describe, expect, it } from 'vitest'
 
 import { runDoctor } from '../src/commands/doctor'
 import { listModules } from '../src/commands/modules'
 import type { Probe } from '../src/core/doctor'
 import { loadModules } from '../src/core/module-loader'
 import { InputError } from '../src/errors'
+import { generatedProject } from './helpers/generated-project'
+import { removeTempDirs } from './helpers/temp-dirs'
+
+afterAll(removeTempDirs)
 
 const registry = loadModules()
 
@@ -68,5 +75,25 @@ describe('doctor', () => {
     expect(code).toBe(0)
     expect(lines.join('\n')).toContain('✔ Docker: engine v28.4.0')
     expect(lines.join('\n')).toContain('! yarn: not installed')
+  })
+
+  it("reports a project's dependencies that differ from the catalog, and only those (D-93)", async () => {
+    const project = await generatedProject(['framework-express', 'database-postgres', 'orm-prisma'])
+    const file = path.join(project, 'package.json')
+    const packageJson = JSON.parse(await readFile(file, 'utf8')) as {
+      dependencies: Record<string, string>
+    }
+    packageJson.dependencies['@prisma/client'] = '^6.0.0'
+    packageJson.dependencies['left-pad'] = '^1.3.0'
+    await writeFile(file, JSON.stringify(packageJson))
+    const lines: string[] = []
+
+    const code = await runDoctor(healthy, (line) => lines.push(line), project)
+
+    expect(code).toBe(0)
+    expect(lines.join('\n')).toMatch(
+      /! Catalog: 1 differ[^\n]*\n\s+@prisma\/client \^6\.0\.0 → \^7/
+    )
+    expect(lines.join('\n')).not.toContain('left-pad')
   })
 })

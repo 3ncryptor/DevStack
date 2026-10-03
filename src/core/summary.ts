@@ -2,11 +2,14 @@ import { packageManagerAdapter } from '../adapters/package-manager/index'
 import type { GenerationPlan } from '../types/plan'
 import type { ApplyResult } from './apply/index'
 import type { FinishResult } from './finish/index'
+import { CLI_PACKAGE } from './manifest'
 import { projectDirectoryName } from './project-name'
 
 export interface SummaryOptions {
   inPlace: boolean
   skipInstall: boolean
+  /** Commands to run again after one failed (D-95), the failed one first. */
+  retry?: readonly string[]
 }
 
 /** Scripts of the planned package.json, so steps never name a script that does not exist. */
@@ -22,6 +25,7 @@ function nextSteps(plan: GenerationPlan, options: SummaryOptions): string[] {
   const steps: string[] = []
   if (!options.inPlace) steps.push(`cd ${projectDirectoryName(plan.projectName)}`)
   if (options.skipInstall) steps.push(`${plan.packageManager} install`)
+  steps.push(...(options.retry ?? []))
   // B17.1: data services first, as a separate step, then the app
   if (scripts['db:up'] !== undefined) steps.push(`${run('db:up')}   # start the database`)
   if (plan.depth === 'bare') {
@@ -30,6 +34,14 @@ function nextSteps(plan: GenerationPlan, options: SummaryOptions): string[] {
     steps.push(run('dev'))
   }
   return steps
+}
+
+/** What to check when a retried command fails again (D-95). */
+function debuggingSteps(): string[] {
+  return [
+    `npx ${CLI_PACKAGE.name} doctor   # Node.js, the package manager, git, Docker`,
+    'run the failed command on its own to see its full output'
+  ]
 }
 
 function envLines(plan: GenerationPlan): string[] {
@@ -117,6 +129,7 @@ export function buildSummary(
     `Project ${plan.projectName} is ready in ${plan.projectDir}`,
     ...section('Status', statusLines(finish)),
     ...section('Next steps', nextSteps(plan, options)),
+    ...section('If a step fails again', options.retry === undefined ? [] : debuggingSteps()),
     ...section('Environment variables (.env.example)', plan.env.length > 0 ? envLines(plan) : []),
     ...section(
       'Warnings',

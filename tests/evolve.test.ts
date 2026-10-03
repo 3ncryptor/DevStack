@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { access, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import { afterAll, describe, expect, it } from 'vitest'
@@ -6,10 +6,9 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { addModules, removeModules, type EvolveOptions } from '../src/commands/evolve'
 import { appendEnv, mergeJson3, mergePnpmWorkspace } from '../src/core/evolve/merge3'
 import type { Change } from '../src/core/evolve/reconcile'
-import { loadModules } from '../src/core/module-loader'
-import { buildGenerationPlan } from '../src/core/planner/index'
 import { InputError } from '../src/errors'
 import type { Logger } from '../src/utils/logger'
+import { generatedProject } from './helpers/generated-project'
 import { removeTempDirs, tempDir } from './helpers/temp-dirs'
 
 afterAll(removeTempDirs)
@@ -27,26 +26,6 @@ const exists = (file: string): Promise<boolean> =>
     () => true,
     () => false
   )
-
-/** A generated project on disk, exactly as init would write its files (no install). */
-async function generatedProject(modules: string[]): Promise<string> {
-  const dir = await tempDir('evolve-')
-  const plan = await buildGenerationPlan({
-    projectName: 'evolve-app',
-    projectDir: dir,
-    selectedModuleNames: modules,
-    registry: loadModules(),
-    packageManager: 'pnpm',
-    packageManagerVersion: '10.26.2',
-    options: { skipInstall: false, skipGit: true }
-  })
-  for (const file of plan.files) {
-    const target = path.join(dir, file.path)
-    await mkdir(path.dirname(target), { recursive: true })
-    await writeFile(target, file.content)
-  }
-  return dir
-}
 
 const options = (projectDir: string, extra: Partial<EvolveOptions> = {}): EvolveOptions => ({
   projectDir,

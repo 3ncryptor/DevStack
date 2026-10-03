@@ -131,7 +131,7 @@ program
 
 program
   .command('doctor')
-  .description('Check Node.js, package managers, git and Docker')
+  .description('Check Node.js, package managers, git and Docker; in a project, catalog drift')
   .action(async () => {
     process.exitCode = await runDoctor(systemProbe, (text) => {
       process.stdout.write(`${text}\n`)

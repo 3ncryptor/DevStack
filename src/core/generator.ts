@@ -8,6 +8,7 @@ import type { GenerationPlan } from '../types/plan'
 import type { Logger } from '../utils/logger'
 import type { ProjectSettings } from './settings'
 import type { PackageManagerId as PackageManager } from '../adapters/package-manager/index'
+import { CommandFailedError } from '../errors'
 import { runPlanCommands } from './apply/commands'
 import { applyPlan, classifyFiles } from './apply/index'
 import { formatPlanText, planToJson } from './plan-output'
@@ -83,7 +84,20 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
   })
   input.logger.info(`Wrote ${result.written.length} files.`)
 
-  await runPlanCommands(plan, input.logger)
+  const summaryOptions = { inPlace: input.options.inPlace, skipInstall: input.options.skipInstall }
+  try {
+    await runPlanCommands(plan, input.logger)
+  } catch (error: unknown) {
+    if (!(error instanceof CommandFailedError)) throw error
+    // the files stay; the summary says what to run again (D-95)
+    const failed = {
+      verification: { status: 'skipped' as const, reason: `${error.remaining[0]} failed` }
+    }
+    input.logger.warn(
+      buildSummary(plan, result, { ...summaryOptions, retry: error.remaining }, failed)
+    )
+    throw error
+  }
   const finish = await finishProject({
     plan,
     skipInstall: input.options.skipInstall,
@@ -95,14 +109,7 @@ export async function generateProject(input: GenerateProjectInput): Promise<void
     prompter: input.prompter,
     logger: input.logger
   })
-  input.logger.success(
-    buildSummary(
-      plan,
-      result,
-      { inPlace: input.options.inPlace, skipInstall: input.options.skipInstall },
-      finish
-    )
-  )
+  input.logger.success(buildSummary(plan, result, summaryOptions, finish))
   if (await shouldStart(input, finish)) await startProject(plan, input.logger)
 }
 
