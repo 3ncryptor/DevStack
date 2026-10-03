@@ -1682,7 +1682,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-next-
     {
       "mode": "644",
       "path": ".vscode/extensions.json",
-      "sha256": "3721e99f092c5dd1",
+      "sha256": "7eb152e5e4662050",
       "strategy": "create",
     },
     {
@@ -2307,7 +2307,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": ".vscode/extensions.json",
-      "sha256": "3721e99f092c5dd1",
+      "sha256": "7eb152e5e4662050",
       "strategy": "create",
     },
     {
@@ -2325,7 +2325,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "AGENTS.md",
-      "sha256": "82d118894f4044ce",
+      "sha256": "523fdb231048f819",
       "strategy": "skip-if-exists",
     },
     {

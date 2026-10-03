@@ -4306,7 +4306,7 @@ exports[`e2e combination plans (D-96) > cjs-fullstack-preset plans as recorded 1
     {
       "mode": "644",
       "path": ".vscode/extensions.json",
-      "sha256": "3721e99f092c5dd1",
+      "sha256": "7eb152e5e4662050",
       "strategy": "create",
     },
     {
@@ -12568,7 +12568,7 @@ exports[`e2e combination plans (D-96) > fullstack-docker plans as recorded 1`] =
     {
       "mode": "644",
       "path": ".vscode/extensions.json",
-      "sha256": "3721e99f092c5dd1",
+      "sha256": "7eb152e5e4662050",
       "strategy": "create",
     },
     {
@@ -16104,7 +16104,7 @@ exports[`e2e combination plans (D-96) > fullstack-preset plans as recorded 1`] =
     {
       "mode": "644",
       "path": ".vscode/extensions.json",
-      "sha256": "3721e99f092c5dd1",
+      "sha256": "7eb152e5e4662050",
       "strategy": "create",
     },
     {
@@ -16667,7 +16667,7 @@ exports[`e2e combination plans (D-96) > fullstack-renamed plans as recorded 1`] 
     {
       "mode": "644",
       "path": ".vscode/extensions.json",
-      "sha256": "75e8ef9770ff798b",
+      "sha256": "a031e5b45075abe1",
       "strategy": "create",
     },
     {
@@ -18507,7 +18507,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-preset plans as recorded 
     {
       "mode": "644",
       "path": ".vscode/extensions.json",
-      "sha256": "3721e99f092c5dd1",
+      "sha256": "7eb152e5e4662050",
       "strategy": "create",
     },
     {
@@ -18525,7 +18525,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-preset plans as recorded 
     {
       "mode": "644",
       "path": "AGENTS.md",
-      "sha256": "412f90249ad422a1",
+      "sha256": "500577e88cfe01f2",
       "strategy": "skip-if-exists",
     },
     {

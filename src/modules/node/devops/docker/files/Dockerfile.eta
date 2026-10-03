@@ -11,7 +11,7 @@ ENV HUSKY=0
 COPY <%= it.pm.manifests %> ./
 RUN <%= it.pm.installFrozen %>
 COPY . .
-<% if (it.modules.includes('orm-prisma')) { %>RUN <%= it.pm.exec %> prisma generate
+<% for (const step of it.postInstall) { %>RUN <%= it.pm.exec %> <%= step %>
 <% } %>RUN <%= it.pm.run %> build
 
 FROM base AS prod-deps

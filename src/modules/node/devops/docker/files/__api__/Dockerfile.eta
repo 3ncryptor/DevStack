@@ -19,7 +19,7 @@ COPY --from=prune /app/out/json/ ./
 RUN <%= it.pm.installFrozen %>
 COPY --from=prune /app/out/full/ ./
 WORKDIR /app/<%= it.apps.backend.dir %>
-<% if (it.modules.includes('orm-prisma')) { %>RUN <%= it.pm.exec %> prisma generate
+<% for (const step of it.postInstall) { %>RUN <%= it.pm.exec %> <%= step %>
 <% } %>RUN <%= it.pm.run %> build
 
 FROM base AS prod-deps

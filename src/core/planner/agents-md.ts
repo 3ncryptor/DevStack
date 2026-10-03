@@ -24,8 +24,10 @@ const APP_ROLES: Readonly<Record<string, string>> = {
   shared: 'types and the API client shared by the apps'
 }
 
-const has = (input: AgentsMdInput, id: string): boolean =>
-  input.modules.some((moduleDefinition) => moduleDefinition.id === id)
+/** One kind of note from every module that has it, each line once. */
+const notes = (input: AgentsMdInput, kind: 'layout' | 'conventions'): string[] => [
+  ...new Set(input.modules.flatMap((moduleDefinition) => moduleDefinition.agentsMd?.[kind] ?? []))
+]
 
 function commands(input: AgentsMdInput): string[] {
   const pm = packageManagerAdapter(input.packageManager)
@@ -60,16 +62,11 @@ function layout(input: AgentsMdInput): string[] {
     ...apps,
     `- \`${apiPrefix}src/${input.domainsDir}/<feature>/\`: one folder per feature (service, repository interface, routes)`,
     `- \`${apiPrefix}src/lib/\`: errors, the response envelope, the logger; \`${apiPrefix}src/config/env.ts\` validates the environment`,
-    ...(has(input, 'orm-prisma')
-      ? [
-          `- \`${apiPrefix}prisma/schema.prisma\`: the database schema; \`${apiPrefix}src/db/repositories/\`: Prisma implementations of the repository interfaces`
-        ]
-      : [])
+    ...notes(input, 'layout').map((line) => line.replaceAll('{{api}}', apiPrefix))
   ]
 }
 
 function conventions(input: AgentsMdInput): string[] {
-  const authed = has(input, 'auth-jwt') || has(input, 'auth-better-auth')
   return [
     '## Conventions',
     '',
@@ -77,25 +74,13 @@ function conventions(input: AgentsMdInput): string[] {
     '- Validate every request body, query and params with Zod (`validate()`); never trust input.',
     '- Feature code depends on repository interfaces, never on the ORM: adapters live in `db/repositories`, tests use in-memory doubles.',
     '- A new environment variable goes in `config/env.ts` and `.env.example`; secrets never go in code.',
-    ...(authed
-      ? [
-          "- Protect routes with `requireAuth(deps.auth)`, admin routes with `requireRole('ADMIN')` after it; the web app's `RequireAuth` is for the user experience only."
-        ]
-      : []),
-    ...(has(input, 'api-versioning')
-      ? ['- Application routes live under `/v1`; `/health` and `/ready` stay unversioned.']
-      : [])
+    ...notes(input, 'conventions')
   ]
 }
 
 function storageStep(input: AgentsMdInput): string {
-  if (has(input, 'orm-prisma'))
-    return '2. Add the model to `prisma/schema.prisma`, run `db:migrate`, and implement the repository in `db/repositories/`.'
-  if (has(input, 'orm-drizzle'))
-    return '2. Add the table to `src/db/schema.ts`, run `db:generate` then `db:migrate`, and implement the repository with `db` from `src/db/client.ts`.'
-  if (has(input, 'orm-mongoose'))
-    return '2. Define the schema and register the model on `connection` from `src/db/client.ts`, then implement the repository with it.'
-  return '2. Implement the repository interface for your storage.'
+  const storage = input.modules.find((moduleDefinition) => moduleDefinition.agentsMd?.storage)
+  return `2. ${storage?.agentsMd?.storage ?? 'Implement the repository interface for your storage.'}`
 }
 
 function addingAFeature(input: AgentsMdInput): string[] {

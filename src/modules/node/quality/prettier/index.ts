@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Prettier',
   category: 'quality',
   language: 'node',
+  vscodeExtensions: ['esbenp.prettier-vscode'],
   depth: 'bare',
   // repo-wide tooling: at the root of a monorepo
   target: 'root',

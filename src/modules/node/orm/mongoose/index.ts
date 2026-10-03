@@ -7,6 +7,10 @@ const moduleDefinition: DevstackModule = {
   title: 'Mongoose',
   category: 'orm',
   language: 'node',
+  agentsMd: {
+    storage:
+      'Define the schema and register the model on `connection` from `src/db/client.ts`, then implement the repository with it.'
+  },
   depth: 'bare',
   files: [{ path: 'src/db/client.ts', depth: 'wired' }],
   provides: ['orm'],

@@ -281,7 +281,15 @@ async function targetOutput(
     moduleOptions: context.moduleOptions,
     settings: context.settings,
     apps: appsOf(context),
-    database: context.modules.find((moduleDefinition) => moduleDefinition.database)?.database
+    database: context.modules.find((moduleDefinition) => moduleDefinition.database)?.database,
+    postInstall: context.modules.flatMap((moduleDefinition) =>
+      (moduleDefinition.commands ?? []).map((command) => command.run.join(' '))
+    ),
+    vscodeExtensions: [
+      ...new Set(
+        context.modules.flatMap((moduleDefinition) => moduleDefinition.vscodeExtensions ?? [])
+      )
+    ]
   }
   const files: PlannedFile[] = [
     generatedFile('package.json', `${JSON.stringify(packageJson, null, 2)}\n`),

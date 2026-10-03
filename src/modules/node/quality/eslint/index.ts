@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'ESLint',
   category: 'quality',
   language: 'node',
+  vscodeExtensions: ['dbaeumer.vscode-eslint'],
   depth: 'bare',
   // repo-wide tooling: at the root of a monorepo
   target: 'root',

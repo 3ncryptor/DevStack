@@ -31,7 +31,9 @@ const context: TemplateContext = {
     frontend: { dir: '', name: 'web', port: 3000 },
     admin: { dir: '', name: 'admin', port: 3002 }
   },
-  database: undefined
+  database: undefined,
+  postInstall: [],
+  vscodeExtensions: []
 }
 
 describe('renderTemplate', () => {

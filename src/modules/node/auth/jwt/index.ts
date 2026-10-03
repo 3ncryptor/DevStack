@@ -50,6 +50,11 @@ const moduleDefinition: DevstackModule = {
   title: 'Email + password (JWT)',
   category: 'auth',
   language: 'node',
+  agentsMd: {
+    conventions: [
+      "- Protect routes with `requireAuth(deps.auth)`, admin routes with `requireRole('ADMIN')` after it; the web app's `RequireAuth` is for the user experience only."
+    ]
+  },
   provides: ['auth'],
   description:
     'Register, login, refresh and logout with argon2 password hashing, JWT access tokens and rotating refresh tokens',

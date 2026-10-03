@@ -14,6 +14,14 @@ const moduleDefinition: DevstackModule = {
   title: 'Prisma',
   category: 'orm',
   language: 'node',
+  vscodeExtensions: ['prisma.prisma'],
+  agentsMd: {
+    layout: [
+      '- `{{api}}prisma/schema.prisma`: the database schema; `{{api}}src/db/repositories/`: Prisma implementations of the repository interfaces'
+    ],
+    storage:
+      'Add the model to `prisma/schema.prisma`, run `db:migrate`, and implement the repository in `db/repositories/`.'
+  },
   depth: 'bare',
   // schema and config are tooling; the client wrapper is integration code
   files: [{ path: 'src/db/client.ts', depth: 'wired' }],

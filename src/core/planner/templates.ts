@@ -56,6 +56,10 @@ export interface TemplateContext {
   apps: Readonly<Record<'backend' | 'frontend' | 'admin', AppInfo>>
   /** The selected database's traits (D-96), e.g. `it.database?.dialect`; undefined without one. */
   database: DatabaseTraits | undefined
+  /** The modules' post-install steps, e.g. `prisma generate`, for Docker and CI to run with `it.pm.exec`. */
+  postInstall: readonly string[]
+  /** VS Code extensions the selected modules recommend, in module order. */
+  vscodeExtensions: readonly string[]
 }
 
 // Templates render developer-controlled data into source code, so no HTML escaping; exact

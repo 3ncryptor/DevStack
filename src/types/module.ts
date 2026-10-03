@@ -174,6 +174,18 @@ export interface DevstackModule {
   options?: z.ZodType<Record<string, unknown>>
   /** A database module's description for ORMs and Docker (D-96). */
   database?: DatabaseTraits
+  /** VS Code extensions recommended with this module, e.g. `prisma.prisma`. */
+  vscodeExtensions?: readonly string[]
+  /** What AGENTS.md tells an AI assistant about this module (D-96). */
+  agentsMd?: AgentsMdNotes
+}
+
+/** Lines a module adds to AGENTS.md; `{{api}}` in a layout line is the API's folder prefix. */
+export interface AgentsMdNotes {
+  layout?: readonly string[]
+  conventions?: readonly string[]
+  /** Step 2 of "Adding a feature": how to store the feature's data. */
+  storage?: string
 }
 
 const MODULE_ID = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -225,6 +237,14 @@ export const moduleDefinitionSchema = z.object({
   exposesSlots: z.array(z.string()).optional(),
   options: z.custom<z.ZodType>((value) => value instanceof z.ZodType).optional(),
   database: databaseTraitsSchema.optional(),
+  vscodeExtensions: z.array(z.string().min(1)).optional(),
+  agentsMd: z
+    .strictObject({
+      layout: z.array(z.string().min(1)).optional(),
+      conventions: z.array(z.string().min(1)).optional(),
+      storage: z.string().min(1).optional()
+    })
+    .optional(),
   env: z
     .array(
       z.object({

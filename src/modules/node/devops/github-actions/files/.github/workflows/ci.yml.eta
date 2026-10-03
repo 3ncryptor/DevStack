@@ -41,8 +41,8 @@ jobs:
           cache: <%= pm %>
 <% } -%>
       - run: <%= it.pm.installFrozen %>
-<% if (it.modules.includes('orm-prisma')) { -%>
-      - run: <%= it.pm.exec %> prisma generate
+<% for (const step of it.postInstall) { -%>
+      - run: <%= it.pm.exec %> <%= step %>
 <% if (monorepo) { -%>
         working-directory: <%= it.apps.backend.dir %>
 <% } -%>

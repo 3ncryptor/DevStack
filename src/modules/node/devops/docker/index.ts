@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Docker and docker compose',
   category: 'devops',
   language: 'node',
+  vscodeExtensions: ['ms-azuretools.vscode-docker'],
   depth: 'bare',
   // the compose file runs the whole stack from the repository root (D-41)
   target: 'root',

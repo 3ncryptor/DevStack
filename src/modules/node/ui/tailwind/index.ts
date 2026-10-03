@@ -6,6 +6,7 @@ const moduleDefinition: DevstackModule = {
   title: 'Tailwind CSS',
   category: 'styling',
   language: 'node',
+  vscodeExtensions: ['bradlc.vscode-tailwindcss'],
   target: 'frontend',
   depth: 'bare',
   // PostCSS works for both: Next.js and Vite read postcss.config.mjs
