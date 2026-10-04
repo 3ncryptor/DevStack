@@ -31,6 +31,8 @@ export interface TemplateContext {
   scripts: readonly string[]
   /** The built file the API's start script runs, e.g. `dist/main.js`; Docker runs it directly. */
   entry: string | undefined
+  /** Production packages whose install scripts must run, e.g. better-sqlite3's binary download. */
+  productionBuilds: readonly string[]
   /** Installed version of the package manager (or a fallback in dry runs). */
   packageManagerVersion: string
   /** Catalog version ranges by package, e.g. `it.versions.turbo` for a Dockerfile. */

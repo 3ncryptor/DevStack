@@ -19,6 +19,7 @@ const context: TemplateContext = {
   port: 3000,
   scripts: [],
   entry: undefined,
+  productionBuilds: [],
   packageManagerVersion: '10.0.0',
   versions: {},
   packageNames: {},

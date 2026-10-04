@@ -47,7 +47,7 @@ export const NODE_CATALOG = {
 
   // data
   prisma: { version: '^7.10.0', allowBuilds: ['prisma', '@prisma/engines'] },
-  '@prisma/client': { version: '^7.10.0', allowBuilds: ['@prisma/client'] },
+  '@prisma/client': { version: '^7.10.0' },
   '@prisma/adapter-pg': { version: '^7.10.0' },
   '@prisma/adapter-mariadb': { version: '^7.10.0' },
   // depends on better-sqlite3 12, which downloads or compiles its binary in an install script
@@ -56,8 +56,9 @@ export const NODE_CATALOG = {
   '@types/pg': { version: '^8.23.1' },
   // databases and ORMs beyond Postgres + Prisma (M4, D-77); verified 2026-10-02
   mysql2: { version: '^3.24.5' },
-  // 13 ships prebuilt binaries (glibc, musl, macOS, Windows), no install script
-  'better-sqlite3': { version: '^13.0.3' },
+  // 12, not 13: npm ci compiles 13 from source (its lockfile entry hides `gypfile: false`), which
+  // fails without a C toolchain, e.g. in node:24-alpine; 12 downloads a prebuilt binary
+  'better-sqlite3': { version: '^12.11.1', allowBuilds: ['better-sqlite3'] },
   '@types/better-sqlite3': { version: '^9.6.0' },
   'drizzle-orm': { version: '^0.45.3' },
   'drizzle-kit': { version: '^0.31.11', allowBuilds: ['esbuild'] },

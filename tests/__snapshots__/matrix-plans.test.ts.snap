@@ -468,7 +468,7 @@ exports[`e2e combination plans (D-96) > backend-bare plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "988c98fa10a4b113",
+      "sha256": "37ab337c03d586e3",
       "strategy": "skip-if-exists",
     },
     {
@@ -669,7 +669,7 @@ exports[`e2e combination plans (D-96) > backend-better-auth plans as recorded 1`
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "988c98fa10a4b113",
+      "sha256": "37ab337c03d586e3",
       "strategy": "skip-if-exists",
     },
     {
@@ -1490,7 +1490,7 @@ exports[`e2e combination plans (D-96) > backend-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "ccb104d52c26fe08",
+      "sha256": "44c7d93749352c3e",
       "strategy": "skip-if-exists",
     },
     {
@@ -1938,7 +1938,7 @@ exports[`e2e combination plans (D-96) > backend-nest-preset plans as recorded 1`
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "1c359f945f574fc7",
+      "sha256": "2c2b76751131c748",
       "strategy": "create",
     },
     {
@@ -1962,7 +1962,7 @@ exports[`e2e combination plans (D-96) > backend-nest-preset plans as recorded 1`
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "16f8774dde4e323c",
+      "sha256": "b47a4725fd667449",
       "strategy": "skip-if-exists",
     },
     {
@@ -2427,7 +2427,7 @@ exports[`e2e combination plans (D-96) > backend-preset plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "988c98fa10a4b113",
+      "sha256": "37ab337c03d586e3",
       "strategy": "skip-if-exists",
     },
     {
@@ -2748,7 +2748,7 @@ exports[`e2e combination plans (D-96) > cjs-express-add-auth plans as recorded 1
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "988c98fa10a4b113",
+      "sha256": "37ab337c03d586e3",
       "strategy": "skip-if-exists",
     },
     {
@@ -3020,7 +3020,7 @@ exports[`e2e combination plans (D-96) > cjs-express-better-auth-todo plans as re
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "546b3dfc6bea722d",
+      "sha256": "d2fb4dfaa46f3cfb",
       "strategy": "skip-if-exists",
     },
     {
@@ -3374,13 +3374,13 @@ exports[`e2e combination plans (D-96) > cjs-express-sqlite-drizzle-strictest pla
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "3d32a90f3fb7b730",
+      "sha256": "71f1e4ee5962dbb4",
       "strategy": "json-merge",
     },
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c23c8ff0d11b790f",
+      "sha256": "9428aea5d7bdcbb5",
       "strategy": "skip-if-exists",
     },
     {
@@ -3865,7 +3865,7 @@ exports[`e2e combination plans (D-96) > cjs-fastify-session-docs plans as record
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "ccb104d52c26fe08",
+      "sha256": "44c7d93749352c3e",
       "strategy": "skip-if-exists",
     },
     {
@@ -4756,7 +4756,7 @@ exports[`e2e combination plans (D-96) > cjs-fullstack-preset plans as recorded 1
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {
@@ -4893,7 +4893,7 @@ exports[`e2e combination plans (D-96) > cjs-nest-jest-winston plans as recorded 
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "16f8774dde4e323c",
+      "sha256": "b47a4725fd667449",
       "strategy": "skip-if-exists",
     },
     {
@@ -5579,7 +5579,7 @@ exports[`e2e combination plans (D-96) > express-add-remove-redis plans as record
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "988c98fa10a4b113",
+      "sha256": "37ab337c03d586e3",
       "strategy": "skip-if-exists",
     },
     {
@@ -6087,7 +6087,7 @@ exports[`e2e combination plans (D-96) > express-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "16f8774dde4e323c",
+      "sha256": "b47a4725fd667449",
       "strategy": "skip-if-exists",
     },
     {
@@ -6510,7 +6510,7 @@ exports[`e2e combination plans (D-96) > express-mysql-prisma plans as recorded 1
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "988c98fa10a4b113",
+      "sha256": "37ab337c03d586e3",
       "strategy": "skip-if-exists",
     },
     {
@@ -7040,7 +7040,7 @@ exports[`e2e combination plans (D-96) > express-session plans as recorded 1`] = 
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "a2077f058d520f3f",
+      "sha256": "effb5b0dbfb0df88",
       "strategy": "create",
     },
     {
@@ -7058,7 +7058,7 @@ exports[`e2e combination plans (D-96) > express-session plans as recorded 1`] = 
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "ccb104d52c26fe08",
+      "sha256": "44c7d93749352c3e",
       "strategy": "skip-if-exists",
     },
     {
@@ -7369,6 +7369,273 @@ exports[`e2e combination plans (D-96) > express-session plans as recorded 1`] = 
 }
 `;
 
+exports[`e2e combination plans (D-96) > express-sqlite-prisma-docker plans as recorded 1`] = `
+{
+  "commands": [
+    [
+      "git",
+      "git",
+      "init",
+      "-b",
+      "main",
+    ],
+    [
+      "install",
+      "pnpm",
+      "install",
+    ],
+    [
+      "postInstall",
+      "pnpm",
+      "exec",
+      "prisma",
+      "generate",
+    ],
+  ],
+  "files": [
+    {
+      "mode": "644",
+      "path": ".devstack/stack.json",
+      "sha256": "6e1c1f6534a1fed5",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".dockerignore",
+      "sha256": "6e493f7af86fb56a",
+      "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".editorconfig",
+      "sha256": "136699256306bd7e",
+      "strategy": "skip-if-exists",
+    },
+    {
+      "mode": "644",
+      "path": ".env",
+      "sha256": "512acb349c910194",
+      "strategy": "skip-if-exists",
+    },
+    {
+      "mode": "644",
+      "path": ".env.example",
+      "sha256": "9afe7ddd6f9af0e4",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".gitignore",
+      "sha256": "0af298f93e0344b5",
+      "strategy": "line-merge",
+    },
+    {
+      "mode": "644",
+      "path": ".prettierignore",
+      "sha256": "1e240a2c47881415",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": ".prettierrc",
+      "sha256": "6fa7baa2fca904b7",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "docker-compose.yml",
+      "sha256": "4f04d093bc32650f",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "Dockerfile",
+      "sha256": "b66d71a8e0dcde5e",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "eslint.config.mjs",
+      "sha256": "423e53b229e743d8",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "package.json",
+      "sha256": "e5052b9885cbb5ee",
+      "strategy": "json-merge",
+    },
+    {
+      "mode": "644",
+      "path": "pnpm-workspace.yaml",
+      "sha256": "70f7a24e6bdaf7e8",
+      "strategy": "skip-if-exists",
+    },
+    {
+      "mode": "644",
+      "path": "prisma.config.mjs",
+      "sha256": "dd97f334883a822b",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "prisma/schema.prisma",
+      "sha256": "457908be2b437a01",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "README.md",
+      "sha256": "efcd2bb4f09eff63",
+      "strategy": "skip-if-exists",
+    },
+    {
+      "mode": "644",
+      "path": "src/app.ts",
+      "sha256": "c27ccf254655b54a",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/config/env.ts",
+      "sha256": "bfeabf446597928d",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/db/client.ts",
+      "sha256": "be11a84606078a2f",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/index.ts",
+      "sha256": "d0159b00f4b04855",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/api-response.ts",
+      "sha256": "e1dcd5f6cc636bf3",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/errors.ts",
+      "sha256": "959145a6a6478969",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/logger.ts",
+      "sha256": "b4d54bb2e3d882fc",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/readiness.ts",
+      "sha256": "2213ff0b93c82d9f",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lib/shutdown.ts",
+      "sha256": "ca146a2c8dd4f95d",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/lifecycle.ts",
+      "sha256": "4426122564d53b5f",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/middlewares/error-handler.ts",
+      "sha256": "995b16d4377983f6",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/middlewares/not-found.ts",
+      "sha256": "5a682f6a71a7d664",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/middlewares/request-id.ts",
+      "sha256": "0dea0abb29e54cf7",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/middlewares/validate.ts",
+      "sha256": "41948f20eee5cc29",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/routes/health.ts",
+      "sha256": "5b724233d0f69fc2",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "src/types/express.d.ts",
+      "sha256": "ed83a806633a0b2c",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tests/api-response.test.ts",
+      "sha256": "780f88f34d6e03db",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tests/health.test.ts",
+      "sha256": "10cccbc87bb5c976",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tests/helpers/app.ts",
+      "sha256": "858fe9e79041dbcc",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tsconfig.build.json",
+      "sha256": "561407be5e72f46b",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "tsconfig.json",
+      "sha256": "1b19f1d87c0d84fc",
+      "strategy": "create",
+    },
+    {
+      "mode": "644",
+      "path": "vitest.config.ts",
+      "sha256": "92706cb90111a712",
+      "strategy": "create",
+    },
+  ],
+  "modules": [
+    "language-node",
+    "database-sqlite",
+    "orm-prisma",
+    "testing-vitest",
+    "quality-eslint",
+    "quality-prettier",
+    "devops-docker",
+    "core-backend",
+    "framework-express",
+  ],
+}
+`;
+
 exports[`e2e combination plans (D-96) > express-strictest plans as recorded 1`] = `
 {
   "commands": [
@@ -7450,7 +7717,7 @@ exports[`e2e combination plans (D-96) > express-strictest plans as recorded 1`] 
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "ccb104d52c26fe08",
+      "sha256": "44c7d93749352c3e",
       "strategy": "skip-if-exists",
     },
     {
@@ -8146,7 +8413,7 @@ exports[`e2e combination plans (D-96) > fastify-better-auth plans as recorded 1`
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "988c98fa10a4b113",
+      "sha256": "37ab337c03d586e3",
       "strategy": "skip-if-exists",
     },
     {
@@ -8525,7 +8792,7 @@ exports[`e2e combination plans (D-96) > fastify-better-auth-strictest plans as r
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "546b3dfc6bea722d",
+      "sha256": "d2fb4dfaa46f3cfb",
       "strategy": "skip-if-exists",
     },
     {
@@ -8811,7 +9078,7 @@ exports[`e2e combination plans (D-96) > fastify-full plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "a2077f058d520f3f",
+      "sha256": "effb5b0dbfb0df88",
       "strategy": "create",
     },
     {
@@ -8829,7 +9096,7 @@ exports[`e2e combination plans (D-96) > fastify-full plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "ccb104d52c26fe08",
+      "sha256": "44c7d93749352c3e",
       "strategy": "skip-if-exists",
     },
     {
@@ -9940,7 +10207,7 @@ exports[`e2e combination plans (D-96) > fastify-session plans as recorded 1`] = 
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "ccb104d52c26fe08",
+      "sha256": "44c7d93749352c3e",
       "strategy": "skip-if-exists",
     },
     {
@@ -10305,7 +10572,7 @@ exports[`e2e combination plans (D-96) > fastify-sqlite-drizzle plans as recorded
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "3b3a441c2e0d0d6a",
+      "sha256": "fc08dc2484223f6c",
       "strategy": "create",
     },
     {
@@ -10323,13 +10590,13 @@ exports[`e2e combination plans (D-96) > fastify-sqlite-drizzle plans as recorded
     {
       "mode": "644",
       "path": "package.json",
-      "sha256": "b3f8f72f02714b5f",
+      "sha256": "4620c5fe4c709106",
       "strategy": "json-merge",
     },
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c23c8ff0d11b790f",
+      "sha256": "9428aea5d7bdcbb5",
       "strategy": "skip-if-exists",
     },
     {
@@ -11228,7 +11495,7 @@ exports[`e2e combination plans (D-96) > fullstack plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {
@@ -12390,7 +12657,7 @@ exports[`e2e combination plans (D-96) > fullstack-better-auth plans as recorded 
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {
@@ -13138,7 +13405,7 @@ exports[`e2e combination plans (D-96) > fullstack-docker plans as recorded 1`] =
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {
@@ -13460,7 +13727,7 @@ exports[`e2e combination plans (D-96) > fullstack-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "apps/api/Dockerfile",
-      "sha256": "555b61ce0908d6fe",
+      "sha256": "003e1f00ea6d9c13",
       "strategy": "create",
     },
     {
@@ -14060,7 +14327,7 @@ exports[`e2e combination plans (D-96) > fullstack-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "3465d5a29f91ff58",
+      "sha256": "d7dd63a2e0a2d9ec",
       "strategy": "skip-if-exists",
     },
     {
@@ -14815,7 +15082,7 @@ exports[`e2e combination plans (D-96) > fullstack-next-css-modules plans as reco
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "3465d5a29f91ff58",
+      "sha256": "d7dd63a2e0a2d9ec",
       "strategy": "skip-if-exists",
     },
     {
@@ -15560,7 +15827,7 @@ exports[`e2e combination plans (D-96) > fullstack-next-strictest plans as record
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "3465d5a29f91ff58",
+      "sha256": "d7dd63a2e0a2d9ec",
       "strategy": "skip-if-exists",
     },
     {
@@ -16554,7 +16821,7 @@ exports[`e2e combination plans (D-96) > fullstack-preset plans as recorded 1`] =
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {
@@ -16703,7 +16970,7 @@ exports[`e2e combination plans (D-96) > fullstack-renamed plans as recorded 1`] 
     {
       "mode": "644",
       "path": "apps/server/Dockerfile",
-      "sha256": "f85aaef6a7ae4a38",
+      "sha256": "030c1c5c6765944c",
       "strategy": "create",
     },
     {
@@ -17171,7 +17438,7 @@ exports[`e2e combination plans (D-96) > fullstack-renamed plans as recorded 1`] 
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "9e42cc8859eb05e8",
+      "sha256": "f1c11f9bac2ec086",
       "strategy": "skip-if-exists",
     },
     {
@@ -17293,7 +17560,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "apps/api/Dockerfile",
-      "sha256": "99d6907982696394",
+      "sha256": "36d2742b39c49550",
       "strategy": "create",
     },
     {
@@ -17851,7 +18118,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "3465d5a29f91ff58",
+      "sha256": "d7dd63a2e0a2d9ec",
       "strategy": "skip-if-exists",
     },
     {
@@ -18341,7 +18608,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-css-modules plans as reco
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {
@@ -18549,7 +18816,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-preset plans as recorded 
     {
       "mode": "644",
       "path": "apps/api/Dockerfile",
-      "sha256": "5fbae462dbe6e7c8",
+      "sha256": "cbeddd05cef1c4a5",
       "strategy": "create",
     },
     {
@@ -19107,7 +19374,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-preset plans as recorded 
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "3465d5a29f91ff58",
+      "sha256": "d7dd63a2e0a2d9ec",
       "strategy": "skip-if-exists",
     },
     {
@@ -19232,7 +19499,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-strictest plans as record
     {
       "mode": "644",
       "path": "apps/api/package.json",
-      "sha256": "794d9ec746a2b8c2",
+      "sha256": "f046d76c07d9547e",
       "strategy": "json-merge",
     },
     {
@@ -19520,7 +19787,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-strictest plans as record
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "39497393a92c3dde",
+      "sha256": "996f71830158cefc",
       "strategy": "skip-if-exists",
     },
     {
@@ -19829,7 +20096,7 @@ exports[`e2e combination plans (D-96) > monorepo-api plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {
@@ -19941,7 +20208,7 @@ exports[`e2e combination plans (D-96) > nest-better-auth plans as recorded 1`] =
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "546b3dfc6bea722d",
+      "sha256": "d2fb4dfaa46f3cfb",
       "strategy": "skip-if-exists",
     },
     {
@@ -20306,7 +20573,7 @@ exports[`e2e combination plans (D-96) > nest-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "546b3dfc6bea722d",
+      "sha256": "d2fb4dfaa46f3cfb",
       "strategy": "skip-if-exists",
     },
     {
@@ -20660,7 +20927,7 @@ exports[`e2e combination plans (D-96) > nest-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "16f8774dde4e323c",
+      "sha256": "b47a4725fd667449",
       "strategy": "skip-if-exists",
     },
     {
@@ -21447,7 +21714,7 @@ exports[`e2e combination plans (D-96) > nest-prisma plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "546b3dfc6bea722d",
+      "sha256": "d2fb4dfaa46f3cfb",
       "strategy": "skip-if-exists",
     },
     {
@@ -21766,7 +22033,7 @@ exports[`e2e combination plans (D-96) > nest-session plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "16f8774dde4e323c",
+      "sha256": "b47a4725fd667449",
       "strategy": "skip-if-exists",
     },
     {
@@ -22193,7 +22460,7 @@ exports[`e2e combination plans (D-96) > nest-session-strictest plans as recorded
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "16f8774dde4e323c",
+      "sha256": "b47a4725fd667449",
       "strategy": "skip-if-exists",
     },
     {
@@ -23271,7 +23538,7 @@ exports[`e2e combination plans (D-96) > node-sqlite-prisma plans as recorded 1`]
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "8cd5edbcdc3611e6",
+      "sha256": "70f7a24e6bdaf7e8",
       "strategy": "skip-if-exists",
     },
     {
@@ -23912,7 +24179,7 @@ exports[`e2e combination plans (D-96) > owner-scenario plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "pnpm-workspace.yaml",
-      "sha256": "c831ea6b9274576f",
+      "sha256": "63bb0860dec52e9a",
       "strategy": "skip-if-exists",
     },
     {

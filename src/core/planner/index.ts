@@ -222,11 +222,10 @@ interface PlanContext {
   settings: ResolvedSettings
 }
 
-/** The built file the API's start script runs, e.g. `dist/main.js`, for Docker's CMD. */
-function apiEntry(input: PlanInput, context: PlanContext): string | undefined {
+/** The API's package.json: the backend app in a monorepo, else the project's. */
+function apiPackageJson(input: PlanInput, context: PlanContext): PackageJson | undefined {
   const api = context.targets.find((target) => target.role === 'backend') ?? context.targets[0]
-  if (api === undefined) return undefined
-  return targetPackageJson(input, api, context).scripts?.['start']?.split(' ').at(-1)
+  return api === undefined ? undefined : targetPackageJson(input, api, context)
 }
 
 const scopeOf = (context: PlanContext): RuleScope => ({
@@ -262,6 +261,7 @@ async function targetOutput(
     context.settings
   )
   const packageJson = targetPackageJson(input, target, context)
+  const api = apiPackageJson(input, context)
   const templateContext: Omit<TemplateContext, 'options'> = {
     projectName: input.projectName,
     packageManager: input.packageManager,
@@ -277,7 +277,10 @@ async function targetOutput(
     target: target.role,
     port: portOf(target.role, context.monorepo, context.settings),
     scripts: Object.keys(packageJson.scripts ?? {}),
-    entry: apiEntry(input, context),
+    entry: api?.scripts?.['start']?.split(' ').at(-1),
+    productionBuilds: languageOf(context.modules).catalog.buildApprovals(
+      Object.keys(api?.dependencies ?? {})
+    ),
     packageManagerVersion:
       input.packageManagerVersion ?? FALLBACK_PM_VERSIONS[input.packageManager],
     versions: languageOf(context.modules).catalog.versions(),

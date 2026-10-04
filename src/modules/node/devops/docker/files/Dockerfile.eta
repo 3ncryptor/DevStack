@@ -17,7 +17,8 @@ COPY . .
 FROM base AS prod-deps
 COPY <%= it.pm.manifests %> ./
 RUN <%= it.pm.installProd %>
-
+<% if (it.productionBuilds.length > 0) { %>RUN <%= it.pm.rebuild %> <%= it.productionBuilds.join(' ') %>
+<% } %>
 FROM <%= it.language.dockerBaseImage %> AS runtime
 ENV NODE_ENV=production
 WORKDIR /app

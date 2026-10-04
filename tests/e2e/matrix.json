@@ -1027,5 +1027,19 @@
         "add": ["auth-jwt", "template-todo"]
       }
     ]
+  },
+  {
+    "id": "express-sqlite-prisma-docker",
+    "modules": [
+      "language-node",
+      "framework-express",
+      "database-sqlite",
+      "orm-prisma",
+      "devops-docker",
+      "testing-vitest",
+      "quality-eslint",
+      "quality-prettier"
+    ],
+    "compose": true
   }
 ]

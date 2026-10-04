@@ -25,7 +25,8 @@ WORKDIR /app/<%= it.apps.backend.dir %>
 FROM base AS prod-deps
 COPY --from=prune /app/out/json/ ./
 RUN <%= it.pm.installProd %>
-
+<% if (it.productionBuilds.length > 0) { %>RUN <%= it.pm.rebuild %> <%= it.productionBuilds.join(' ') %>
+<% } %>
 FROM <%= it.language.dockerBaseImage %> AS runtime
 ENV NODE_ENV=production PORT=<%= it.apps.backend.port %>
 WORKDIR /app

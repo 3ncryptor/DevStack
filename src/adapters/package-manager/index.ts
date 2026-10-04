@@ -15,6 +15,8 @@ export interface DockerCommands {
   installFrozen: string
   /** Production dependencies only, without scripts (no dev tools such as husky exist). */
   installProd: string
+  /** Runs named packages' install scripts after `installProd`, e.g. a native binary download. */
+  rebuild: string
   exec: string
   run: string
 }
@@ -52,7 +54,8 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
       // `devOptional` in the lockfile and are only dropped when optional is omitted as well (D-57)
       installProd: 'npm ci --omit=dev --omit=optional --ignore-scripts',
       exec: 'npx --no --',
-      run: 'npm run'
+      run: 'npm run',
+      rebuild: 'npm rebuild'
     })
   },
   pnpm: {
@@ -68,7 +71,8 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
       installFrozen: 'pnpm install --frozen-lockfile',
       installProd: 'pnpm install --frozen-lockfile --prod --ignore-scripts',
       exec: 'pnpm exec',
-      run: 'pnpm run'
+      run: 'pnpm run',
+      rebuild: 'pnpm rebuild'
     })
   },
   yarn: {
@@ -85,7 +89,9 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
       installFrozen: 'yarn install --frozen-lockfile',
       installProd: 'yarn install --frozen-lockfile --production --ignore-scripts',
       exec: 'yarn',
-      run: 'yarn run'
+      run: 'yarn run',
+      // yarn 1 has no rebuild; its node_modules is npm's layout
+      rebuild: 'npm rebuild'
     })
   },
   bun: {
@@ -101,7 +107,9 @@ const ADAPTERS: Record<PackageManagerId, PackageManagerAdapter> = {
       installFrozen: 'bun install --frozen-lockfile',
       installProd: 'bun install --frozen-lockfile --production --ignore-scripts',
       exec: 'bunx',
-      run: 'bun run'
+      run: 'bun run',
+      // bun installs npm's node_modules layout
+      rebuild: 'npm rebuild'
     })
   }
 }

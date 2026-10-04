@@ -1185,7 +1185,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the backend-nest pr
     {
       "mode": "644",
       "path": "Dockerfile",
-      "sha256": "a7db72bb0174aad2",
+      "sha256": "01f015e8030c8323",
       "strategy": "create",
     },
     {
@@ -2349,7 +2349,7 @@ exports[`buildGenerationPlan > matches the recorded plan for the fullstack-vite-
     {
       "mode": "644",
       "path": "apps/api/Dockerfile",
-      "sha256": "44f77961b13e8393",
+      "sha256": "a0501351ccadcb0e",
       "strategy": "create",
     },
     {
