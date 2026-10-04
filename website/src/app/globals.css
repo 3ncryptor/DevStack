@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+/* Developer-centric and dark-first (D-100): near-black, one accent, monospace for code. */
+@theme {
+  --color-background: #0a0b0d;
+  --color-surface: #111317;
+  --color-border: #1f232b;
+  --color-foreground: #e6e8eb;
+  --color-muted: #8b93a1;
+  --color-accent: #4ade80;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+/* a faint dot grid, like graph paper under the terminal */
+.dot-grid {
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

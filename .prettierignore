@@ -9,3 +9,7 @@ graphify-out
 .cursor
 AGENTS.md
 CLAUDE.md
+# the website's build output and generated module data
+.next
+website/src/generated
+website/next-env.d.ts

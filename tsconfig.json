@@ -13,6 +13,6 @@
     "noEmit": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["bin", "src", "tests", "vitest.config.ts", "tsup.config.ts"],
+  "include": ["bin", "scripts", "src", "tests", "vitest.config.ts", "tsup.config.ts"],
   "exclude": ["dist", "node_modules", "src/modules/**/files/**"]
 }
