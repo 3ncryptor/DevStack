@@ -10,6 +10,23 @@
   background-size: 24px 24px;
 }
 
+/* headlines: a wide, heavy grotesk (Archivo at 125% width), Neutron's big type */
+@utility display {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+/* the tiny letter-spaced mono labels: `// how it works`, `ANALYTICS ● LIVE` */
+@utility label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
 /* an endless row: content is doubled, so sliding by half loops without a seam */
 @keyframes marquee {
   to {
@@ -42,6 +59,7 @@
 
 @theme inline {
   --font-heading: var(--font-geist-sans);
+  --font-display: var(--font-archivo);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-warning: var(--warning);
@@ -87,26 +105,26 @@
 }
 
 :root {
-  /* Developer-centric and dark-first (D-100): near-black, terminal green, monospace for code. */
-  --background: #0a0b0d;
-  --foreground: #e6e8eb;
-  --card: #111317;
-  --card-foreground: #e6e8eb;
-  --popover: #111317;
-  --popover-foreground: #e6e8eb;
+  /* After neutronfest.org: pure black, white type, terminal green as the one accent. */
+  --background: #000000;
+  --foreground: #fafafa;
+  --card: #0a0a0a;
+  --card-foreground: #fafafa;
+  --popover: #0a0a0a;
+  --popover-foreground: #fafafa;
   --primary: #4ade80;
-  --primary-foreground: #0a0b0d;
-  --secondary: #16191e;
-  --secondary-foreground: #e6e8eb;
-  --muted: #16191e;
-  --muted-foreground: #8b93a1;
-  --accent: #16191e;
-  --accent-foreground: #e6e8eb;
+  --primary-foreground: #000000;
+  --secondary: #111111;
+  --secondary-foreground: #fafafa;
+  --muted: #111111;
+  --muted-foreground: #8a8a8a;
+  --accent: #111111;
+  --accent-foreground: #fafafa;
   --destructive: #f87171;
   --warning: #fbbf24;
   --glow: rgb(74 222 128 / 15%);
-  --border: #1f232b;
-  --input: #1f232b;
+  --border: #1c1c1c;
+  --input: #1c1c1c;
   --ring: #4ade80;
   --chart-1: #4ade80;
   --chart-2: #22d3ee;
@@ -114,13 +132,13 @@
   --chart-4: #fbbf24;
   --chart-5: #f87171;
   --radius: 0.5rem;
-  --sidebar: #0d0f12;
-  --sidebar-foreground: #e6e8eb;
+  --sidebar: #050505;
+  --sidebar-foreground: #fafafa;
   --sidebar-primary: #4ade80;
-  --sidebar-primary-foreground: #0a0b0d;
-  --sidebar-accent: #16191e;
-  --sidebar-accent-foreground: #e6e8eb;
-  --sidebar-border: #1f232b;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #111111;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #1c1c1c;
   --sidebar-ring: #4ade80;
 }
 

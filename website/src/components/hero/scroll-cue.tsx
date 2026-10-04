@@ -9,7 +9,7 @@ const BOB_SECONDS = 1.6
 export function ScrollCue() {
   return (
     <a
-      href="#experience"
+      href="#works-with"
       className="text-muted-foreground hover:text-foreground flex flex-col items-center gap-1 font-mono text-xs transition-colors"
     >
       see it work

@@ -5,7 +5,7 @@ import { REPOSITORY } from '@/lib/site'
 import cliPackage from '@repo/package.json'
 
 const LINKS: readonly CurvedNavbarItem[] = [
-  { label: 'experience', href: '/#experience', description: 'Watch a stack get built.' },
+  { label: 'stack', href: '/#works-with', description: 'Everything DevStack wires.' },
   { label: 'build', href: '/#build', description: 'Pick a stack, get one command.' },
   { label: 'docs', href: '/docs', description: 'Flags, settings, every module.' },
   { label: 'mcp', href: '/docs/mcp', description: 'Use DevStack from your AI assistant.' }
@@ -24,8 +24,8 @@ export function SiteHeader({ stars }: { readonly stars: number | undefined }) {
         actionHref={REPOSITORY}
         panelHeading="Production-ready stacks, wired and verified."
         panelDescription="Pick a stack, run one command, and get a project that installs, passes its checks and boots."
-        background="#111317"
-        foreground="#e6e8eb"
+        background="#0a0a0a"
+        foreground="#fafafa"
         accent="#4ade80"
         compactWidth={760}
       >
