@@ -177,7 +177,8 @@ export function getPreset(name: string): PresetDefinition | undefined {
 export interface ResolvedPreset {
   name: string
   description: string
-  source: 'built-in' | 'user'
+  /** `flags`: given as `--modules` and `--option` (D-99). */
+  source: 'built-in' | 'user' | 'flags'
   modules: string[]
   moduleOptions: Record<string, Record<string, unknown>>
   settings?: ProjectSettings

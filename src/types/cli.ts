@@ -5,6 +5,10 @@ import { MODULE_SYSTEMS } from '../core/settings'
 
 export const cliOptionSchema = z.strictObject({
   preset: z.string().optional(),
+  /** `--modules`: the stack as module ids, like an inline preset (D-99). */
+  modules: z.array(z.string().min(1)).min(1).optional(),
+  /** `--option <module>.<key>=<value>`, parsed. */
+  moduleOptions: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
   /** Path to a stack config (stack.json or a project's .devstack/stack.json). */
   config: z.string().optional(),
   /** Package manager for the generated project; beats config and detection. */

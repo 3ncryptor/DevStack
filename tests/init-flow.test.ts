@@ -152,6 +152,27 @@ describe('init flow', () => {
     expect(await exists(path.join(dir, 'pm-check'))).toBe(false)
   })
 
+  it('takes a stack as --modules, but not together with --preset (D-99)', async () => {
+    const output = captureStdout()
+
+    await runCreateDevstack({
+      projectName: 'flags-app',
+      options: { modules: ['framework-fastify', 'security-helmet'], yes: true, dryRun: true },
+      prompter: new ScriptedPrompter([]),
+      probe: failingProbe
+    })
+    const conflict = runCreateDevstack({
+      projectName: 'flags-app',
+      options: { modules: ['framework-fastify'], preset: 'backend', yes: true, dryRun: true },
+      prompter: new ScriptedPrompter([]),
+      probe: failingProbe
+    })
+
+    expect(output()).toContain('framework-fastify')
+    expect(output()).toContain('security-helmet')
+    await expect(conflict).rejects.toThrow('Use --modules or --preset, not both.')
+  })
+
   it('checks a package manager set by --pm before asking any question', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     const prompter = new ScriptedPrompter([])

@@ -118,25 +118,27 @@ empty GitHub repository.
 `plan`, `modules`, `doctor`, `add`, `remove`, `config`, `presets` and `mcp` are commands, so a
 project with one of those names needs the explicit form: `create-devstack-app init doctor`.
 
-| Flag                        | Effect                                                                                                              |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `--preset <name>`           | Start from a preset, built in or your own (`presets list`); you still see the review screen unless you pass `--yes` |
-| `--pm <name>`               | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm)      |
-| `--depth <level>`           | `wired` (default): integration code included. `bare`: config, tooling and folders only                              |
-| `--module-system <system>`  | `esm` (default) or `cjs`: how the API's code is loaded. Web apps stay ESM                                           |
-| `--config <file>`           | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                         |
-| `--yes`                     | Accept defaults, never ask. Never overwrites existing files                                                         |
-| `--force`                   | Overwrite existing files. Originals are backed up first                                                             |
-| `--advanced`                | Pick modules one by one; the review screen offers fixes when they do not fit together                               |
-| `--in-place`                | Generate into the current directory                                                                                 |
-| `--dry-run`                 | Print the plan (files and commands) and stop                                                                        |
-| `--print-plan [text\|json]` | Print the plan in a format; `json` never prompts                                                                    |
-| `--skip-install`            | Do not install dependencies                                                                                         |
-| `--skip-git`                | Do not initialise git or install hooks                                                                              |
-| `--skip-verify`             | Skip the checks and boot test after install (the project is "Not verified")                                         |
-| `--github <url>`            | Push the initial commit to this existing, empty GitHub repository                                                   |
-| `--start`                   | Start the database and the dev servers when the project is ready                                                    |
-| `--verbose`                 | Debug output and full error details                                                                                 |
+| Flag                          | Effect                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--preset <name>`             | Start from a preset, built in or your own (`presets list`); you still see the review screen unless you pass `--yes` |
+| `--modules <ids>`             | The stack as module ids, comma-separated (the website's builder writes this command)                                |
+| `--option <module.key=value>` | A module option, repeatable, e.g. `security-rate-limit.limit=500`                                                   |
+| `--pm <name>`                 | Package manager: `npm`, `pnpm`, `yarn` or `bun` (default: how you ran the CLI, then a lockfile here, then npm)      |
+| `--depth <level>`             | `wired` (default): integration code included. `bare`: config, tooling and folders only                              |
+| `--module-system <system>`    | `esm` (default) or `cjs`: how the API's code is loaded. Web apps stay ESM                                           |
+| `--config <file>`             | Generate from a stack config, e.g. another project's `.devstack/stack.json`                                         |
+| `--yes`                       | Accept defaults, never ask. Never overwrites existing files                                                         |
+| `--force`                     | Overwrite existing files. Originals are backed up first                                                             |
+| `--advanced`                  | Pick modules one by one; the review screen offers fixes when they do not fit together                               |
+| `--in-place`                  | Generate into the current directory                                                                                 |
+| `--dry-run`                   | Print the plan (files and commands) and stop                                                                        |
+| `--print-plan [text\|json]`   | Print the plan in a format; `json` never prompts                                                                    |
+| `--skip-install`              | Do not install dependencies                                                                                         |
+| `--skip-git`                  | Do not initialise git or install hooks                                                                              |
+| `--skip-verify`               | Skip the checks and boot test after install (the project is "Not verified")                                         |
+| `--github <url>`              | Push the initial commit to this existing, empty GitHub repository                                                   |
+| `--start`                     | Start the database and the dev servers when the project is ready                                                    |
+| `--verbose`                   | Debug output and full error details                                                                                 |
 
 Exit codes: `0` success, `1` generation failed after writing (the message lists what was written),
 `2` invalid input or stack (nothing written), `3` cancelled.

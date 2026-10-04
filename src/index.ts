@@ -112,6 +112,18 @@ interface StackChoice {
 }
 
 async function presetFor(options: CliOptions, home: string): Promise<ResolvedPreset | undefined> {
+  if (options.modules !== undefined) {
+    if (options.preset !== undefined) {
+      throw new InputError('Use --modules or --preset, not both.')
+    }
+    return {
+      name: 'modules',
+      description: 'from --modules',
+      source: 'flags',
+      modules: options.modules,
+      moduleOptions: options.moduleOptions ?? {}
+    }
+  }
   if (options.preset === undefined) return undefined
   const preset = await findPreset(options.preset, home)
   if (preset === undefined) {
@@ -318,7 +330,10 @@ function assertNonInteractive(projectName: string | undefined, options: CliOptio
   const needsName = projectName === undefined && !options.yes
   const needsModules =
     options.advanced ||
-    (options.preset === undefined && options.config === undefined && !options.yes)
+    (options.preset === undefined &&
+      options.modules === undefined &&
+      options.config === undefined &&
+      !options.yes)
   if (needsName || needsModules) {
     throw new InputError(
       '--print-plan json cannot ask questions. Pass a project name and --preset <name>, or --yes.'
@@ -330,9 +345,9 @@ async function readConfig(options: CliOptions): Promise<StackConfig | undefined>
   if (options.config === undefined) {
     return undefined
   }
-  if (options.preset !== undefined || options.advanced) {
+  if (options.preset !== undefined || options.modules !== undefined || options.advanced) {
     throw new InputError(
-      '--config cannot be combined with --preset or --advanced: the config already lists the modules.'
+      '--config cannot be combined with --preset, --modules or --advanced: the config already lists the modules.'
     )
   }
   return loadStackConfig(path.resolve(process.cwd(), options.config))

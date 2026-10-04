@@ -9,12 +9,33 @@ import { listModules } from '../src/commands/modules'
 import { systemProbe } from '../src/core/doctor'
 import { CLI_PACKAGE } from '../src/core/manifest'
 import { loadModules } from '../src/core/module-loader'
-import { Aborted, EXIT_CODE, exitCodeFor } from '../src/errors'
+import { Aborted, EXIT_CODE, exitCodeFor, InputError } from '../src/errors'
+import { parseModuleOptions, parseModulesFlag } from '../src/core/stack-command'
 import { runCreateDevstack } from '../src/index'
 import type { CliOptions } from '../src/types/cli'
 import { ConsoleLogger } from '../src/utils/logger'
 
-interface InitFlags {
+/** The flags that describe a stack inline (D-99), shared by init and plan. */
+interface StackFlags {
+  modules?: string
+  option: string[]
+}
+
+const collect = (value: string, previous: string[]): string[] => [...previous, value]
+
+/** `--modules` and `--option` as CLI options. */
+function stackOptions(flags: StackFlags): Pick<CliOptions, 'modules' | 'moduleOptions'> {
+  if (flags.modules !== undefined) {
+    return {
+      modules: parseModulesFlag(flags.modules),
+      moduleOptions: parseModuleOptions(flags.option)
+    }
+  }
+  if (flags.option.length > 0) throw new InputError('--option needs --modules.')
+  return {}
+}
+
+interface InitFlags extends StackFlags {
   preset?: string
   pm?: string
   depth?: string
@@ -49,6 +70,13 @@ program
   .description('Create a new project')
   .argument('[project-name]', 'Name of the project to create')
   .option('--preset <name>', 'Use a predefined preset (example: backend)')
+  .option('--modules <ids>', 'The stack as module ids, e.g. framework-fastify,database-postgres')
+  .option(
+    '--option <module.key=value>',
+    'A module option, e.g. security-rate-limit.limit=500',
+    collect,
+    []
+  )
   .option(
     '--depth <level>',
     'bare (config and tooling only) or wired (default, adds integration code)'
@@ -69,11 +97,12 @@ program
   .option('--dry-run', 'Show what would be written and run, then stop', false)
   .option('--print-plan [format]', 'Print the plan as text or json and write nothing')
   .action(async (projectName: string | undefined, flags: InitFlags) => {
-    const { printPlan, pm, depth, moduleSystem, ...rest } = flags
+    const { printPlan, pm, depth, moduleSystem, modules, option, ...rest } = flags
     await runCreateDevstack({
       projectName,
       options: {
         ...rest,
+        ...stackOptions({ modules, option }),
         pm: pm as CliOptions['pm'],
         depth: depth as CliOptions['depth'],
         moduleSystem: moduleSystem as CliOptions['moduleSystem'],
@@ -82,7 +111,7 @@ program
     })
   })
 
-interface PlanFlags {
+interface PlanFlags extends StackFlags {
   preset?: string
   config?: string
   pm?: string
@@ -98,6 +127,8 @@ program
   .description('Resolve a stack and print what init would write and run; writes nothing')
   .argument('[project-name]', 'Name to plan for (default: from the config, or devstack-app)')
   .option('--preset <name>', 'Plan a predefined preset (default: backend)')
+  .option('--modules <ids>', 'Plan these module ids')
+  .option('--option <module.key=value>', 'A module option', collect, [])
   .option('--config <file>', 'Plan a stack config, e.g. .devstack/stack.json')
   .option('--pm <name>', 'Package manager: npm, pnpm, yarn or bun')
   .option('--depth <level>', 'bare or wired')
@@ -108,6 +139,7 @@ program
       projectName,
       options: {
         preset: flags.preset,
+        ...stackOptions(flags),
         config: flags.config,
         pm: flags.pm as CliOptions['pm'],
         depth: flags.depth as CliOptions['depth'],
