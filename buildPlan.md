@@ -1325,9 +1325,15 @@ Exit gate: on the deployed site, a visitor builds a stack in the builder, copies
 runs it, and gets a project that passes its gates; every module has a docs page; the builder
 cannot produce a stack the CLI rejects.
 
-Open with the owner: branding (name styling, colors, logo), the demo's exact form (replayed
-terminal vs recorded video), analytics (none by default), whether generated `stack.json` files
-point at the hosted `$schema`, and a custom domain later (the `$schema` URL moves with it).
+Look and libraries (D-100): developer-centric, dark-first, one accent color, monospace for
+anything code-like; a typographic `>_ devstack` wordmark until there is a logo. shadcn/ui for
+structure and controls, DevClub UI (`@devclubnst/ui`, copied in through its CLI) for the
+developer showpieces (file tree, code block, stepper, search, bento grid), Aceternity UI for
+one or two landing accents. WebGL and heavy animation load lazily on the landing page only and
+respect reduced motion. The demo is a clickable terminal replay of the wizard.
+
+Open with the owner: analytics (none by default), whether generated `stack.json` files point at
+the hosted `$schema`, and a custom domain later (the `$schema` URL moves with it).
 
 ## Post-1.0 — Python and Go (targets: v1.1.0, v1.2.0)
 
@@ -1969,6 +1975,14 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   reference, the MCP guide and the hosted `$schema`. The builder and docs reuse the CLI's
   registry, resolver and wizard logic through a browser-safe entry; a `--modules` flag makes
   every built stack expressible as one command.
+
+- **D-100 (2026-10-04)** — Website look and UI libraries (owner): developer-centric and
+  dark-first, a typographic `>_ devstack` wordmark for now, the demo as a clickable terminal
+  replay. shadcn/ui for structure, DevClub UI for developer showpieces, Aceternity UI for a few
+  landing accents. DevClub UI components are copied in through its CLI rather than installed as
+  a package: its package.json lists `next`, `react` and `react-dom` as exact dependencies
+  instead of peers (a second React breaks hooks) and pulls three.js and GSAP into every install;
+  moving them to `peerDependencies` upstream would make the package installable.
 
 # §8. Open questions
 
