@@ -5,7 +5,7 @@ import { NPM_PACKAGE, REPOSITORY } from '@/lib/site'
 import { Wordmark } from './wordmark'
 
 const LINKS = [
-  { label: 'builder', href: '/builder' },
+  { label: 'build', href: '/#build' },
   { label: 'docs', href: '/docs' },
   { label: 'mcp', href: '/docs/mcp' }
 ]

@@ -7,9 +7,9 @@ export default function Home() {
   return (
     <>
       <Hero />
+      <HowItWorks />
       <WorksWith />
       <ProblemPromise />
-      <HowItWorks />
     </>
   )
 }

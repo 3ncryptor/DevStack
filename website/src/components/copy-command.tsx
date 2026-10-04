@@ -18,11 +18,11 @@ export function CopyCommand({ command }: { readonly command: string }) {
   }
 
   return (
-    <div className="border-border bg-card hover:border-primary/40 flex items-center gap-3 rounded-lg border px-4 py-3 font-mono text-sm transition-colors">
+    <div className="border-border bg-card hover:border-primary/40 flex max-w-full min-w-0 items-center gap-3 rounded-lg border px-4 py-3 font-mono text-sm transition-colors">
       <span aria-hidden className="text-primary select-none">
         $
       </span>
-      <code className="flex-1 overflow-x-auto whitespace-nowrap">{command}</code>
+      <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap">{command}</code>
       <button
         type="button"
         onClick={() => void copy()}

@@ -67,7 +67,12 @@ export function HowItWorks() {
   const { detail, Panel } = STORY[active] ?? STORY[0]
 
   return (
-    <section ref={track} className="relative" style={{ height: `${STORY.length * 100}vh` }}>
+    <section
+      ref={track}
+      id="experience"
+      className="relative"
+      style={{ height: `${STORY.length * 100}vh` }}
+    >
       <div className="sticky top-0 mx-auto flex h-screen max-w-6xl flex-col justify-center gap-10 px-6 py-20">
         <SectionHeading
           eyebrow="how it works"
