@@ -15,15 +15,15 @@ export function CopyCommand({ command }: { readonly command: string }) {
   }
 
   return (
-    <div className="border-border bg-surface flex items-center gap-3 rounded-md border px-4 py-3 font-mono text-sm">
-      <span aria-hidden className="text-accent select-none">
+    <div className="border-border bg-card flex items-center gap-3 rounded-md border px-4 py-3 font-mono text-sm">
+      <span aria-hidden className="text-primary select-none">
         $
       </span>
       <code className="flex-1 overflow-x-auto whitespace-nowrap">{command}</code>
       <button
         type="button"
         onClick={() => void copy()}
-        className="text-muted hover:text-foreground focus-visible:outline-accent shrink-0 text-xs focus-visible:outline"
+        className="text-muted-foreground hover:text-foreground focus-visible:outline-ring shrink-0 text-xs focus-visible:outline"
         aria-label={`Copy: ${command}`}
       >
         {copied ? 'copied' : 'copy'}

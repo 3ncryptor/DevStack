@@ -2,7 +2,7 @@
 export function Wordmark() {
   return (
     <span className="font-mono text-base font-semibold tracking-tight">
-      <span className="text-accent">&gt;_</span> devstack
+      <span className="text-primary">&gt;_</span> devstack
     </span>
   )
 }
