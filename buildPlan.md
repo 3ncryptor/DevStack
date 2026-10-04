@@ -1298,12 +1298,36 @@ end-to-end.
 
 Deferred (D-92): metrics (§ success metrics) are measured later; the public website is M7.
 
-## Phase 7 — Public website (D-83, D-92)
+## Phase 7 — Public website (D-83, D-92, D-99)
 
-Planned in depth before any work: landing page, interactive stack builder running the real
-resolver, docs with a module reference generated from the registry, MCP setup guide, hosted
-`$schema`. Built in this repo, excluded from the npm package, deployed by the host's Git
-integration (no new workflow).
+A public site where people discover DevStack, build a stack in the browser and copy one
+command that generates it. Next.js in `website/` (its own package, never in the npm package),
+on Vercel through its Git integration (no workflow), on a free `*.vercel.app` subdomain for now.
+
+The site reuses DevStack's own logic instead of copying it: the builder offers choices with the
+wizard's `moduleChoices`/`fitsStack` (D-96), validates with `resolveStack`, and the module
+reference is generated from the registry at build time. So the site can never offer a stack the
+CLI rejects, and new modules appear on the site without site changes.
+
+| #   | Task                                                                                                                                                                                                                                                              | Effort |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 7.1 | CLI: `--modules <id,...>` and `--option <module>.<key>=<value>`, so any stack is one command. A pure `commandFor(selection)` builds the command; a test parses every command it builds back through the CLI and expects the same modules, options and settings.   | M      |
+| 7.2 | Browser-safe core: module definitions stop touching `node:fs` at import (template paths resolved lazily), and `src/browser.ts` exports the registry metadata, `resolveStack`, the wizard's choice logic and `commandFor`. A test bundles it for the browser.      | M      |
+| 7.3 | Site skeleton: Next.js App Router, TypeScript, Tailwind, dark mode, SEO metadata, accessible navigation; `website/` builds and lints locally; Vercel project rooted at `website/`, rebuilding only when the site or the shared core changes.                      | M      |
+| 7.4 | Landing page: what DevStack is, the copyable `npx` command, what you get (wired stacks, verified, add/remove, MCP), supported choices drawn from the registry.                                                                                                    | M      |
+| 7.5 | Interactive demo (owner): the wizard replayed in a terminal on the page; visitors click answers and watch the project get planned; driven by the same metadata as the wizard, so it never drifts.                                                                 | M      |
+| 7.6 | Stack builder: the wizard's questions as a GUI, choices narrowed live by `fitsStack`, resolver diagnostics shown with their fixes, a live file preview from the plan, and the final command to copy; also a `stack.json` download and a shareable URL.            | L      |
+| 7.7 | Docs: getting started, the wizard, CLI flags, settings (style, strictness, ESM/CJS, apps, ports), presets and remembered defaults, `add`/`remove`, `doctor`, troubleshooting, "adding a module" (the plug-and-play contract); plus one generated page per module. | L      |
+| 7.8 | MCP guide (what MCP is, setup for Claude Code, Claude Desktop, Cursor, VS Code) and the hosted `$schema`: the stack config's JSON Schema generated from its zod schema at build time.                                                                             | S      |
+| 7.9 | Launch polish: performance budget (static pages, the builder as the only heavy client code), accessibility pass, link checks, a smoke test of the copied command against the CLI.                                                                                 | M      |
+
+Exit gate: on the deployed site, a visitor builds a stack in the builder, copies the command,
+runs it, and gets a project that passes its gates; every module has a docs page; the builder
+cannot produce a stack the CLI rejects.
+
+Open with the owner: branding (name styling, colors, logo), the demo's exact form (replayed
+terminal vs recorded video), analytics (none by default), whether generated `stack.json` files
+point at the hosted `$schema`, and a custom domain later (the `$schema` URL moves with it).
 
 ## Post-1.0 — Python and Go (targets: v1.1.0, v1.2.0)
 
@@ -1938,6 +1962,13 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   language through `LanguageAdapter` (`src/adapters/language`: version catalog, Docker base
   image); adding a language is an adapter, a catalog (`VersionCatalog`) and an entry in
   `LANGUAGE_IDS`.
+
+- **D-99 (2026-10-04)** — Website stack (owner): Next.js in `website/`, Vercel via its Git
+  integration, a free `*.vercel.app` subdomain for now. v1 has the landing page, an interactive
+  demo, the stack builder that ends in one copyable command, docs with a generated module
+  reference, the MCP guide and the hosted `$schema`. The builder and docs reuse the CLI's
+  registry, resolver and wizard logic through a browser-safe entry; a `--modules` flag makes
+  every built stack expressible as one command.
 
 # §8. Open questions
 
