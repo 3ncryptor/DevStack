@@ -1,6 +1,7 @@
 import { access } from 'node:fs/promises'
 import path from 'node:path'
 
+import { execa } from 'execa'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Probe } from '../src/core/doctor'
@@ -75,6 +76,59 @@ describe('init flow', () => {
 
     expect(reviewed.asked).toEqual(['Package manager', 'What next?'])
     expect(silent.asked).toEqual([])
+  })
+
+  it('asks for the initial commit first, and skips the GitHub question when it is declined', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const dir = await tempDir('devstack-flow-')
+    vi.spyOn(process, 'cwd').mockReturnValue(dir)
+    const healthy: Probe = (command, args) =>
+      Promise.resolve(
+        command === 'npm' ? '11.0.0' : command === 'git' ? `${args.join(' ')} answer` : undefined
+      )
+    const prompter = new ScriptedPrompter(['generate', false])
+
+    await runCreateDevstack({
+      projectName: 'no-commit',
+      options: { preset: 'backend', pm: 'npm', skipInstall: true },
+      prompter,
+      probe: healthy
+    })
+
+    expect(prompter.asked).toEqual([
+      'What next?',
+      'Create an initial git commit? (git is set up either way)'
+    ])
+    expect(await exists(path.join(dir, 'no-commit', '.git'))).toBe(true)
+    await expect(
+      execa('git', ['rev-parse', '--verify', 'HEAD'], { cwd: path.join(dir, 'no-commit') })
+    ).rejects.toThrow()
+  })
+
+  it('commits when the user agrees, then offers GitHub', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const dir = await tempDir('devstack-flow-')
+    vi.spyOn(process, 'cwd').mockReturnValue(dir)
+    const healthy: Probe = (command, args) =>
+      Promise.resolve(
+        command === 'npm' ? '11.0.0' : command === 'git' ? `${args.join(' ')} answer` : undefined
+      )
+    const prompter = new ScriptedPrompter(['generate', true, false])
+
+    await runCreateDevstack({
+      projectName: 'with-commit',
+      options: { preset: 'backend', pm: 'npm', skipInstall: true },
+      prompter,
+      probe: healthy
+    })
+
+    expect(prompter.asked.slice(1)).toEqual([
+      'Create an initial git commit? (git is set up either way)',
+      'Also push it to a GitHub repository? (an existing, empty one; after the checks pass)'
+    ])
+    await expect(
+      execa('git', ['rev-parse', '--verify', 'HEAD'], { cwd: path.join(dir, 'with-commit') })
+    ).resolves.toBeDefined()
   })
 
   it('stops before writing anything when the chosen package manager is missing', async () => {

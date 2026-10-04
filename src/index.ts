@@ -269,29 +269,48 @@ function wizardServices(
   }
 }
 
-/** A0.2 #19: an existing, empty GitHub repository to push to; --github answers it upfront. */
-async function githubUrl(
+interface GitAnswers {
+  initialCommit: boolean
+  /** An existing, empty GitHub repository the commit is pushed to (A0.5). */
+  github?: string
+}
+
+/**
+ * A0.2 #19: whether to make the initial commit, then whether to push it to GitHub; declining the
+ * commit skips the push question. --github answers both upfront; settings that turn the commit
+ * off ask neither.
+ */
+async function gitAnswers(
   options: CliOptions,
   prompter: Prompter,
-  config: StackConfig | undefined
-): Promise<string | undefined> {
+  config: StackConfig | undefined,
+  initialCommit: boolean
+): Promise<GitAnswers> {
   if (options.github !== undefined) {
     const problem = githubUrlProblem(options.github)
     if (problem !== undefined) throw new InputError(`--github: ${problem}`)
-    return options.github
+    return { initialCommit, github: options.github }
   }
   const interactive = !options.yes && options.printPlan === undefined && !options.dryRun
-  if (!interactive || options.skipGit || config !== undefined) return undefined
+  if (!interactive || options.skipGit || config !== undefined || !initialCommit) {
+    return { initialCommit }
+  }
+  const commit = await prompter.confirm({
+    message: 'Create an initial git commit? (git is set up either way)',
+    initialValue: true
+  })
+  if (!commit) return { initialCommit: false }
   const connect = await prompter.confirm({
-    message: 'Connect a GitHub repository? (an existing, empty one; pushed after the checks pass)',
+    message: 'Also push it to a GitHub repository? (an existing, empty one; after the checks pass)',
     initialValue: false
   })
-  if (!connect) return undefined
-  return prompter.text({
+  if (!connect) return { initialCommit: true }
+  const github = await prompter.text({
     message: 'GitHub repository URL',
     placeholder: 'https://github.com/<owner>/<repo>',
     validate: (value) => githubUrlProblem(value.trim())
   })
+  return { initialCommit: true, github }
 }
 
 /** Prompts write to stdout, which would corrupt the JSON document; require every answer upfront. */
@@ -447,6 +466,7 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     )
   }
 
+  const git = await gitAnswers(options, prompter, config, settings.initialCommit ?? true)
   await generateProject({
     projectName: target.projectName,
     projectDir: target.projectDir,
@@ -459,8 +479,8 @@ export async function runCreateDevstack(input: CreateDevstackInput): Promise<voi
     registry,
     packageManager,
     packageManagerVersion: environment?.packageManagerVersions[packageManager],
-    settings,
-    options: { ...options, github: await githubUrl(options, prompter, config) },
+    settings: { ...settings, initialCommit: git.initialCommit },
+    options: { ...options, github: git.github },
     logger,
     prompter
   })

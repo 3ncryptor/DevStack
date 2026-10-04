@@ -111,7 +111,9 @@ configured. Nothing is written until the review screen, where you can generate, 
 answer, save the stack as a named preset, remember your answers as defaults, or cancel. A
 missing package manager is caught there too, before any file is written. If installing fails
 after the files are written, they stay: the summary says "Not verified" and lists the commands
-to run again, and what to check if one fails again.
+to run again, and what to check if one fails again. After the files are written it asks whether to make the
+initial git commit (git is set up either way), and only then whether to push it to an existing,
+empty GitHub repository.
 
 `plan`, `modules`, `doctor`, `add`, `remove`, `config`, `presets` and `mcp` are commands, so a
 project with one of those names needs the explicit form: `create-devstack-app init doctor`.
