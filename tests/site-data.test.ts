@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
+import { GATES } from '../src/core/finish/verify'
+import { loadModules } from '../src/core/module-loader'
 import { PRESETS } from '../src/core/presets'
 import { resolveStack } from '../src/core/resolver/index'
 import { BUILTIN_MODULES } from '../src/modules/registry'
-import { siteModules } from '../src/site-data'
+import { filmData, siteModules } from '../src/site-data'
 import type { DevstackModule } from '../src/types/module'
 
 /** The website's modules exactly as it receives them: through JSON. */
@@ -35,6 +37,14 @@ describe('site data (D-99)', () => {
     const broken = ['orm-mongoose', 'database-postgres', 'framework-express', 'framework-nest']
 
     expect(resolved(fromJson, broken)).toEqual(resolved(registry, broken))
+  })
+
+  it('films a real stack: wizard answers, planned files and the checks', async () => {
+    const film = await filmData(loadModules())
+
+    expect(film.answers).toContainEqual({ question: 'Framework', answer: 'Express' })
+    expect(film.files).toContain('.devstack/stack.json')
+    expect(film.gates).toEqual(GATES)
   })
 
   it('keeps option defaults and choices for the builder, and no template paths', () => {
