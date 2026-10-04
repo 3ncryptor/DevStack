@@ -1,6 +1,3 @@
-import { access } from 'node:fs/promises'
-import path from 'node:path'
-
 /** Package managers DevStack generates for (buildPlan B7). */
 export const PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'] as const
 
@@ -161,18 +158,4 @@ export function choosePackageManager(signals: PackageManagerSignals): PackageMan
     if (signals.lockfiles.includes(lockfile)) return { id, source: `${lockfile} in this folder` }
   }
   return { id: 'npm', source: 'default' }
-}
-
-/** Lockfile names present in `directory` (bun's older binary lockfile counts as bun.lock). */
-export async function lockfilesIn(directory: string): Promise<string[]> {
-  const candidates = [...Object.values(ADAPTERS).map((adapter) => adapter.lockfile), 'bun.lockb']
-  const present = await Promise.all(
-    candidates.map((name) =>
-      access(path.join(directory, name)).then(
-        () => (name === 'bun.lockb' ? 'bun.lock' : name),
-        () => undefined
-      )
-    )
-  )
-  return present.filter((name): name is string => name !== undefined)
 }

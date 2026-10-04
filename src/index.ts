@@ -38,11 +38,8 @@ import {
 import { cliOptionSchema, type CliOptions } from './types/cli'
 import type { DevstackModule } from './types/module'
 import { ConsoleLogger } from './utils/logger'
-import {
-  choosePackageManager,
-  lockfilesIn,
-  type PackageManagerId
-} from './adapters/package-manager/index'
+import { choosePackageManager, type PackageManagerId } from './adapters/package-manager/index'
+import { lockfilesIn } from './adapters/package-manager/lockfiles'
 import { systemProbe, type EnvironmentReport, type Probe } from './core/doctor'
 import { splitModuleEntries, type StackConfig } from './core/manifest'
 import { buildGenerationPlan } from './core/planner/index'
