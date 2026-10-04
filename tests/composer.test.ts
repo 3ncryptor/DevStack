@@ -117,11 +117,6 @@ describe('composer', () => {
       'build-app'
     )
 
-    expect(result.buildApprovals).toEqual([
-      '@prisma/client',
-      '@prisma/engines',
-      'esbuild',
-      'prisma'
-    ])
+    expect(result.buildApprovals).toEqual(['@prisma/engines', 'esbuild', 'prisma'])
   })
 })
