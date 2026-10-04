@@ -47,6 +47,14 @@ describe('site data (D-99)', () => {
     expect(film.gates).toEqual(GATES)
   })
 
+  it('films what adding a module really changes', async () => {
+    const { evolve } = await filmData(loadModules())
+
+    expect(evolve.added).toContain('apps/api/src/features/auth/auth.routes.ts')
+    expect(evolve.changed).toContain('apps/api/src/app.ts')
+    expect(evolve.added.filter((path) => evolve.changed.includes(path))).toEqual([])
+  })
+
   it('keeps option defaults and choices for the builder, and no template paths', () => {
     const rateLimit = fromJson.get('security-rate-limit') as unknown as Record<string, unknown>
 

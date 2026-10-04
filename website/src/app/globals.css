@@ -10,6 +10,36 @@
   background-size: 24px 24px;
 }
 
+/* an endless row: content is doubled, so sliding by half loops without a seam */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee {
+  animation: marquee 60s linear infinite;
+}
+
+.marquee-mask:hover .marquee {
+  animation-play-state: paused;
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    animation: none;
+    flex-wrap: wrap;
+  }
+
+  .marquee > [aria-hidden='true'] {
+    display: none;
+  }
+}
+
 @theme inline {
   --font-heading: var(--font-geist-sans);
   --font-sans: var(--font-geist-sans);

@@ -6,6 +6,7 @@ import { buildGenerationPlan } from './core/planner/index'
 import { PRESETS } from './core/presets'
 import { answersFromModules, STEPS } from './prompts/wizard/steps'
 import type { DevstackModule } from './types/module'
+import type { PlannedFile } from './types/plan'
 
 /**
  * A module as the website loads it (D-99): plain JSON. `filesPath` is left out (templates are
@@ -35,23 +36,50 @@ export interface FilmData {
   answers: Array<{ question: string; answer: string }>
   files: string[]
   gates: readonly string[]
+  /** What `add <module>` changes in that stack: files it creates and files it rewrites. */
+  evolve: { module: string; added: string[]; changed: string[] }
 }
 
 const FILM_PRESET = 'fullstack-next-express'
 const FILM_PROJECT = 'my-app'
+const FILM_ADDITION = 'auth-jwt'
+
+async function plannedFiles(
+  modules: readonly string[],
+  registry: Map<string, DevstackModule>
+): Promise<PlannedFile[]> {
+  const plan = await buildGenerationPlan({
+    projectName: FILM_PROJECT,
+    projectDir: `/virtual/${FILM_PROJECT}`,
+    selectedModuleNames: [...modules],
+    registry,
+    packageManager: 'pnpm',
+    options: { skipInstall: false, skipGit: false }
+  })
+  return plan.files
+}
+
+async function evolveData(
+  modules: readonly string[],
+  before: readonly PlannedFile[],
+  registry: Map<string, DevstackModule>
+): Promise<FilmData['evolve']> {
+  const contents = new Map(before.map((file) => [file.path, file.content]))
+  const after = await plannedFiles([...modules, FILM_ADDITION], registry)
+  return {
+    module: FILM_ADDITION,
+    added: after.filter((file) => !contents.has(file.path)).map((file) => file.path),
+    changed: after
+      .filter((file) => contents.has(file.path) && contents.get(file.path) !== file.content)
+      .map((file) => file.path)
+  }
+}
 
 export async function filmData(registry: Map<string, DevstackModule>): Promise<FilmData> {
   const modules = PRESETS[FILM_PRESET]?.modules ?? []
   const answers = answersFromModules(modules, registry)
   const environment = { registry, defaultPackageManager: 'pnpm' as const }
-  const plan = await buildGenerationPlan({
-    projectName: FILM_PROJECT,
-    projectDir: `/virtual/${FILM_PROJECT}`,
-    selectedModuleNames: modules,
-    registry,
-    packageManager: 'pnpm',
-    options: { skipInstall: false, skipGit: false }
-  })
+  const files = await plannedFiles(modules, registry)
   return {
     projectName: FILM_PROJECT,
     packageName: CLI_PACKAGE.name,
@@ -59,7 +87,8 @@ export async function filmData(registry: Map<string, DevstackModule>): Promise<F
       question: step.label,
       answer: step.describe(answers, environment)
     })),
-    files: plan.files.map((file) => file.path),
-    gates: GATES
+    files: files.map((file) => file.path),
+    gates: GATES,
+    evolve: await evolveData(modules, files, registry)
   }
 }

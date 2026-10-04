@@ -20,4 +20,10 @@ export {
   type WizardStep
 } from './prompts/wizard/steps'
 export type { Diagnostic, FixAction } from './types/diagnostics'
-export type { Depth, DevstackModule, ModuleSystem, WizardQuestion } from './types/module'
+export type {
+  Depth,
+  DevstackModule,
+  ModuleCategory,
+  ModuleSystem,
+  WizardQuestion
+} from './types/module'
