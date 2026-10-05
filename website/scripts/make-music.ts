@@ -8,7 +8,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import { BPM, DURATION_IN_FRAMES, FPS, SCENES, type SceneId } from '../src/film/timing'
-import { decay, noise, OnePole, RATE, sine, sound, wav } from './audio'
+import { Bus, decay, noise, normalized, OnePole, RATE, sine, sound, wav } from './audio'
 
 const BEAT_S = 60 / BPM
 /** Mix levels: the kick sits under the music, not on top of it. */
@@ -32,23 +32,6 @@ const PROGRESSION = [
 ] as const
 const chordAt = (beat: number) =>
   PROGRESSION[Math.floor(beat / 4) % PROGRESSION.length] ?? PROGRESSION[0]
-
-/** A stereo bus: sounds placed by beat, with gain and pan (−1 left … 1 right). */
-class Bus {
-  readonly left = new Float32Array(Math.ceil(LENGTH_S * RATE))
-  readonly right = new Float32Array(Math.ceil(LENGTH_S * RATE))
-
-  add(beat: number, samples: Float32Array, gain = 1, pan = 0): void {
-    const start = Math.round(beat * BEAT_S * RATE)
-    const left = gain * Math.min(1, 1 - pan)
-    const right = gain * Math.min(1, 1 + pan)
-    for (let index = 0; index < samples.length && start + index < this.left.length; index += 1) {
-      const sample = samples[index] ?? 0
-      this.left[start + index] = (this.left[start + index] ?? 0) + sample * left
-      this.right[start + index] = (this.right[start + index] ?? 0) + sample * right
-    }
-  }
-}
 
 /** The instruments: drums once, pitched sounds per note (cached, so the song renders fast). */
 class Instruments {
@@ -161,8 +144,8 @@ class Instruments {
 
 /** The song, section by section, following the film's scenes. */
 class Song {
-  readonly drums = new Bus()
-  readonly music = new Bus()
+  readonly drums = new Bus(LENGTH_S, BPM)
+  readonly music = new Bus(LENGTH_S, BPM)
   readonly kicks: number[] = []
   private readonly play = new Instruments()
 
@@ -277,12 +260,7 @@ function master(song: Song): [Float32Array, Float32Array] {
     left[index] = mix(song.drums.left, song.music.left)
     right[index] = mix(song.drums.right, song.music.right)
   }
-  let peak = 0
-  for (const channel of [left, right]) {
-    for (const value of channel) peak = Math.max(peak, Math.abs(value))
-  }
-  const scale = PEAK / peak
-  return [left.map((value) => value * scale), right.map((value) => value * scale)]
+  return normalized([left, right], PEAK)
 }
 
 function compose(): Song {

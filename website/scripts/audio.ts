@@ -40,6 +40,42 @@ export class OnePole {
   }
 }
 
+/** A stereo bus at a tempo: sounds placed by beat, with gain and pan (−1 left … 1 right). */
+export class Bus {
+  readonly left: Float32Array
+  readonly right: Float32Array
+  private readonly beatSeconds: number
+
+  constructor(seconds: number, bpm: number) {
+    this.left = new Float32Array(Math.ceil(seconds * RATE))
+    this.right = new Float32Array(Math.ceil(seconds * RATE))
+    this.beatSeconds = 60 / bpm
+  }
+
+  add(beat: number, samples: Float32Array, gain = 1, pan = 0): void {
+    const start = Math.round(beat * this.beatSeconds * RATE)
+    const left = gain * Math.min(1, 1 - pan)
+    const right = gain * Math.min(1, 1 + pan)
+    for (let index = 0; index < samples.length && start + index < this.left.length; index += 1) {
+      const sample = samples[index] ?? 0
+      this.left[start + index] = (this.left[start + index] ?? 0) + sample * left
+      this.right[start + index] = (this.right[start + index] ?? 0) + sample * right
+    }
+  }
+}
+
+/** Scales both channels so the louder one peaks at `peak`. */
+export function normalized(
+  [left, right]: readonly [Float32Array, Float32Array],
+  peak: number
+): [Float32Array, Float32Array] {
+  let max = 0
+  for (const channel of [left, right])
+    for (const value of channel) max = Math.max(max, Math.abs(value))
+  const scale = peak / max
+  return [left.map((value) => value * scale), right.map((value) => value * scale)]
+}
+
 /** 16-bit PCM WAV, channels interleaved (one channel for mono, two for stereo). */
 export function wav(channels: readonly Float32Array[]): Buffer {
   const frames = channels[0]?.length ?? 0
