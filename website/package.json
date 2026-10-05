@@ -12,7 +12,8 @@
     "lint": "eslint",
     "typecheck": "npm run data && next typegen && tsc --noEmit --incremental false",
     "film:sfx": "../node_modules/.bin/tsx scripts/make-sfx.ts",
-    "film:render": "npm run data && npm run film:sfx && ../node_modules/.bin/tsx scripts/render-film.ts",
+    "film:music": "../node_modules/.bin/tsx scripts/make-music.ts",
+    "film:render": "npm run data && npm run film:sfx && npm run film:music && ../node_modules/.bin/tsx scripts/render-film.ts",
     "film:still": "npm run data && ../node_modules/.bin/tsx scripts/render-film.ts still"
   },
   "dependencies": {

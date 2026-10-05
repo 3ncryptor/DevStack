@@ -33,6 +33,8 @@ const SCENE_COMPONENTS: Record<SceneId, ComponentType<SceneProps>> = {
 const FADE_FRAMES = 4
 const GLOW_TRAVEL_PERCENT = 40
 const MUSIC_VOLUME = 0.8
+/** Near-instant: the first hit of the hook must land at full strength. */
+const MUSIC_FADE_IN_FRAMES = 3
 
 /** Fades a scene in and out at its edges: short, so cuts still land on the beat. */
 function Fade({ duration, children }: { readonly duration: number; readonly children: ReactNode }) {
@@ -61,18 +63,18 @@ function Backdrop() {
   )
 }
 
-/** The track under the whole film: in over half a beat, out over the end card's last bar. */
+/** The track under the whole film: in at once, out over the end card's last bar. */
 const musicVolume = (frame: number): number =>
   interpolate(
     frame,
-    [0, beats(0.5), DURATION_IN_FRAMES - beats(4), DURATION_IN_FRAMES],
+    [0, MUSIC_FADE_IN_FRAMES, DURATION_IN_FRAMES - beats(4), DURATION_IN_FRAMES],
     [0, MUSIC_VOLUME, MUSIC_VOLUME, 0],
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   )
 
 /**
  * The DevStack film (plan: the film): scenes from timing.ts cut to the music, each with its
- * line. `hasMusic` is false until the licensed track is in src/film/audio/music.mp3.
+ * line, over the music composed for it (scripts/make-music.ts → src/film/audio/music.wav).
  */
 export function ProductFilm({
   data,
@@ -85,7 +87,7 @@ export function ProductFilm({
   return (
     <AbsoluteFill className="text-foreground">
       <Backdrop />
-      {hasMusic && <Audio src={staticFile('music.mp3')} volume={musicVolume} />}
+      {hasMusic && <Audio src={staticFile('music.wav')} volume={musicVolume} />}
       {SCENES.map(({ id, from, duration, caption }) => {
         const Scene = SCENE_COMPONENTS[id]
         return (

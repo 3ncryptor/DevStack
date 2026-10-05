@@ -31,7 +31,7 @@ export function EndScene({ data }: SceneProps) {
       <p className="text-muted-foreground text-[34px]" style={rise(24)}>
         free &amp; open source · {REPOSITORY.replace('https://', '')}
       </p>
-      <Sfx name="impact" at={0} />
+      <Sfx name="impact" at={0} volume={0.5} />
     </div>
   )
 }

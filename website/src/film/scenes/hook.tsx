@@ -34,7 +34,7 @@ export function HookScene() {
                 }}
               >
                 {word}
-                <Sfx name="impact" at={at} volume={0.7} />
+                <Sfx name="impact" at={at} volume={0.45} />
               </span>
             )
           })}

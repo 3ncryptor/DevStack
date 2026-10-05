@@ -43,5 +43,5 @@ next-env.d.ts
 # written by `npm run data` from the module registry
 /src/generated/
 
-# the film's audio: generated sound effects, and the licensed music track (not redistributed)
+# the film's audio, composed by scripts/make-music.ts and make-sfx.ts (regenerated on render)
 /src/film/audio/

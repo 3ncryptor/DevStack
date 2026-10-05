@@ -3,8 +3,8 @@
  * YouTube and the site's hero. Run from website/ through npm:
  *   npm run film:render             → out/devstack.mp4, copied to public/film/ with a poster
  *   npm run film:still -- 0 600     → out/frame-0.png, out/frame-600.png
- * Music plays when the licensed track is at src/film/audio/music.mp3; the sound effects come
- * from `npm run film:sfx`.
+ * The music (npm run film:music) and the sound effects (npm run film:sfx) are composed in code
+ * and written to src/film/audio/ first.
  */
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir } from 'node:fs/promises'
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
   const [mode = 'video', ...frames] = process.argv.slice(2)
   if (mode !== 'video' && mode !== 'still') throw new Error(`unknown mode "${mode}": video | still`)
 
-  const inputProps = { hasMusic: existsSync(path.join(AUDIO, 'music.mp3')) }
+  const inputProps = { hasMusic: existsSync(path.join(AUDIO, 'music.wav')) }
   const serveUrl = await filmBundle()
   const composition = await selectComposition({ serveUrl, id: FILM_COMPOSITION, inputProps })
 
@@ -59,7 +59,7 @@ async function main(): Promise<void> {
     return
   }
 
-  if (!inputProps.hasMusic) console.warn('no src/film/audio/music.mp3: rendering without music')
+  if (!inputProps.hasMusic) console.warn('no src/film/audio/music.wav: rendering without music')
   const master = path.join(OUT, 'devstack.mp4')
   await renderMedia({
     composition,

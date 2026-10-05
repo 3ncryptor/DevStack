@@ -6,8 +6,9 @@ import { Sfx } from '../sfx'
 import { beats } from '../timing'
 
 const TYPE_START = beats(0.5)
-const TYPE_END = beats(4)
-const ENTER_AT = beats(5)
+const TYPE_END = beats(3.5)
+/** On the bar line: the music drops here (scripts/make-music.ts). */
+const ENTER_AT = beats(4)
 
 /** Scene 4: the one command types itself, key by key; Enter lands on the beat with a drop. */
 export function CommandScene({ data }: SceneProps) {
@@ -39,7 +40,7 @@ export function CommandScene({ data }: SceneProps) {
       {[...command].map((_, index) => (
         <Sfx key={index} name="click" at={Math.round(TYPE_START + index * keyEvery)} volume={0.5} />
       ))}
-      <Sfx name="impact" at={ENTER_AT} />
+      <Sfx name="impact" at={ENTER_AT} volume={0.5} />
     </div>
   )
 }

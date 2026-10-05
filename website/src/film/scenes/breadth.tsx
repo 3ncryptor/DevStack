@@ -68,7 +68,7 @@ export function BreadthScene({ duration }: SceneProps) {
         })}
       </div>
       {WALL_LOGOS.map(({ title }, wallIndex) => (
-        <Sfx key={title} name="impact" at={wallIndex * wallFrames} volume={0.5} />
+        <Sfx key={title} name="impact" at={wallIndex * wallFrames} volume={0.3} />
       ))}
     </div>
   )
