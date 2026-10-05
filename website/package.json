@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "npm run data && tsc --noEmit --incremental false",
+    "typecheck": "npm run data && next typegen && tsc --noEmit --incremental false",
     "film:sfx": "../node_modules/.bin/tsx scripts/make-sfx.ts",
     "film:render": "npm run data && npm run film:sfx && ../node_modules/.bin/tsx scripts/render-film.ts",
     "film:still": "npm run data && ../node_modules/.bin/tsx scripts/render-film.ts still"
@@ -26,6 +26,8 @@
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "shadcn": "^4.21.1",
     "simple-icons": "16.34.0",
     "tailwind-merge": "^3.7.0",

@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { PACKAGE_MANAGERS } from './adapters/package-manager/index'
 import { GATES } from './core/finish/verify'
-import { CLI_PACKAGE } from './core/manifest'
+import { CLI_PACKAGE, stackConfigSchema } from './core/manifest'
 import { buildGenerationPlan } from './core/planner/index'
 import { PRESETS } from './core/presets'
 import { answersFromModules, STEPS } from './prompts/wizard/steps'
@@ -96,6 +96,10 @@ export async function filmData(registry: Map<string, DevstackModule>): Promise<F
     evolve: await evolveData(modules, files, registry)
   }
 }
+
+/** The stack config (stack.json, --config) as JSON Schema, for editors' `$schema` (D-99). */
+export const stackConfigJsonSchema = (): Record<string, unknown> =>
+  z.toJSONSchema(stackConfigSchema, { io: 'input' })
 
 /** The website's numbers and charts (plan: stats & charts), all counted from DevStack itself. */
 export interface SiteStats {
