@@ -4,7 +4,7 @@
  * with the code; runtime dependencies install with their own. The list comes from esbuild's
  * metafile, so it follows whatever the bundle actually contains.
  */
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 import type { Options } from 'tsup'
@@ -74,7 +74,9 @@ export function thirdPartyNotices(): Plugin {
         const packages = [...roots]
           .map(readPackage)
           .sort((left, right) => left.name.localeCompare(right.name))
+        // tsup writes the bundle itself after this hook, so on a clean checkout dist/ is not there yet
         const outdir = build.initialOptions.outdir ?? 'dist'
+        mkdirSync(outdir, { recursive: true })
         writeFileSync(path.join(outdir, NOTICES_FILE), notices(packages))
       })
     }
