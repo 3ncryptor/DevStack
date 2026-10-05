@@ -1335,6 +1335,32 @@ respect reduced motion. The demo is a clickable terminal replay of the wizard.
 Open with the owner: analytics (none by default), whether generated `stack.json` files point at
 the hosted `$schema`, and a custom domain later (the `$schema` URL moves with it).
 
+## Release 1.0 — publishing to npm (D-102)
+
+The first public release is `create-devstack-app@1.0.0`, launched the same day as the website.
+The name was free on npm on 2026-10-05 (`create-devstack` and `devstack` are taken).
+
+| #    | Task                                                                                                                                                                                                                                                                                                      | Effort |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| R.1  | Third-party notices: the MCP SDK and its dependencies are bundled into `dist/` without their copyright notices (MIT requires them). Build writes `THIRD_PARTY_NOTICES.md` from the licenses of every bundled package; it ships in `files`.                                                                | S      |
+| R.2  | Second bin `devstack` beside `create-devstack-app` (same `dist/cli.js`). `npx create-devstack-app my-app` stays the entry point; README and site show `devstack add/remove/doctor/mcp` for in-project commands, and `npm create devstack-app` / `pnpm create devstack-app` / `bun create devstack-app`.   | S      |
+| R.3  | Manifest: `homepage` is the website, `version` set by the changeset, `engines`, `files`, `keywords` reviewed; `npm publish --dry-run` clean.                                                                                                                                                              | S      |
+| R.4  | Tarball smoke test (`scripts/smoke-tarball.ts`): `npm pack`, install the tarball in an empty folder with an empty cache, run it through `npx`, `pnpm dlx`, `yarn dlx` and `bunx` and the `create` forms; one generated project passes its gates; `mcp` starts from the installed package.                 | M      |
+| R.5  | Changelog: the 35 pending changesets fold into one curated major changeset, "what 1.0 does"; `changeset version` makes `1.0.0` and `CHANGELOG.md`. Per-change entries start after 1.0.                                                                                                                    | S      |
+| R.6  | Release gate (D-81): the full e2e matrix (every combination on npm, pnpm, yarn and bun), the compose checks and a sampling run, once, on the release commit. Everything passes or nothing is published.                                                                                                   | M      |
+| R.7  | First publish, by the owner (npm allows trusted publishing only once a package exists): `npm login` (2FA), `npm publish --access public --tag next`; R.4 repeated against the registry (`npx create-devstack-app@next`); then `npm dist-tag add create-devstack-app@1.0.0 latest`.                        | S      |
+| R.8  | Tag `v1.0.0` and a GitHub Release with the changelog and the film.                                                                                                                                                                                                                                        | S      |
+| R.9  | Trusted publishing (D-52 exception): `.github/workflows/release.yml` on a `v*` tag runs the gates and `npm publish` over OIDC (`id-token: write`, npm ≥ 11.5.1, provenance automatic, no stored token); the owner registers the repo as the package's trusted publisher on npmjs.com. Used from 1.0.1 on. | S      |
+| R.10 | Launch day: the site's production URL checked (builder, docs, `/schema/stack.json`, film), its copy buttons run against the published package, Phase 7's exit gate run on the deployed site.                                                                                                              | S      |
+
+Rollback: a bad release is fixed forward (`npm deprecate` it, publish a patch), never
+unpublished (npm allows it only for 72 hours and it breaks anyone who installed it). `next`
+before `latest` keeps a broken build off the default `npx` path.
+
+Order: R.1–R.5 and R.9's workflow file are local work; R.6 runs on the release commit; R.7, R.8
+and R.10 are launch day. Needed from the owner: the website's production URL (R.3), `npm login`
+(R.7), the trusted-publisher setting on npmjs.com (R.9), and the go/no-go after R.6.
+
 ## Post-1.0 — Python and Go (targets: v1.1.0, v1.2.0)
 
 | #   | Task                                                                                                                                             | Effort |
@@ -1999,6 +2025,14 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   later piece of work. Open against Phase 7: the builder's live file preview and `stack.json`
   download (7.6), troubleshooting and "adding a module" on the site (7.7), a link check and one
   full run of a copied command through its gates (7.9), and the exit gate on the deployed site.
+
+- **D-102 (2026-10-05)** — Publishing (owner): the first public release is 1.0.0 (Phase 6 is
+  done and the contract frozen, D-98), on the same day the website goes live. Two bin names,
+  `create-devstack-app` and `devstack`. One curated 1.0 changelog entry instead of 35 milestone
+  entries. The first publish is manual (npm only allows trusted publishing for a package that
+  exists), first to `next`, promoted to `latest` after a registry smoke test; later releases go
+  through a tag-triggered `release.yml` with trusted publishing, the one exception to D-52.
+  A GitHub Release accompanies the tag; npm's homepage is the website. Plan: "Release 1.0".
 
 # §8. Open questions
 
