@@ -19,7 +19,16 @@ export const metadata: Metadata = {
     template: '%s · DevStack'
   },
   description:
-    'Pick a stack, run one command, get a project that installs, passes its checks and boots.'
+    'Pick a stack, run one command, get a project that installs, passes its checks and boots.',
+  // shared links show the film's poster frame (rendered by npm run film:render)
+  openGraph: {
+    type: 'website',
+    siteName: 'DevStack',
+    images: [
+      { url: '/film/poster.jpeg', width: 1920, height: 1080, alt: 'Stop wiring. Start shipping.' }
+    ]
+  },
+  twitter: { card: 'summary_large_image', images: ['/film/poster.jpeg'] }
 }
 
 export const viewport: Viewport = { themeColor: '#000000', colorScheme: 'dark' }
