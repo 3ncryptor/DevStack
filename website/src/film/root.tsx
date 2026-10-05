@@ -1,5 +1,6 @@
 import '../app/globals.css'
 
+import { loadVariableFont as loadArchivo } from '@remotion/google-fonts/Archivo'
 import { loadFont as loadGeist } from '@remotion/google-fonts/Geist'
 import { loadFont as loadGeistMono } from '@remotion/google-fonts/GeistMono'
 import type { CSSProperties } from 'react'
@@ -9,18 +10,25 @@ import { FILM_DATA, type FilmData } from './film-data'
 import { ProductFilm } from './product-film'
 import { DURATION_IN_FRAMES, FILM_COMPOSITION, FPS, HEIGHT, WIDTH } from './timing'
 
-/** The page gets Geist from next/font; a render has no Next, so it loads the same fonts here. */
+/** The page gets its fonts from next/font; a render has no Next, so it loads the same here. */
 const FONTS = {
   '--font-geist-sans': loadGeist('normal', { weights: ['400', '600'], subsets: ['latin'] })
     .fontFamily,
   '--font-geist-mono': loadGeistMono('normal', { weights: ['400', '600'], subsets: ['latin'] })
-    .fontFamily
+    .fontFamily,
+  '--font-archivo': loadArchivo('normal', { subsets: ['latin'] }).fontFamily
 } as CSSProperties
 
-function RenderedFilm({ data }: { readonly data: FilmData }) {
+/** A type alias, not an interface: Remotion requires props assignable to a plain record. */
+type FilmProps = {
+  readonly data: FilmData
+  readonly hasMusic: boolean
+}
+
+function RenderedFilm({ data, hasMusic }: FilmProps) {
   return (
     <div className="dark font-sans" style={{ ...FONTS, width: WIDTH, height: HEIGHT }}>
-      <ProductFilm data={data} />
+      <ProductFilm data={data} hasMusic={hasMusic} />
     </div>
   )
 }
@@ -35,7 +43,7 @@ function Root() {
       fps={FPS}
       width={WIDTH}
       height={HEIGHT}
-      defaultProps={{ data: FILM_DATA }}
+      defaultProps={{ data: FILM_DATA, hasMusic: false } satisfies FilmProps}
     />
   )
 }

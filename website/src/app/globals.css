@@ -12,8 +12,10 @@
 
 /* headlines: a wide, heavy grotesk (Archivo at 125% width), Neutron's big type */
 @utility display {
-  font-family: var(--font-display);
+  font-family: var(--font-archivo);
   font-stretch: 125%;
+  /* the width axis directly too: font loaders that skip font-stretch still get it wide */
+  font-variation-settings: 'wdth' 125;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 0.95;
@@ -59,7 +61,6 @@
 
 @theme inline {
   --font-heading: var(--font-geist-sans);
-  --font-display: var(--font-archivo);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-warning: var(--warning);

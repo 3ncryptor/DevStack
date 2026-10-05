@@ -30,7 +30,7 @@ export function Caption({ text }: { readonly text: string }) {
   const { fps } = useVideoConfig()
 
   return (
-    <div className="absolute inset-x-0 bottom-[70px] flex flex-wrap justify-center gap-x-[0.28em] px-32 text-center text-[64px] leading-tight font-semibold tracking-tight">
+    <div className="display absolute inset-x-0 bottom-[80px] flex flex-wrap justify-center gap-x-[0.3em] px-24 text-center text-[54px] uppercase">
       {wordsOf(text).map((word, index) => {
         const shown = spring({
           frame: frame - FIRST_WORD_AT - index * WORD_EVERY,

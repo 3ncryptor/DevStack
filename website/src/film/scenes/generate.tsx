@@ -3,6 +3,7 @@ import { useCurrentFrame } from 'remotion'
 import { ramp } from '../anim'
 import { Camera } from '../camera'
 import type { SceneProps } from '../film-data'
+import { Sfx } from '../sfx'
 import { TerminalFrame } from '../terminal-frame'
 
 const LINE_PX = 50
@@ -56,6 +57,7 @@ export function GenerateScene({ data, duration }: SceneProps) {
             ))}
           </div>
         </div>
+        <Sfx name="whoosh" at={0} volume={0.6} />
       </TerminalFrame>
     </Camera>
   )

@@ -2,6 +2,7 @@ import { spring, useCurrentFrame, useVideoConfig } from 'remotion'
 
 import { ramp } from '../anim'
 import { checksOf, type SceneProps } from '../film-data'
+import { Sfx } from '../sfx'
 import { TerminalFrame } from '../terminal-frame'
 
 const INSTALL_FRAMES = 30
@@ -41,6 +42,11 @@ export function VerifyScene({ data }: SceneProps) {
             >
               <span className="text-primary">✓ </span>
               {check}
+              <Sfx
+                name={index === checksOf(data).length - 1 ? 'chime' : 'tick'}
+                at={INSTALL_FRAMES + index * CHECK_EVERY}
+                volume={0.5}
+              />
             </p>
           )
         })}

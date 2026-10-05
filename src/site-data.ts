@@ -36,6 +36,8 @@ export interface FilmData {
   answers: Array<{ question: string; answer: string }>
   files: string[]
   gates: readonly string[]
+  /** How many modules DevStack has to choose from. */
+  modules: number
   /** What `add <module>` changes in that stack: files it creates and files it rewrites. */
   evolve: { module: string; added: string[]; changed: string[] }
 }
@@ -89,6 +91,7 @@ export async function filmData(registry: Map<string, DevstackModule>): Promise<F
     })),
     files: files.map((file) => file.path),
     gates: GATES,
+    modules: registry.size,
     evolve: await evolveData(modules, files, registry)
   }
 }

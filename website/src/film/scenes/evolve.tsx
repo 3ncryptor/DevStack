@@ -3,6 +3,7 @@ import { useCurrentFrame } from 'remotion'
 import { ramp } from '../anim'
 import { Camera } from '../camera'
 import type { SceneProps } from '../film-data'
+import { Sfx } from '../sfx'
 import { TerminalFrame } from '../terminal-frame'
 
 const TYPE_END = 25
@@ -50,6 +51,15 @@ export function EvolveScene({ data, duration }: SceneProps) {
             ))}
           </div>
         </div>
+        {[...command].map((_, index) => (
+          <Sfx
+            key={index}
+            name="click"
+            at={Math.round((index * TYPE_END) / command.length)}
+            volume={0.4}
+          />
+        ))}
+        <Sfx name="chime" at={TYPE_END} volume={0.4} />
       </TerminalFrame>
     </Camera>
   )

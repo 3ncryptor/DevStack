@@ -4,6 +4,7 @@ import { REPOSITORY } from '@/lib/site'
 
 import { ramp } from '../anim'
 import type { SceneProps } from '../film-data'
+import { Sfx } from '../sfx'
 
 const RISE_FRAMES = 15
 const RISE_PX = 30
@@ -28,8 +29,9 @@ export function EndScene({ data }: SceneProps) {
         <span className="text-primary">$ </span>npx {data.packageName} {data.projectName}
       </p>
       <p className="text-muted-foreground text-[34px]" style={rise(24)}>
-        {REPOSITORY.replace('https://', '')}
+        free &amp; open source · {REPOSITORY.replace('https://', '')}
       </p>
+      <Sfx name="impact" at={0} />
     </div>
   )
 }

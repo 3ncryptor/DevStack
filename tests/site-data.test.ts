@@ -45,6 +45,7 @@ describe('site data (D-99)', () => {
     expect(film.answers).toContainEqual({ question: 'Framework', answer: 'Express' })
     expect(film.files).toContain('.devstack/stack.json')
     expect(film.gates).toEqual(GATES)
+    expect(film.modules).toBe(BUILTIN_MODULES.length)
   })
 
   it('films what adding a module really changes', async () => {

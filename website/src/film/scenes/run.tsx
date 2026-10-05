@@ -2,6 +2,7 @@ import { spring, useCurrentFrame, useVideoConfig } from 'remotion'
 
 import { Camera } from '../camera'
 import type { SceneProps } from '../film-data'
+import { Sfx } from '../sfx'
 
 const SERVICES = ['API', 'DB']
 const FIRST_SERVICE_AT = 30
@@ -43,6 +44,8 @@ export function RunScene({ data }: SceneProps) {
           </div>
         </div>
       </div>
+      <Sfx name="whoosh" at={0} volume={0.7} />
+      <Sfx name="chime" at={FIRST_SERVICE_AT} volume={0.5} />
     </Camera>
   )
 }

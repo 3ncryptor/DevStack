@@ -3,6 +3,7 @@ import type { SimpleIcon } from 'simple-icons'
 
 import { PACKAGE_MANAGERS, type ModuleCategory } from '@repo/src/browser'
 
+import { BrandLogo } from '@/components/brand-logo'
 import { MODULE_LOGOS, PACKAGE_MANAGER_LOGOS, visibleColour } from '@/lib/logos'
 import { registry } from '@/lib/registry'
 
@@ -27,13 +28,10 @@ function LogoTile({ icon, hidden }: { readonly icon: SimpleIcon; readonly hidden
       className="group flex w-40 shrink-0 flex-col items-center gap-4 py-6 transition-transform duration-300 hover:-translate-y-1"
       style={{ '--brand': visibleColour(icon) } as CSSProperties}
     >
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden
-        className="size-16 fill-current text-neutral-300 transition-colors duration-300 group-hover:text-(--brand)"
-      >
-        <path d={icon.path} />
-      </svg>
+      <BrandLogo
+        icon={icon}
+        className="size-16 text-neutral-300 transition-colors duration-300 group-hover:text-(--brand)"
+      />
       <span className="label text-muted-foreground group-hover:text-foreground transition-colors">
         {icon.title}
       </span>

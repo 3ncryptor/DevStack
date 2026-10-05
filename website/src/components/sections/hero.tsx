@@ -1,32 +1,19 @@
-import { CopyCommand } from '@/components/copy-command'
-import { CtaLink } from '@/components/cta-link'
-import { HeroBackdrop } from '@/components/hero/hero-backdrop'
-import { HeroFilm } from '@/components/hero/hero-film'
-import { ScrollCue } from '@/components/hero/scroll-cue'
-import { Reveal } from '@/components/motion/reveal'
+import { PACKAGE_MANAGERS } from '@repo/src/browser'
+
+import { VideoHero } from '@/components/hero/video-hero'
+import { registry } from '@/lib/registry'
+import { REPOSITORY } from '@/lib/site'
 
 import cliPackage from '@repo/package.json'
 
-/** Section 1: one line, the command, and the film, which does the explaining. */
+/** Section 1: the full-screen film, scrolled away into the command and GitHub (VideoHero). */
 export function Hero() {
   return (
-    <section className="dot-grid relative overflow-hidden">
-      <HeroBackdrop />
-      <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-8 px-6 pt-32 pb-16 text-center">
-        <Reveal>
-          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-            One command. <span className="text-primary block">A production-ready stack.</span>
-          </h1>
-        </Reveal>
-        <Reveal delay={0.1} className="flex max-w-full flex-col items-center gap-4 sm:flex-row">
-          <CopyCommand command={`npx ${cliPackage.name} my-app`} />
-          <CtaLink href="#build">build your stack ↓</CtaLink>
-        </Reveal>
-        <div className="w-full text-left">
-          <HeroFilm />
-        </div>
-        <ScrollCue />
-      </div>
-    </section>
+    <VideoHero
+      command={`npx ${cliPackage.name} my-app`}
+      modules={registry.size}
+      packageManagers={PACKAGE_MANAGERS.length}
+      repository={REPOSITORY}
+    />
   )
 }
