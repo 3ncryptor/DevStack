@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci --prefix .. && npm ci",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ../src ../scripts ../package.json"
+  "ignoreCommand": "bash scripts/ignore-build.sh"
 }
