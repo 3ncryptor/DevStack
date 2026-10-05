@@ -1,4 +1,4 @@
-import { access } from 'node:fs/promises'
+import { access, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import { execa } from 'execa'
@@ -14,6 +14,7 @@ import { removeTempDirs, tempDir } from './helpers/temp-dirs'
 afterAll(removeTempDirs)
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
 })
 
 /** Collects what the CLI prints to stdout (the dry-run plan). */
@@ -108,6 +109,11 @@ describe('init flow', () => {
   it('commits when the user agrees, then offers GitHub', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     const dir = await tempDir('devstack-flow-')
+    // the commit needs a git identity (src/core/finish/git.ts); CI runners have none, so the
+    // test brings its own instead of relying on the machine's
+    const gitConfig = path.join(dir, 'gitconfig')
+    await writeFile(gitConfig, '[user]\n\tname = DevStack Test\n\temail = test@example.com\n')
+    vi.stubEnv('GIT_CONFIG_GLOBAL', gitConfig)
     vi.spyOn(process, 'cwd').mockReturnValue(dir)
     const healthy: Probe = (command, args) =>
       Promise.resolve(
