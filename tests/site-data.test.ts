@@ -5,7 +5,7 @@ import { loadModules } from '../src/core/module-loader'
 import { PRESETS } from '../src/core/presets'
 import { resolveStack } from '../src/core/resolver/index'
 import { BUILTIN_MODULES } from '../src/modules/registry'
-import { filmData, siteModules } from '../src/site-data'
+import { filmData, siteModules, siteStats } from '../src/site-data'
 import type { DevstackModule } from '../src/types/module'
 
 /** The website's modules exactly as it receives them: through JSON. */
@@ -54,6 +54,15 @@ describe('site data (D-99)', () => {
     expect(evolve.added).toContain('apps/api/src/features/auth/auth.routes.ts')
     expect(evolve.changed).toContain('apps/api/src/app.ts')
     expect(evolve.added.filter((path) => evolve.changed.includes(path))).toEqual([])
+  })
+
+  it('counts the stats from the registry and the planner', async () => {
+    const stats = await siteStats(loadModules())
+
+    expect(stats.modules).toBe(BUILTIN_MODULES.length)
+    expect(stats.categories.reduce((total, row) => total + row.modules, 0)).toBe(stats.modules)
+    expect(stats.presets.map((preset) => preset.name)).toEqual(Object.keys(PRESETS))
+    expect(stats.presets.every((preset) => preset.files > preset.modules)).toBe(true)
   })
 
   it('keeps option defaults and choices for the builder, and no template paths', () => {

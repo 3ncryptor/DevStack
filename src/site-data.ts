@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { PACKAGE_MANAGERS } from './adapters/package-manager/index'
 import { GATES } from './core/finish/verify'
 import { CLI_PACKAGE } from './core/manifest'
 import { buildGenerationPlan } from './core/planner/index'
@@ -93,5 +94,60 @@ export async function filmData(registry: Map<string, DevstackModule>): Promise<F
     gates: GATES,
     modules: registry.size,
     evolve: await evolveData(modules, files, registry)
+  }
+}
+
+/** The website's numbers and charts (plan: stats & charts), all counted from DevStack itself. */
+export interface SiteStats {
+  modules: number
+  packageManagers: number
+  gates: readonly string[]
+  /** Modules per category, largest first. */
+  categories: Array<{ category: string; modules: number }>
+  /** Each built-in preset with the modules it resolves to and the files it plans. */
+  presets: Array<{ name: string; description: string; modules: number; files: number }>
+  /** The opening of the film stack's API app, exactly as DevStack generates it. */
+  showcase: { path: string; code: string }
+}
+
+const SHOWCASE_PATH = 'apps/api/src/app.ts'
+const SHOWCASE_FROM = 'export function createApp'
+const SHOWCASE_LINES = 16
+
+async function showcase(registry: Map<string, DevstackModule>): Promise<SiteStats['showcase']> {
+  const files = await plannedFiles(PRESETS[FILM_PRESET]?.modules ?? [], registry)
+  const app = files.find((file) => file.path === SHOWCASE_PATH)
+  if (app === undefined) throw new Error(`the film stack no longer plans ${SHOWCASE_PATH}`)
+  // From the app factory down: where the modules' middleware is wired in.
+  const lines = app.content.split('\n')
+  const start = Math.max(
+    0,
+    lines.findIndex((line) => line.startsWith(SHOWCASE_FROM))
+  )
+  return { path: SHOWCASE_PATH, code: lines.slice(start, start + SHOWCASE_LINES).join('\n') }
+}
+
+export async function siteStats(registry: Map<string, DevstackModule>): Promise<SiteStats> {
+  const counts = new Map<string, number>()
+  for (const moduleDefinition of registry.values()) {
+    counts.set(moduleDefinition.category, (counts.get(moduleDefinition.category) ?? 0) + 1)
+  }
+  const presets = await Promise.all(
+    Object.values(PRESETS).map(async (preset) => ({
+      name: preset.name,
+      description: preset.description,
+      modules: preset.modules.length,
+      files: (await plannedFiles(preset.modules, registry)).length
+    }))
+  )
+  return {
+    modules: registry.size,
+    packageManagers: PACKAGE_MANAGERS.length,
+    gates: GATES,
+    categories: [...counts]
+      .map(([category, modules]) => ({ category, modules }))
+      .sort((a, b) => b.modules - a.modules),
+    presets,
+    showcase: await showcase(registry)
   }
 }

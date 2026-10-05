@@ -14,10 +14,30 @@ export interface StackSelection {
   moduleSystem?: ModuleSystem
 }
 
-const SAFE_WORD = /^[\w@%+=:,./-]+$/
+/** Where the command is pasted: a POSIX shell (macOS, Linux, WSL) or Windows PowerShell. */
+export type Shell = 'posix' | 'powershell'
 
-const shellWord = (word: string): string =>
-  SAFE_WORD.test(word) ? word : `'${word.replaceAll("'", `'\\''`)}'`
+interface ShellRules {
+  /** npx itself: PowerShell runs npx.ps1 first, which the default Windows script policy blocks. */
+  program: string
+  /** Words made only of these characters need no quotes. */
+  safe: RegExp
+  quote: (word: string) => string
+}
+
+export const SHELLS: Readonly<Record<Shell, ShellRules>> = {
+  posix: {
+    program: 'npx',
+    safe: /^[\w@%+=:,./-]+$/,
+    quote: (word) => `'${word.replaceAll("'", `'\\''`)}'`
+  },
+  // a bare comma list is an array in PowerShell (a,b → "a b"), and @ starts a splat
+  powershell: {
+    program: 'npx.cmd',
+    safe: /^[\w%+=:./-]+$/,
+    quote: (word) => `'${word.replaceAll("'", "''")}'`
+  }
+}
 
 const optionValue = (value: unknown): string =>
   typeof value === 'string' ? value : JSON.stringify(value)
@@ -26,12 +46,16 @@ const optionValue = (value: unknown): string =>
  * The one command that generates `selection` (D-99): what the stack builder offers to copy.
  * `--yes` because the builder already was the review.
  */
-export function commandFor(selection: StackSelection, packageName: string): string {
+export function commandFor(
+  selection: StackSelection,
+  packageName: string,
+  shell: Shell = 'posix'
+): string {
+  const rules = SHELLS[shell]
   const options = Object.entries(selection.moduleOptions ?? {}).flatMap(([id, values]) =>
     Object.entries(values).map(([key, value]) => ['--option', `${id}.${key}=${optionValue(value)}`])
   )
-  return [
-    'npx',
+  const words = [
     packageName,
     selection.projectName,
     '--modules',
@@ -42,8 +66,8 @@ export function commandFor(selection: StackSelection, packageName: string): stri
     ...(selection.moduleSystem === undefined ? [] : ['--module-system', selection.moduleSystem]),
     '--yes'
   ]
-    .map(shellWord)
-    .join(' ')
+  const quoted = words.map((word) => (rules.safe.test(word) ? word : rules.quote(word)))
+  return [rules.program, ...quoted].join(' ')
 }
 
 /** `--modules a,b,c` → `['a', 'b', 'c']`. */

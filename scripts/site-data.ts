@@ -8,7 +8,7 @@ import path from 'node:path'
 
 import { loadModules } from '../src/core/module-loader'
 import { BUILTIN_MODULES } from '../src/modules/registry'
-import { filmData, siteModules } from '../src/site-data'
+import { filmData, siteModules, siteStats } from '../src/site-data'
 
 const directory = process.argv[2]
 if (directory === undefined) throw new Error('usage: tsx scripts/site-data.ts <output-dir>')
@@ -18,3 +18,4 @@ const json = (value: unknown): string => `${JSON.stringify(value)}\n`
 await mkdir(directory, { recursive: true })
 await writeFile(path.join(directory, 'modules.json'), json(siteModules(BUILTIN_MODULES)))
 await writeFile(path.join(directory, 'film.json'), json(await filmData(loadModules())))
+await writeFile(path.join(directory, 'stats.json'), json(await siteStats(loadModules())))

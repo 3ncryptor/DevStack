@@ -7,8 +7,14 @@
 export { PACKAGE_MANAGERS, type PackageManagerId } from './adapters/package-manager/index'
 export { applyFixAction, resolveStack } from './core/resolver/index'
 export { MODULE_SYSTEMS } from './core/settings'
-export { commandFor, type ModuleOptions, type StackSelection } from './core/stack-command'
+export {
+  commandFor,
+  type ModuleOptions,
+  type Shell,
+  type StackSelection
+} from './core/stack-command'
 export { fitsStack, moduleChoices, type ModuleChoice } from './prompts/wizard/choices'
+export { wizardForm, type FormQuestion } from './prompts/wizard/form'
 export {
   ALWAYS_INCLUDED,
   ALWAYS_INCLUDED_LABEL,
