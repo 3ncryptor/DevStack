@@ -1,5 +1,7 @@
 import { defineConfig } from 'tsup'
 
+import { thirdPartyNotices } from './scripts/third-party-notices'
+
 // Bundles the CLI into dist/cli.js (ESM). Module templates are not bundled: they ship as-is
 // from src/modules/*/files and are resolved at runtime from the package root (src/paths.ts).
 export default defineConfig({
@@ -10,5 +12,6 @@ export default defineConfig({
   clean: true,
   // chunks: rarely used commands (mcp, with its bundled SDK) load only when they run
   splitting: true,
-  sourcemap: false
+  sourcemap: false,
+  esbuildPlugins: [thirdPartyNotices()]
 })

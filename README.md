@@ -4,15 +4,17 @@ Scaffold a running, wired TypeScript backend from the stack you choose. Every ge
 passes its own lint, format, typecheck and build on the first run, boots with a `/health` route,
 and shuts down cleanly on `SIGTERM`.
 
-> Status: 0.x, Phase 0 of the [build plan](./buildPlan.md). The stack menu is small today (Express
-> or NestJS, optional Prisma + Postgres, security middleware, tooling, Docker). The plan lists
-> what comes next.
+Website and docs: [devstack-app-delta.vercel.app](https://devstack-app-delta.vercel.app). Build a
+stack in the browser and copy the one command that generates it.
 
 ## Quick start
 
 ```bash
 npx create-devstack-app my-app
 ```
+
+`npm create devstack-app`, `pnpm create devstack-app`, `yarn create devstack-app` and
+`bun create devstack-app` do the same.
 
 The wizard asks for your framework, database, folder layout, tooling and middleware. When it
 finishes, the CLI prints the next commands for your package manager, the environment variables to
@@ -102,6 +104,9 @@ create-devstack-app config set settings.license MIT   # remember a default
 create-devstack-app presets save team-api         # keep this project's stack as a preset
 create-devstack-app mcp                           # serve DevStack to AI assistants
 ```
+
+Installed globally (`npm install -g create-devstack-app`), the CLI also answers to `devstack`:
+`devstack add security-rate-limit`, `devstack doctor`, `devstack mcp`.
 
 The wizard first checks your machine (Node.js version, package managers, git identity), then
 asks only the questions that apply: framework, module system (ESM or CommonJS), database and

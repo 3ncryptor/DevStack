@@ -1,6 +1,6 @@
 {
   "name": "create-devstack-app",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Scaffold a running, wired TypeScript project from the stack you choose",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,8 @@
   },
   "type": "module",
   "bin": {
-    "create-devstack-app": "dist/cli.js"
+    "create-devstack-app": "dist/cli.js",
+    "devstack": "dist/cli.js"
   },
   "scripts": {
     "build": "tsup",
@@ -26,7 +27,8 @@
     "e2e:sample": "tsx tests/e2e/harness.ts --tier full --pm pnpm --sample 5",
     "prepack": "npm run build",
     "test:coverage": "vitest run --coverage",
-    "graph": "bash scripts/graphify.sh"
+    "graph": "bash scripts/graphify.sh",
+    "release:smoke": "tsx tests/e2e/release-smoke.ts"
   },
   "engines": {
     "node": ">=22.12.0"
@@ -81,7 +83,7 @@
     "README.md",
     "LICENSE"
   ],
-  "homepage": "https://github.com/3ncryptor/DevStack#readme",
+  "homepage": "https://devstack-app-delta.vercel.app",
   "bugs": {
     "url": "https://github.com/3ncryptor/DevStack/issues"
   },
