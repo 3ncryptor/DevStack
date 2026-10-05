@@ -37,11 +37,20 @@ interface Source {
   readonly isPublished: boolean
 }
 
-const launchers = ({ spec, isPublished }: Source): Check[] => {
+const launchers = ({ spec, isPublished }: Source, workDir: string): Check[] => {
   const initializer = spec.replace(PACKAGE, 'devstack-app')
+  // pnpm's own caches, as --config flags: npm warns about pnpm-only npm_config_* variables
+  const pnpm = [
+    `--config.store-dir=${path.join(workDir, 'pnpm-store')}`,
+    `--config.cache-dir=${path.join(workDir, 'pnpm-cache')}`
+  ]
   const always: Check[] = [
     { name: 'npx', command: 'npx', args: ['--yes', `--package=${spec}`, PACKAGE, '--version'] },
-    { name: 'pnpm dlx', command: 'pnpm', args: [`--package=${spec}`, 'dlx', PACKAGE, '--version'] },
+    {
+      name: 'pnpm dlx',
+      command: 'pnpm',
+      args: [...pnpm, `--package=${spec}`, 'dlx', PACKAGE, '--version']
+    },
     { name: 'bunx', command: 'bunx', args: ['--package', spec, PACKAGE, '--version'] }
   ]
   // `yarn create` (yarn 1) installs globally, so it is left to a manual check.
@@ -51,7 +60,7 @@ const launchers = ({ spec, isPublished }: Source): Check[] => {
       command: 'npm',
       args: ['create', '--yes', initializer, '--', '--version']
     },
-    { name: 'pnpm create', command: 'pnpm', args: ['create', initializer, '--version'] },
+    { name: 'pnpm create', command: 'pnpm', args: [...pnpm, 'create', initializer, '--version'] },
     { name: 'bun create', command: 'bun', args: ['create', initializer, '--version'] }
   ]
   return isPublished ? [...always, ...published] : always
@@ -121,8 +130,6 @@ async function main(): Promise<void> {
   // Empty caches, so nothing resolves from an earlier install on this machine.
   const env: NodeJS.ProcessEnv = {
     npm_config_cache: path.join(workDir, 'npm-cache'),
-    npm_config_store_dir: path.join(workDir, 'pnpm-store'),
-    npm_config_cache_dir: path.join(workDir, 'pnpm-cache'),
     BUN_INSTALL_CACHE_DIR: path.join(workDir, 'bun-cache')
   }
   const results: { name: string; ok: boolean }[] = []
@@ -140,7 +147,7 @@ async function main(): Promise<void> {
         : await registrySource(registrySpec, workDir)
     console.log(`${source.spec} (${source.version})`)
 
-    for (const check of launchers(source)) {
+    for (const check of launchers(source, workDir)) {
       const result = await runIn(workDir, check.command, check.args)
       const printed = result.stdout.trim().split('\n').at(-1)
       record(check.name, result.ok && printed === source.version, result.output)
@@ -151,26 +158,23 @@ async function main(): Promise<void> {
     await writeFile(path.join(project, 'package.json'), '{ "private": true }\n')
     const install = await runIn(project, 'npm', ['install', source.spec, '--no-audit', '--no-fund'])
     record('npm install', install.ok, install.output)
-    if (!install.ok) return
-
-    const binPath = (bin: string): string => path.join(project, 'node_modules', '.bin', bin)
-    for (const bin of BINS) {
-      const result = await runIn(project, binPath(bin), ['--version'])
-      record(`bin ${bin}`, result.ok && result.stdout.trim() === source.version, result.output)
+    // without an install the checks below cannot run; the failure is already recorded
+    if (install.ok) {
+      const binPath = (bin: string): string => path.join(project, 'node_modules', '.bin', bin)
+      for (const bin of BINS) {
+        const result = await runIn(project, binPath(bin), ['--version'])
+        record(`bin ${bin}`, result.ok && result.stdout.trim() === source.version, result.output)
+      }
+      const installed = path.join(project, 'node_modules', PACKAGE)
+      const notices = path.join(installed, 'dist', 'THIRD_PARTY_NOTICES.md')
+      record('third-party notices', existsSync(notices))
+      const manifest = JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')) as {
+        scripts?: Record<string, string>
+      }
+      record('no install scripts', manifest.scripts?.postinstall === undefined)
+      const answered = await mcpAnswers(binPath('devstack'), project, { ...process.env, ...env })
+      record('mcp over stdio', answered)
     }
-    const installed = path.join(project, 'node_modules', PACKAGE)
-    record(
-      'third-party notices',
-      existsSync(path.join(installed, 'dist', 'THIRD_PARTY_NOTICES.md'))
-    )
-    const manifest = JSON.parse(await readFile(path.join(installed, 'package.json'), 'utf8')) as {
-      scripts?: Record<string, string>
-    }
-    record('no install scripts', manifest.scripts?.postinstall === undefined)
-    record(
-      'mcp over stdio',
-      await mcpAnswers(binPath('devstack'), project, { ...process.env, ...env })
-    )
   } finally {
     killAllGroups()
     if (!process.argv.includes('--keep')) await rm(workDir, { recursive: true, force: true })

@@ -1,74 +1,192 @@
-# Publishes to npm when a version tag is pushed (buildPlan R.9, D-102). Trusted publishing:
-# npm trusts this workflow over OIDC, so no token is stored and provenance is attached. The
-# first publish (1.0.0) was manual; npm only allows a trusted publisher for an existing package.
+# Releases create-devstack-app (see RELEASING.md). A v*.*.* tag on main runs every stage; publishing
+# waits for a maintainer to approve the `release` environment:
+#   verify     the tag matches package.json, CHANGELOG.md has the section, lint/format/types/tests
+#              pass, and the npm tarball is packed once
+#   rehearse   on Linux and macOS: the tarball published to a throwaway local registry and started
+#              from it the ways users do (npx, pnpm dlx, bunx, the create forms, both bins, MCP)
+#   publish    (approval) a draft GitHub Release, npm with provenance through trusted publishing,
+#              then the release goes live
+#   live       fresh Linux and macOS runners start the published package and verify its signatures
+# Run it by hand (Actions → Release → Run workflow) for a rehearsal: everything up to publish, which
+# is skipped. Only a tag push can publish.
 name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*.*.*']
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: release
   cancel-in-progress: false
 
+env:
+  # Trusted publishing needs npm 11.5.1 or newer, which Node 24 ships with.
+  NODE_VERSION: 24
+  BUN_VERSION: 1.4.0
+  PNPM_VERSION: 10.26.2
+
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-
+  verify:
+    name: Verify the release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
     steps:
-      # Pinned to commits: this job can publish, so its actions must not change underneath it.
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Node 24 ships npm 11 (trusted publishing needs npm 11.5.1 or newer)
-          node-version: 24
-          registry-url: https://registry.npmjs.org
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
-
-      - name: Tag matches package.json
+      - run: npm ci
+      - id: meta
+        name: Version, tag and release notes
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          version="$(node -p 'require("./package.json").version')"
-          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match package.json version $version" >&2
-            exit 1
+          version=$(node -p 'require("./package.json").version')
+          if [ "$EVENT" = push ]; then
+            tag=$REF_NAME
+            # Only a commit that is on main can be released.
+            git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$tag is not on main"; exit 1; }
+          else
+            tag="v$version"
           fi
-
-      - name: Install dependencies
-        run: npm ci
-
-      # The smoke test starts the CLI through pnpm dlx and bunx too
-      - name: Install pnpm and bun
-        run: npm install --global pnpm@10.26.2 bun@1.4.0
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Format
-        run: npm run format
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Test
-        run: npm run test
-
-      - name: Smoke-test the packed CLI
-        run: npm run release:smoke
-
-      # Skips a version already on npm, such as 1.0.0, which was published by hand
-      - name: Publish
+          npx tsx scripts/release-notes.ts "$tag" > release-notes.md
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          { echo "### $tag ($EVENT)"; echo; cat release-notes.md; } >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run lint
+      - run: npm run format
+      - run: npm run typecheck
+      - run: npm test
+      - name: Pack the tarball that gets published
         run: |
-          version="$(node -p 'require("./package.json").version')"
-          if npm view "create-devstack-app@$version" version >/dev/null 2>&1; then
-            echo "create-devstack-app@$version is already on npm; nothing to publish."
-            exit 0
+          npm run build
+          mkdir release
+          npm pack --ignore-scripts --pack-destination release
+          mv release-notes.md release/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release
+          path: release
+          if-no-files-found: error
+
+  rehearse:
+    name: Rehearse (${{ matrix.os }})
+    needs: verify
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: npm install --global "pnpm@$PNPM_VERSION"
+      - run: npm ci
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release
+          path: release
+      - name: npm, through a throwaway local registry
+        run: sh scripts/npm-rehearse.sh "release/create-devstack-app-$VERSION.tgz"
+
+  publish:
+    name: Publish ${{ needs.verify.outputs.tag }}
+    needs: [verify, rehearse]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: release
+      url: https://github.com/${{ github.repository }}/releases/tag/${{ needs.verify.outputs.tag }}
+    permissions:
+      contents: write # the GitHub Release
+      id-token: write # npm trusted publishing and provenance
+    env:
+      TAG: ${{ needs.verify.outputs.tag }}
+      VERSION: ${{ needs.verify.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release
+          path: release
+      - name: Draft GitHub Release (re-runs replace its files)
+        run: |
+          tarball="release/create-devstack-app-$VERSION.tgz"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$tarball" --clobber
+          else
+            gh release create "$TAG" "$tarball" --draft --verify-tag --title "create-devstack-app $VERSION" --notes-file release/release-notes.md
           fi
-          npm publish
+      - name: npm (skips a version that is already published)
+        env:
+          # No token: npm trusts this workflow in the `release` environment (scripts/npm-trust.sh).
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          npm --version
+          sh scripts/npm-publish.sh "release/create-devstack-app-$VERSION.tgz"
+      - name: Make the GitHub Release live
+        run: gh release edit "$TAG" --draft=false --latest
+
+  live:
+    name: Start the published package (${{ matrix.os }})
+    needs: [verify, publish]
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: npm install --global "pnpm@$PNPM_VERSION"
+      - run: npm ci
+      - name: Wait for the registry to serve the version
+        run: for _ in $(seq 1 30); do npm view "create-devstack-app@$VERSION" version > /dev/null 2>&1 && break; sleep 10; done
+      - name: The published package, the ways users start it
+        run: npm run release:smoke -- --registry "create-devstack-app@$VERSION"
+      - name: npm signatures and provenance verify
+        run: |
+          mkdir -p "$RUNNER_TEMP/audit" && cd "$RUNNER_TEMP/audit"
+          npm init -y > /dev/null
+          npm install "create-devstack-app@$VERSION"
+          npm audit signatures

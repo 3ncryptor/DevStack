@@ -1,11 +1,36 @@
 # create-devstack-app
 
-Scaffold a running, wired TypeScript backend from the stack you choose. Every generated project
-passes its own lint, format, typecheck and build on the first run, boots with a `/health` route,
-and shuts down cleanly on `SIGTERM`.
+**One command from an empty folder to a running, wired TypeScript stack, with its checks passing.**
 
-Website and docs: [devstack-app-delta.vercel.app](https://devstack-app-delta.vercel.app). Build a
-stack in the browser and copy the one command that generates it.
+[![CI](https://github.com/3ncryptor/DevStack/actions/workflows/ci.yml/badge.svg)](https://github.com/3ncryptor/DevStack/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/create-devstack-app.svg)](https://www.npmjs.com/package/create-devstack-app)
+[![Release](https://img.shields.io/github/v/release/3ncryptor/DevStack.svg)](https://github.com/3ncryptor/DevStack/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/3ncryptor/DevStack/blob/main/LICENSE)
+[![Website](https://img.shields.io/badge/website-devstack--app-4ade80.svg)](https://devstack-app-delta.vercel.app)
+
+You pick the stack: an API on Express, Fastify or NestJS, optionally a Next.js or React web app
+in a monorepo, a database and ORM, auth, tests, Docker, CI. DevStack writes the project with the
+pieces already connected to each other, installs it, and runs its lint, format, typecheck, test
+and build, then boots it and checks `/health`. You get the project after it has passed.
+
+```text
+$ npx create-devstack-app my-app --preset fullstack-next-express
+
+my-app/                           93 files
+├─ apps/api/                      Express 5 · Prisma 7 + PostgreSQL 18 · Vitest · OpenAPI + Scalar
+│  └─ src/                        app.ts, config/env.ts, lib/{logger,errors,readiness,shutdown}.ts …
+├─ apps/web/                      Next.js 16 · Tailwind 4 · "API ✓ connected · DB ✓ connected"
+├─ packages/shared/               the response envelope types and a typed API client
+├─ docker-compose.yml             the whole stack, PostgreSQL included
+├─ .github/workflows/ci.yml       every check, on your package manager
+├─ AGENTS.md · CLAUDE.md          your stack, explained to AI coding assistants
+└─ .devstack/stack.json           the record you can regenerate the project from
+
+✓ lint  ✓ format  ✓ typecheck  ✓ test  ✓ build  ✓ boot + /health
+```
+
+**Build a stack in the browser:** [devstack-app-delta.vercel.app](https://devstack-app-delta.vercel.app)
+asks the wizard's questions and gives you the command for macOS, Linux or Windows.
 
 ## Quick start
 
@@ -16,74 +41,58 @@ npx create-devstack-app my-app
 `npm create devstack-app`, `pnpm create devstack-app`, `yarn create devstack-app` and
 `bun create devstack-app` do the same.
 
-The wizard asks for your framework, database, folder layout, tooling and middleware. When it
-finishes, the CLI prints the next commands for your package manager, the environment variables to
-fill in, and any warnings (for example, CORS left open to every origin).
+The wizard checks your machine (Node.js, package managers, git identity), then asks only the
+questions that apply to your answers so far. Nothing is written until the review screen. When it
+finishes, the CLI prints the next commands for your package manager, the environment variables
+to fill in, and any warnings (for example, CORS left open to every origin).
 
-Requires Node.js 22.12 or newer. Generated projects target Node.js 24.
+Requires Node.js 22.12 or newer. Generated projects target Node.js 24, on npm, pnpm, yarn or bun.
 
-## What you get
+## Features
 
-- **Express 5, Fastify 5 or NestJS 12** on TypeScript (NodeNext), ESM or CommonJS, built around `createApp(deps)` so tests
-  need no open port:
+- **An API that is production-shaped from the first commit.** Express 5, Fastify 5 or NestJS 12,
+  ESM or CommonJS, built around `createApp(deps)` so tests need no open port:
   - environment validated with Zod at startup, every missing or invalid variable listed at once;
-  - pino JSON logs with a request id per request (echoed in `x-request-id`);
-  - one response envelope: `{ success: true, data, meta? }` (`ApiSuccess`, with pagination
-    `meta`) and `{ success: false, error: { code, message, requestId, details? } }` (`ApiError`),
-    with no stack traces; Nest wraps return values for you;
-  - Zod for env, request bodies, queries and params (`validate()` in Express, a pipe in Nest),
-    and an optional `asyncHandler()` for Express;
-  - `GET /health` (liveness) and `GET /ready` (503 with per-check status while, say, the database
-    is down);
-  - graceful shutdown: `SIGTERM`/`SIGINT` stop accepting connections, finish in-flight requests,
-    close the database, and exit 0;
-  - a Supertest test that passes on day one (`node:test`).
-- **Fullstack in a monorepo** (pnpm, npm, yarn or bun workspaces with Turborepo): the API in
-  `apps/api`, a Next.js 16 web app in `apps/web`, an optional admin app in `apps/admin`, and
-  `packages/shared` with the response types and a typed API client. In development the web apps
-  call the API through a `/api` proxy, so there is no CORS to configure; the API allows both web
-  origins anyway. The home page shows "API ✓ connected · DB ✓ connected".
-- **Folders for the architecture you pick:** feature-scoped, clean or MVC for the API;
-  feature-based, layer-based or atomic design for the web apps, with `.gitkeep` in each folder.
-- **Rate limiting your way:** fixed window, sliding window, token bucket or leaky bucket, with
-  `RateLimit-*` headers and the standard error body on 429.
-- **API versioning:** application routes under `/v1` if you want it; `/health` and `/ready`
-  stay unversioned.
-- **Security middleware you pick, imported explicitly:** Helmet, CORS, origin checks, rate
-  limiting, request logging and compression. There is no runtime discovery, so a missing
-  middleware is a compile error, never a silent no-op. Open CORS logs a warning at startup.
-- **Prisma 7 + PostgreSQL** (optional): driver adapter, `prisma.config.mjs`, a client generated
-  into `src/generated` after install, wired into `/ready` and shutdown, and `db:*` scripts
-  (`db:up` starts the compose database when Docker is selected).
-- **Email + password auth** (optional, Express + Prisma): register, login, refresh, logout and
-  `GET /auth/me`; argon2id password hashes; a 15-minute JWT access token and a rotating 7-day
-  refresh token, both in httpOnly cookies (a reused refresh token ends every session); writes
-  carrying cookies must come from `ALLOWED_ORIGINS`; `requireAuth` and `requireRole('ADMIN')`
-  for your routes, and `auth:make-admin <email>` to promote a user. `JWT_SECRET` gets a random
-  value in your local `.env` only. Tests run on in-memory repositories, plus one against
-  Postgres once it is migrated.
-- **Better Auth** (optional, Express + Prisma): email + password and, if you pick them, GitHub
-  and Google sign-in, with database sessions and admin roles; the client id and secret stay
-  blank in `.env` until you add them.
-- **Login pages in the web apps** whenever an API has auth: login, register, account and
-  logout, OAuth buttons, and `<RequireAuth>` for protected pages; the admin app only lets admins
-  in.
-- **A Todo app to start from** (optional): list, filters, cursor pagination, create, edit,
-  toggle and delete, from the Prisma model to a page in the web app; each user sees only their
-  own todos when you pick auth; `db:seed` adds sample data and a demo user.
-- **Repo extras** (on by default): `AGENTS.md` and `CLAUDE.md` describing your stack for AI
-  assistants, VS Code settings, extensions and a debug launch, and GitHub hygiene files
-  (Dependabot, PR and issue templates, CODEOWNERS).
-- **Tooling that passes on day one:** ESLint 10 (flat config), Prettier, Husky + lint-staged +
-  commitlint. Every generated file is formatted with the project's own Prettier config.
-- **Docker** (optional): a multi-stage, non-root Dockerfile for your package manager with a
-  `/health` healthcheck, and a compose file that only adds Postgres when you chose a database.
-- **`.env.example`** built from what each module needs, a local `.env` with working defaults
-  (never overwritten), a README for your stack, and `.devstack/stack.json`, a record of the stack
-  you can regenerate from.
-- **npm, pnpm, yarn or bun**, including pnpm's build-script approval (`allowBuilds`).
+  - JSON logs with a request id per request (pino, Winston, or plain JSON lines);
+  - one response envelope, `{ success: true, data, meta? }` and
+    `{ success: false, error: { code, message, requestId, details? } }`, with no stack traces;
+  - `GET /health` (liveness) and `GET /ready` (503 with per-check status while a dependency is
+    down);
+  - graceful shutdown: `SIGTERM`/`SIGINT` finish in-flight requests, close the database, exit 0.
+- **Fullstack in a monorepo.** pnpm, npm, yarn or bun workspaces with Turborepo: the API in
+  `apps/api`, a Next.js 16 or React 19 + Vite web app in `apps/web`, an optional Next.js admin
+  app, and `packages/shared` with the response types and a typed client. In development the web
+  apps reach the API through a `/api` proxy, so there is no CORS to configure.
+- **Data, wired in.** PostgreSQL 18, MySQL 8.4, SQLite or MongoDB 8, through Prisma 7, Drizzle or
+  Mongoose; Redis for caching, rate limits and sessions. The database is part of `/ready` and of
+  shutdown, has `db:*` scripts, and gets a compose service when you choose Docker.
+- **Auth that works end to end** (Express, Fastify or NestJS, with Prisma + PostgreSQL):
+  - JWT: register, login, refresh and logout, argon2id hashes, a 15-minute access token and a
+    rotating 7-day refresh token in httpOnly cookies; a reused refresh token ends every session;
+  - or Better Auth: email + password, optional GitHub and Google sign-in, database sessions and
+    admin roles;
+  - optionally sessions in Redis instead of JWT access tokens;
+  - login, register and account pages in the web apps, and `requireAuth` / `requireRole('ADMIN')`
+    for your routes.
+- **Security you choose, imported explicitly.** Helmet, CORS, origin checks, request logging,
+  compression, and rate limiting (fixed window, sliding window, token bucket or leaky bucket,
+  with `RateLimit-*` headers). A missing middleware is a compile error, never a silent no-op.
+- **The rest of a real project.** Vitest or Jest with Supertest; OpenAPI at `/openapi.json` with
+  a Scalar reference at `/docs`; `/v1` API versioning; ESLint 10, Prettier, Husky + lint-staged +
+  commitlint; multi-stage, non-root Dockerfiles and a compose file for the whole stack; a GitHub
+  Actions workflow; VS Code settings; Dependabot and issue templates; `AGENTS.md` and `CLAUDE.md`.
+- **Folders for the architecture you pick.** Feature-scoped, clean, MVC or flat for the API;
+  feature-based, layer-based or atomic design for the web apps.
+- **A Todo app to start from** (optional, Express + Prisma): CRUD with filters and cursor
+  pagination, from the Prisma model to a page in the web app, per user when you pick auth.
+- **Changes later without a rewrite.** `add` and `remove` modules in an existing project; files
+  you edited are never overwritten.
+- **For AI assistants too.** `create-devstack-app mcp` serves DevStack over MCP, so an assistant
+  can list modules, validate a stack, plan and generate it.
 
-## Usage
+55 modules in all; each one has a page on the [website](https://devstack-app-delta.vercel.app/docs/modules).
+
+## Commands
 
 ```bash
 create-devstack-app my-app                        # interactive wizard
@@ -108,16 +117,13 @@ create-devstack-app mcp                           # serve DevStack to AI assista
 Installed globally (`npm install -g create-devstack-app`), the CLI also answers to `devstack`:
 `devstack add security-rate-limit`, `devstack doctor`, `devstack mcp`.
 
-The wizard first checks your machine (Node.js version, package managers, git identity), then
-asks only the questions that apply: framework, module system (ESM or CommonJS), database and
-ORM, package manager, architecture,
-pre-commit hooks, Docker and what `app.ts` sets up. ESLint, Prettier and TypeScript are always
-configured. Nothing is written until the review screen, where you can generate, change any
-answer, save the stack as a named preset, remember your answers as defaults, or cancel. A
-missing package manager is caught there too, before any file is written. If installing fails
-after the files are written, they stay: the summary says "Not verified" and lists the commands
-to run again, and what to check if one fails again. After the files are written it asks whether to make the
-initial git commit (git is set up either way), and only then whether to push it to an existing,
+Built-in presets: `backend`, `backend-fastify`, `backend-nest`, `api-mongo`,
+`fullstack-next-express` and `fullstack-vite-express`; `presets list` shows them with yours.
+
+On the review screen you can generate, change any answer, save the stack as a preset, remember
+your answers as defaults, or cancel. If installing fails after the files are written, they stay:
+the summary says "Not verified" and lists the commands to run again. After the files are written
+it asks whether to make the initial git commit, and only then whether to push it to an existing,
 empty GitHub repository.
 
 `plan`, `modules`, `doctor`, `add`, `remove`, `config`, `presets` and `mcp` are commands, so a
@@ -165,7 +171,9 @@ Exit codes: `0` success, `1` generation failed after writing (the message lists 
 ```
 
 A module entry can be an id or `{ "id", "options" }`; options are validated against the
-module's schema, and defaults fill in the rest (rate limiting: `windowMs`, `limit`).
+module's schema, and defaults fill in the rest (rate limiting: `windowMs`, `limit`). The JSON
+Schema for this file is published at
+[`/schema/stack.json`](https://devstack-app-delta.vercel.app/schema/stack.json).
 
 A config can also carry `settings`, recorded with every project:
 
@@ -244,7 +252,11 @@ remove tools keep the same rules as the commands.
   deletes only files it generated that you have not changed, after backing them up.
 - Symlinks, non-regular files and paths outside the project are refused before anything is written.
 - Project names follow npm's rules, including reserved and Windows device names.
-- Commands run without a shell.
+- Commands run without a shell, and the package runs no install scripts.
+- Every release is built and published by GitHub Actions from a tagged commit, with npm
+  provenance; check it with `npm audit signatures` in a project that depends on the package.
+  Third-party code bundled into the CLI is listed with its licences in
+  `dist/THIRD_PARTY_NOTICES.md`.
 
 ## Develop
 
@@ -256,6 +268,7 @@ npm run test:coverage             # with coverage
 npm run e2e                       # smoke: 4 stacks on pnpm, in parallel (~1 min)
 npm run e2e:full                  # every stack on npm, pnpm, yarn and bun (~10 min)
 npm run e2e -- --only fullstack-docker --keep   # one stack, keeping the project
+npm run release:smoke             # the packed CLI through npx, pnpm dlx, bunx and both bins
 npm run lint && npm run typecheck && npm run build
 npm run graph                     # knowledge graph of the codebase in graphify-out/ (needs uv)
 ```
@@ -285,10 +298,15 @@ writes the files, and runs the commands. Versions come only from `src/catalog/no
    variables through `env`, and post-install steps through `commands`.
 5. Add tests, and add a combination to `tests/e2e/matrix.json`.
 
-Decisions and their reasons are in [`buildPlan.md` §7](./buildPlan.md#7-decision-log) and
-indexed in [`docs/adr`](./docs/adr/README.md). See [CONTRIBUTING.md](./CONTRIBUTING.md),
-[CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) and [SECURITY.md](./SECURITY.md).
+| Document                                                                           | What it covers                                        |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| [buildPlan.md](https://github.com/3ncryptor/DevStack/blob/main/buildPlan.md)       | The product, the architecture and every decision (§7) |
+| [docs/adr](https://github.com/3ncryptor/DevStack/blob/main/docs/adr/README.md)     | The decisions, indexed                                |
+| [RELEASING.md](https://github.com/3ncryptor/DevStack/blob/main/RELEASING.md)       | How a release is verified, rehearsed and published    |
+| [CHANGELOG.md](https://github.com/3ncryptor/DevStack/blob/main/CHANGELOG.md)       | What changed in each version                          |
+| [CONTRIBUTING.md](https://github.com/3ncryptor/DevStack/blob/main/CONTRIBUTING.md) | How to contribute                                     |
+| [SECURITY.md](https://github.com/3ncryptor/DevStack/blob/main/SECURITY.md)         | Reporting a vulnerability privately                   |
 
 ## License
 
-MIT
+[MIT](https://github.com/3ncryptor/DevStack/blob/main/LICENSE)

@@ -1367,6 +1367,14 @@ were tested by hand; the e2e smoke tier, the unit suite (1006 tests) and R.4 ran
 release commit instead. `release.yml` installs pnpm and bun so R.4 runs before every later
 publish.
 
+**Status (2026-10-05, later):** R.7 done by the owner: 1.0.0 published by hand at 08:59 UTC
+(`latest` and `next`, from `f49f16e`, no provenance; `0.0.0-stage` is npm's staged-publishing
+placeholder). From 1.0.1 on, releases follow D-103: `release.yml` (verify, rehearse on a
+throwaway registry, publish after approval, live checks), `RELEASING.md`, and
+`scripts/npm-{publish,rehearse,trust}.sh`. Since the package exists, trusted publishing is set up
+directly, with no bootstrap token. 1.0.1 carries the rewritten README, which npm shows only for
+a published version.
+
 Rollback: a bad release is fixed forward (`npm deprecate` it, publish a patch), never
 unpublished (npm allows it only for 72 hours and it breaks anyone who installed it). `next`
 before `latest` keeps a broken build off the default `npx` path.
@@ -2047,6 +2055,14 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   exists), first to `next`, promoted to `latest` after a registry smoke test; later releases go
   through a tag-triggered `release.yml` with trusted publishing, the one exception to D-52.
   A GitHub Release accompanies the tag; npm's homepage is the website. Plan: "Release 1.0".
+- **D-103 (2026-10-05)** — Releases the way Kestrel does them (owner): built and published only by
+  GitHub Actions, never from a laptop. A `v*.*.*` tag on `main` runs verify (tag = version, on
+  `main`, changelog section, gates, one packed tarball), rehearse (that tarball published to a
+  throwaway Verdaccio and started the ways users do, on Linux and macOS), publish (waits for the
+  `release` environment's approval; draft GitHub Release, npm with provenance through trusted
+  publishing, release goes live) and live (fresh runners start the published version, `npm audit
+signatures`). A manual run is a rehearsal and cannot publish. Supersedes D-102's manual-first
+  flow; how-to in `RELEASING.md`.
 
 # §8. Open questions
 
