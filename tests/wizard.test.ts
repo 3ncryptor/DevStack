@@ -711,7 +711,9 @@ describe('answers ↔ modules', () => {
 
     expect(offered).toHaveLength(8192)
     expect(failures).toEqual([])
-  })
+    // exhaustive: thousands of resolutions; under a full parallel run it needs more than the
+    // default 20 s, though it takes a few seconds alone
+  }, 120_000)
 })
 
 describe('React + Vite and CSS Modules (D-79)', () => {
