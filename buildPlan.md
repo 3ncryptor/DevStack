@@ -1984,6 +1984,22 @@ clean`, …), `common/` for language-agnostic ones (databases, Redis, the monore
   instead of peers (a second React breaks hooks) and pulls three.js and GSAP into every install;
   moving them to `peerDependencies` upstream would make the package installable.
 
+- **D-101 (2026-10-05)** — Website as built, revising D-100 after owner review (look modeled on
+  neutronfest.org): pure black, white type, terminal green as the one accent, a wide display
+  face (Archivo at 125%) and letter-spaced mono labels; DevClub's curved navbar. The hero is a
+  full-screen 40 s film (Remotion, rendered to MP4, played muted with a sound toggle) that a GSAP
+  ScrollTrigger timeline cuts away into the command and GitHub links. The film's music and
+  sound effects are composed in code (`website/scripts/make-music.ts`, `make-sfx.ts`): no stock
+  audio, beat-synced to its storyboard. The terminal-replay demo (7.5) is dropped: the builder
+  on the landing page (`#build`) is the interactive part. It runs the wizard's own steps through
+  `wizardForm` (a recording prompter), so it asks exactly what the CLI asks; final commands for
+  macOS/Linux and PowerShell (`commandFor(…, 'powershell')`: `npx.cmd`, quoted comma list).
+  Docs render the README (one source); module pages and `/schema/stack.json` come from the
+  registry and the zod schema at build time. A voiceover cut for marketing is a separate,
+  later piece of work. Open against Phase 7: the builder's live file preview and `stack.json`
+  download (7.6), troubleshooting and "adding a module" on the site (7.7), a link check and one
+  full run of a copied command through its gates (7.9), and the exit gate on the deployed site.
+
 # §8. Open questions
 
 | #    | Question                                                                                                                                                                                                                                                                                                                                                                                                                                | Owner | Resolve by        |
