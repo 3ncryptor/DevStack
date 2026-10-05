@@ -1,6 +1,6 @@
 {
   "name": "create-devstack-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scaffold a running, wired TypeScript project from the stack you choose",
   "license": "MIT",
   "repository": {

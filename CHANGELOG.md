@@ -1,5 +1,13 @@
 # create-devstack-app
 
+## 1.0.1
+
+### Patch Changes
+
+- The README on npm describes the whole tool: fullstack monorepos, every database, ORM and auth
+  option, the commands and their flags. Releases are now built, rehearsed and published by GitHub
+  Actions with npm provenance; check a release with `npm audit signatures`.
+
 ## 1.0.0
 
 ### Major Changes

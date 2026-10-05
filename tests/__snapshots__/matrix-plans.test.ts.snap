@@ -26,7 +26,7 @@ exports[`e2e combination plans (D-96) > api-mongo-preset plans as recorded 1`] =
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "b44bbf88218187a9",
+      "sha256": "8adf4a95951be243",
       "strategy": "create",
     },
     {
@@ -134,7 +134,7 @@ exports[`e2e combination plans (D-96) > api-mongo-preset plans as recorded 1`] =
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "c00680f19b9959b3",
+      "sha256": "d4e801406688ef6c",
       "strategy": "skip-if-exists",
     },
     {
@@ -384,7 +384,7 @@ exports[`e2e combination plans (D-96) > backend-bare plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "95379a4f5fe9e642",
+      "sha256": "05c2af8837f12de1",
       "strategy": "create",
     },
     {
@@ -486,7 +486,7 @@ exports[`e2e combination plans (D-96) > backend-bare plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "c2083bfb5a8e2c54",
+      "sha256": "cca804217682b7b7",
       "strategy": "skip-if-exists",
     },
     {
@@ -585,7 +585,7 @@ exports[`e2e combination plans (D-96) > backend-better-auth plans as recorded 1`
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "2eca9fddcbc4d911",
+      "sha256": "9b8bbbbcb15b3793",
       "strategy": "create",
     },
     {
@@ -687,7 +687,7 @@ exports[`e2e combination plans (D-96) > backend-better-auth plans as recorded 1`
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "a1268f0ddbb22ccb",
+      "sha256": "2b63fcd188a47bfd",
       "strategy": "skip-if-exists",
     },
     {
@@ -1027,7 +1027,7 @@ exports[`e2e combination plans (D-96) > backend-fastify-preset plans as recorded
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "a3c8ae5cfe71fffb",
+      "sha256": "1d91a007114b5fbc",
       "strategy": "create",
     },
     {
@@ -1141,7 +1141,7 @@ exports[`e2e combination plans (D-96) > backend-fastify-preset plans as recorded
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "e66c48b3d984ca8a",
+      "sha256": "3093837212d45098",
       "strategy": "skip-if-exists",
     },
     {
@@ -1406,7 +1406,7 @@ exports[`e2e combination plans (D-96) > backend-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "7efd03c859ae7936",
+      "sha256": "86c954e9d859aaad",
       "strategy": "create",
     },
     {
@@ -1508,7 +1508,7 @@ exports[`e2e combination plans (D-96) > backend-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "65dfd785f627a7df",
+      "sha256": "0c4f1821e07d1fbd",
       "strategy": "skip-if-exists",
     },
     {
@@ -1854,7 +1854,7 @@ exports[`e2e combination plans (D-96) > backend-nest-preset plans as recorded 1`
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "6919302dc67d5eb4",
+      "sha256": "5453ca7e7a3fcb14",
       "strategy": "create",
     },
     {
@@ -1980,7 +1980,7 @@ exports[`e2e combination plans (D-96) > backend-nest-preset plans as recorded 1`
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "ca89e040600f3668",
+      "sha256": "2a84b65c7e281130",
       "strategy": "skip-if-exists",
     },
     {
@@ -2343,7 +2343,7 @@ exports[`e2e combination plans (D-96) > backend-preset plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "d3f12b0d9672b687",
+      "sha256": "fdca2b0dd68467f5",
       "strategy": "create",
     },
     {
@@ -2445,7 +2445,7 @@ exports[`e2e combination plans (D-96) > backend-preset plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "3fe1eaf49002b8ba",
+      "sha256": "06ab755836e20fd0",
       "strategy": "skip-if-exists",
     },
     {
@@ -2694,7 +2694,7 @@ exports[`e2e combination plans (D-96) > cjs-express-add-auth plans as recorded 1
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "867153c6a5a7611c",
+      "sha256": "ec0b468543b01cd6",
       "strategy": "create",
     },
     {
@@ -2766,7 +2766,7 @@ exports[`e2e combination plans (D-96) > cjs-express-add-auth plans as recorded 1
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "208ec48a560e0ec1",
+      "sha256": "4d6b0901927847c6",
       "strategy": "skip-if-exists",
     },
     {
@@ -2942,7 +2942,7 @@ exports[`e2e combination plans (D-96) > cjs-express-better-auth-todo plans as re
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "4ee0514e8caa7448",
+      "sha256": "701382b5ea5523c1",
       "strategy": "create",
     },
     {
@@ -3038,7 +3038,7 @@ exports[`e2e combination plans (D-96) > cjs-express-better-auth-todo plans as re
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "05138d42ad012c08",
+      "sha256": "29624c0a59fbd9b7",
       "strategy": "skip-if-exists",
     },
     {
@@ -3320,7 +3320,7 @@ exports[`e2e combination plans (D-96) > cjs-express-sqlite-drizzle-strictest pla
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "ed21a251538abdaa",
+      "sha256": "53fa24f74bc86d28",
       "strategy": "create",
     },
     {
@@ -3386,7 +3386,7 @@ exports[`e2e combination plans (D-96) > cjs-express-sqlite-drizzle-strictest pla
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "94d8ce5fcb0a2537",
+      "sha256": "8e3e9e796c7f2014",
       "strategy": "skip-if-exists",
     },
     {
@@ -3568,7 +3568,7 @@ exports[`e2e combination plans (D-96) > cjs-fastify-mysql-drizzle-jest plans as 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "a1c83204753bd960",
+      "sha256": "3dfc8f69ad9270aa",
       "strategy": "create",
     },
     {
@@ -3640,7 +3640,7 @@ exports[`e2e combination plans (D-96) > cjs-fastify-mysql-drizzle-jest plans as 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "ac5f7c4f20e6c83c",
+      "sha256": "3f00934fc1d23514",
       "strategy": "skip-if-exists",
     },
     {
@@ -3811,7 +3811,7 @@ exports[`e2e combination plans (D-96) > cjs-fastify-session-docs plans as record
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "26a18206c3030b9e",
+      "sha256": "9699de92c1456471",
       "strategy": "create",
     },
     {
@@ -3883,7 +3883,7 @@ exports[`e2e combination plans (D-96) > cjs-fastify-session-docs plans as record
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "995241cf78634e82",
+      "sha256": "67ddbf20865fed7f",
       "strategy": "skip-if-exists",
     },
     {
@@ -4210,7 +4210,7 @@ exports[`e2e combination plans (D-96) > cjs-fullstack-preset plans as recorded 1
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "2854c208302d1d9d",
+      "sha256": "459e3c90ce7b4e6a",
       "strategy": "create",
     },
     {
@@ -4762,7 +4762,7 @@ exports[`e2e combination plans (D-96) > cjs-fullstack-preset plans as recorded 1
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "6a79d0f3bfcb15fa",
+      "sha256": "28ed59ecbfdad45a",
       "strategy": "skip-if-exists",
     },
     {
@@ -4833,7 +4833,7 @@ exports[`e2e combination plans (D-96) > cjs-nest-jest-winston plans as recorded 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "689e087e13fad0bd",
+      "sha256": "d835eb11befa58f1",
       "strategy": "create",
     },
     {
@@ -4911,7 +4911,7 @@ exports[`e2e combination plans (D-96) > cjs-nest-jest-winston plans as recorded 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "71b7e0c55d9f9dd6",
+      "sha256": "739abfdb6eb0f594",
       "strategy": "skip-if-exists",
     },
     {
@@ -5246,7 +5246,7 @@ exports[`e2e combination plans (D-96) > cjs-nest-node-test plans as recorded 1`]
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "6af0c44787ccb333",
+      "sha256": "21b313e0e7a49f1d",
       "strategy": "create",
     },
     {
@@ -5306,7 +5306,7 @@ exports[`e2e combination plans (D-96) > cjs-nest-node-test plans as recorded 1`]
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "70ba8b951bb544a3",
+      "sha256": "7f70f968d8a8c395",
       "strategy": "skip-if-exists",
     },
     {
@@ -5525,7 +5525,7 @@ exports[`e2e combination plans (D-96) > express-add-remove-redis plans as record
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "00b00e5cd88f07a5",
+      "sha256": "83f451fe28d66dbb",
       "strategy": "create",
     },
     {
@@ -5597,7 +5597,7 @@ exports[`e2e combination plans (D-96) > express-add-remove-redis plans as record
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "6a5709e143cf65e0",
+      "sha256": "35f5af553ea2f092",
       "strategy": "skip-if-exists",
     },
     {
@@ -5773,7 +5773,7 @@ exports[`e2e combination plans (D-96) > express-docker plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "d5ba000c2a726dec",
+      "sha256": "c07c7d7f21cf8a0b",
       "strategy": "create",
     },
     {
@@ -5851,7 +5851,7 @@ exports[`e2e combination plans (D-96) > express-docker plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "92539b9bcb377a43",
+      "sha256": "3c4f1331237f4c4e",
       "strategy": "skip-if-exists",
     },
     {
@@ -6027,7 +6027,7 @@ exports[`e2e combination plans (D-96) > express-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "f98f72162ebab70f",
+      "sha256": "4f6d461bd214a2ef",
       "strategy": "create",
     },
     {
@@ -6105,7 +6105,7 @@ exports[`e2e combination plans (D-96) > express-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "4da14de9927c9fbf",
+      "sha256": "b2dc06b99704461a",
       "strategy": "skip-if-exists",
     },
     {
@@ -6438,7 +6438,7 @@ exports[`e2e combination plans (D-96) > express-mysql-prisma plans as recorded 1
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "db538dbad6cf74e7",
+      "sha256": "58d53523cbe83943",
       "strategy": "create",
     },
     {
@@ -6528,7 +6528,7 @@ exports[`e2e combination plans (D-96) > express-mysql-prisma plans as recorded 1
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "bc470055e0c166cf",
+      "sha256": "8a85add455090064",
       "strategy": "skip-if-exists",
     },
     {
@@ -6712,7 +6712,7 @@ exports[`e2e combination plans (D-96) > express-postgres-drizzle plans as record
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "0f978cd263fa9742",
+      "sha256": "7da2b94d296117c9",
       "strategy": "create",
     },
     {
@@ -6796,7 +6796,7 @@ exports[`e2e combination plans (D-96) > express-postgres-drizzle plans as record
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "8f89eddbdb6640dd",
+      "sha256": "4cf7287a207fcab9",
       "strategy": "skip-if-exists",
     },
     {
@@ -6986,7 +6986,7 @@ exports[`e2e combination plans (D-96) > express-session plans as recorded 1`] = 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "905597d33e37bf85",
+      "sha256": "a005863f0cd0130e",
       "strategy": "create",
     },
     {
@@ -7076,7 +7076,7 @@ exports[`e2e combination plans (D-96) > express-session plans as recorded 1`] = 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "b4216e60691dfe8b",
+      "sha256": "6f9c9e5a9f703900",
       "strategy": "skip-if-exists",
     },
     {
@@ -7396,7 +7396,7 @@ exports[`e2e combination plans (D-96) > express-sqlite-prisma-docker plans as re
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "1ff5eb5b6b9b9e45",
+      "sha256": "39367ce402cf5bc6",
       "strategy": "create",
     },
     {
@@ -7486,7 +7486,7 @@ exports[`e2e combination plans (D-96) > express-sqlite-prisma-docker plans as re
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "b65aed47bdea67d8",
+      "sha256": "0b94ec33e8936e71",
       "strategy": "skip-if-exists",
     },
     {
@@ -7663,7 +7663,7 @@ exports[`e2e combination plans (D-96) > express-strictest plans as recorded 1`] 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "4b3544b81ea3e213",
+      "sha256": "1c2581017095c06f",
       "strategy": "create",
     },
     {
@@ -7735,7 +7735,7 @@ exports[`e2e combination plans (D-96) > express-strictest plans as recorded 1`] 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "6af0397191110cd1",
+      "sha256": "b699395d70008899",
       "strategy": "skip-if-exists",
     },
     {
@@ -8111,7 +8111,7 @@ exports[`e2e combination plans (D-96) > fastify-add-rate-limit plans as recorded
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "57d2ba95bbc4e81c",
+      "sha256": "14e8d1eee48e98af",
       "strategy": "create",
     },
     {
@@ -8171,7 +8171,7 @@ exports[`e2e combination plans (D-96) > fastify-add-rate-limit plans as recorded
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "6c9b63e717082c63",
+      "sha256": "89caf095c39a7f72",
       "strategy": "skip-if-exists",
     },
     {
@@ -8341,7 +8341,7 @@ exports[`e2e combination plans (D-96) > fastify-better-auth plans as recorded 1`
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "eacc5446a67c5fc2",
+      "sha256": "6ee9c8848190ad1e",
       "strategy": "create",
     },
     {
@@ -8431,7 +8431,7 @@ exports[`e2e combination plans (D-96) > fastify-better-auth plans as recorded 1`
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "940287443371d378",
+      "sha256": "74cec6c9afcda120",
       "strategy": "skip-if-exists",
     },
     {
@@ -8732,7 +8732,7 @@ exports[`e2e combination plans (D-96) > fastify-better-auth-strictest plans as r
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "957c95e00eda965d",
+      "sha256": "27aa84d738dd3523",
       "strategy": "create",
     },
     {
@@ -8810,7 +8810,7 @@ exports[`e2e combination plans (D-96) > fastify-better-auth-strictest plans as r
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "783940327d9ff0ba",
+      "sha256": "25ac76fab9ebd8b7",
       "strategy": "skip-if-exists",
     },
     {
@@ -9024,7 +9024,7 @@ exports[`e2e combination plans (D-96) > fastify-full plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "55258c28b34df9fb",
+      "sha256": "e483d92fd34ab468",
       "strategy": "create",
     },
     {
@@ -9114,7 +9114,7 @@ exports[`e2e combination plans (D-96) > fastify-full plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "8ace4abc5fc86aec",
+      "sha256": "57ae6071c5bc1b08",
       "strategy": "skip-if-exists",
     },
     {
@@ -9457,7 +9457,7 @@ exports[`e2e combination plans (D-96) > fastify-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "c33b387989e7cbe8",
+      "sha256": "64fe277cee82176e",
       "strategy": "create",
     },
     {
@@ -9523,7 +9523,7 @@ exports[`e2e combination plans (D-96) > fastify-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "04981fd31ffaaa03",
+      "sha256": "d102b46ba25dd07c",
       "strategy": "skip-if-exists",
     },
     {
@@ -9693,7 +9693,7 @@ exports[`e2e combination plans (D-96) > fastify-mysql-drizzle plans as recorded 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "ffd9283cd7b87bcc",
+      "sha256": "5f666db48058ff10",
       "strategy": "create",
     },
     {
@@ -9765,7 +9765,7 @@ exports[`e2e combination plans (D-96) > fastify-mysql-drizzle plans as recorded 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "7b05dc64471e7290",
+      "sha256": "c7e0559b5606ff92",
       "strategy": "skip-if-exists",
     },
     {
@@ -9936,7 +9936,7 @@ exports[`e2e combination plans (D-96) > fastify-plain plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "fb445b9983e4da45",
+      "sha256": "d03e561265967591",
       "strategy": "create",
     },
     {
@@ -9996,7 +9996,7 @@ exports[`e2e combination plans (D-96) > fastify-plain plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "9b4dc1580cf11f7c",
+      "sha256": "9c621d6712cccfef",
       "strategy": "skip-if-exists",
     },
     {
@@ -10153,7 +10153,7 @@ exports[`e2e combination plans (D-96) > fastify-session plans as recorded 1`] = 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "9ec478d6bfe3dd13",
+      "sha256": "6568b5bba233adc0",
       "strategy": "create",
     },
     {
@@ -10225,7 +10225,7 @@ exports[`e2e combination plans (D-96) > fastify-session plans as recorded 1`] = 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "c70512126124f6fe",
+      "sha256": "94820a25cab9e5ef",
       "strategy": "skip-if-exists",
     },
     {
@@ -10518,7 +10518,7 @@ exports[`e2e combination plans (D-96) > fastify-sqlite-drizzle plans as recorded
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "b97c673a5106cd9d",
+      "sha256": "ac116d3fdee32f79",
       "strategy": "create",
     },
     {
@@ -10602,7 +10602,7 @@ exports[`e2e combination plans (D-96) > fastify-sqlite-drizzle plans as recorded
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "37cea5e6d50ad6d0",
+      "sha256": "730a017f4868a81a",
       "strategy": "skip-if-exists",
     },
     {
@@ -10773,7 +10773,7 @@ exports[`e2e combination plans (D-96) > fastify-strictest plans as recorded 1`] 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "9dc32ebb25d8fa54",
+      "sha256": "27f3fee62b52e5b3",
       "strategy": "create",
     },
     {
@@ -10839,7 +10839,7 @@ exports[`e2e combination plans (D-96) > fastify-strictest plans as recorded 1`] 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "4a38fc3cdf3b3033",
+      "sha256": "9fdbba82431d41a2",
       "strategy": "skip-if-exists",
     },
     {
@@ -11081,7 +11081,7 @@ exports[`e2e combination plans (D-96) > fullstack plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "2dd83c16fc51e634",
+      "sha256": "2a01bc6a0f832b15",
       "strategy": "create",
     },
     {
@@ -11501,7 +11501,7 @@ exports[`e2e combination plans (D-96) > fullstack plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "75d3669d79febc62",
+      "sha256": "ed4bc6a5cef8398f",
       "strategy": "skip-if-exists",
     },
     {
@@ -11552,7 +11552,7 @@ exports[`e2e combination plans (D-96) > fullstack-add-auth plans as recorded 1`]
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "24a47cf9f18708f8",
+      "sha256": "9b172ccc57f4d40f",
       "strategy": "create",
     },
     {
@@ -11876,7 +11876,7 @@ exports[`e2e combination plans (D-96) > fullstack-add-auth plans as recorded 1`]
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "405386a76fdd7875",
+      "sha256": "1287c11f0189b509",
       "strategy": "skip-if-exists",
     },
     {
@@ -11937,7 +11937,7 @@ exports[`e2e combination plans (D-96) > fullstack-better-auth plans as recorded 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "d8f7946a84f7db59",
+      "sha256": "ca9bd07385d7f80f",
       "strategy": "create",
     },
     {
@@ -12663,7 +12663,7 @@ exports[`e2e combination plans (D-96) > fullstack-better-auth plans as recorded 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "f318bdd4d25bed41",
+      "sha256": "185d55f729296ce8",
       "strategy": "skip-if-exists",
     },
     {
@@ -12739,7 +12739,7 @@ exports[`e2e combination plans (D-96) > fullstack-docker plans as recorded 1`] =
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "e341214daef9ed86",
+      "sha256": "8cc3fd8d24b425b9",
       "strategy": "create",
     },
     {
@@ -13411,7 +13411,7 @@ exports[`e2e combination plans (D-96) > fullstack-docker plans as recorded 1`] =
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "364763eaa64180b4",
+      "sha256": "3872cd6cc0fe6887",
       "strategy": "skip-if-exists",
     },
     {
@@ -13487,7 +13487,7 @@ exports[`e2e combination plans (D-96) > fullstack-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "1068dc465da514d5",
+      "sha256": "0dcfe01371cb0150",
       "strategy": "create",
     },
     {
@@ -14333,7 +14333,7 @@ exports[`e2e combination plans (D-96) > fullstack-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "3d847aa55c9df2df",
+      "sha256": "75141b09075adcc1",
       "strategy": "skip-if-exists",
     },
     {
@@ -14404,7 +14404,7 @@ exports[`e2e combination plans (D-96) > fullstack-next-css-modules plans as reco
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "58f0bf2744e93d8c",
+      "sha256": "3a2de8a0d0e8e7cf",
       "strategy": "create",
     },
     {
@@ -15088,7 +15088,7 @@ exports[`e2e combination plans (D-96) > fullstack-next-css-modules plans as reco
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "17570d30a253d967",
+      "sha256": "3faf6fd0014e9dbd",
       "strategy": "skip-if-exists",
     },
     {
@@ -15149,7 +15149,7 @@ exports[`e2e combination plans (D-96) > fullstack-next-strictest plans as record
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "8ffea584471e0dd5",
+      "sha256": "6f70c6ec212ac1fa",
       "strategy": "create",
     },
     {
@@ -15833,7 +15833,7 @@ exports[`e2e combination plans (D-96) > fullstack-next-strictest plans as record
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "0b026c5edc87ea11",
+      "sha256": "906c6ca145f27e0a",
       "strategy": "skip-if-exists",
     },
     {
@@ -15887,7 +15887,7 @@ exports[`e2e combination plans (D-96) > fullstack-plain-css plans as recorded 1`
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "dde047bc7c3ac672",
+      "sha256": "fef0b23dd9a39b2d",
       "strategy": "create",
     },
     {
@@ -16217,7 +16217,7 @@ exports[`e2e combination plans (D-96) > fullstack-plain-css plans as recorded 1`
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "80ab9c80dd2a7f9d",
+      "sha256": "6ee055f562e7a872",
       "strategy": "skip-if-exists",
     },
     {
@@ -16275,7 +16275,7 @@ exports[`e2e combination plans (D-96) > fullstack-preset plans as recorded 1`] =
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "70c4a9e74cf75435",
+      "sha256": "47c56978cce6f8cc",
       "strategy": "create",
     },
     {
@@ -16827,7 +16827,7 @@ exports[`e2e combination plans (D-96) > fullstack-preset plans as recorded 1`] =
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "5c5fe75ef35c09b7",
+      "sha256": "7cba18066fabdf34",
       "strategy": "skip-if-exists",
     },
     {
@@ -16898,7 +16898,7 @@ exports[`e2e combination plans (D-96) > fullstack-renamed plans as recorded 1`] 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "fafa96dc19a204c6",
+      "sha256": "dac06c3568cf2586",
       "strategy": "create",
     },
     {
@@ -17444,7 +17444,7 @@ exports[`e2e combination plans (D-96) > fullstack-renamed plans as recorded 1`] 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "9b2f48e02c983d1f",
+      "sha256": "69adaf05165d6dea",
       "strategy": "skip-if-exists",
     },
     {
@@ -17506,7 +17506,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "29405f83599ad597",
+      "sha256": "ee9fc84b918e529a",
       "strategy": "create",
     },
     {
@@ -18124,7 +18124,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "941364ce297f663c",
+      "sha256": "4e0b823eebf6359b",
       "strategy": "skip-if-exists",
     },
     {
@@ -18188,7 +18188,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-css-modules plans as reco
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "82da99213ac950f8",
+      "sha256": "2f64b239592d8e46",
       "strategy": "create",
     },
     {
@@ -18614,7 +18614,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-css-modules plans as reco
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "092f106750d23346",
+      "sha256": "351a70606d6ecb50",
       "strategy": "skip-if-exists",
     },
     {
@@ -18678,7 +18678,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-preset plans as recorded 
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "d03b4cf8dffc8a00",
+      "sha256": "07d12686d2a3d03b",
       "strategy": "create",
     },
     {
@@ -19380,7 +19380,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-preset plans as recorded 
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "f98e5f92a142cdd5",
+      "sha256": "bcbf2ce7078888a2",
       "strategy": "skip-if-exists",
     },
     {
@@ -19445,7 +19445,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-strictest plans as record
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "933b39bd42a8a73b",
+      "sha256": "5dfac7c57152968f",
       "strategy": "create",
     },
     {
@@ -19793,7 +19793,7 @@ exports[`e2e combination plans (D-96) > fullstack-vite-strictest plans as record
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "ffc73bf2db63a1a3",
+      "sha256": "a9cc24205d718acb",
       "strategy": "skip-if-exists",
     },
     {
@@ -19856,7 +19856,7 @@ exports[`e2e combination plans (D-96) > monorepo-api plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "33fd62116a489784",
+      "sha256": "cf98853248bd3b48",
       "strategy": "create",
     },
     {
@@ -20102,7 +20102,7 @@ exports[`e2e combination plans (D-96) > monorepo-api plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "d79fd92f9b67fe35",
+      "sha256": "c70447fa1025bc94",
       "strategy": "skip-if-exists",
     },
     {
@@ -20154,7 +20154,7 @@ exports[`e2e combination plans (D-96) > nest-better-auth plans as recorded 1`] =
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "fca92b40c51abee4",
+      "sha256": "6cf408aa1712742a",
       "strategy": "create",
     },
     {
@@ -20226,7 +20226,7 @@ exports[`e2e combination plans (D-96) > nest-better-auth plans as recorded 1`] =
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "6d0244cec688515a",
+      "sha256": "0f845eb53601a0de",
       "strategy": "skip-if-exists",
     },
     {
@@ -20513,7 +20513,7 @@ exports[`e2e combination plans (D-96) > nest-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "e9e755a7e2c2323a",
+      "sha256": "e7e960f8238b4f66",
       "strategy": "create",
     },
     {
@@ -20591,7 +20591,7 @@ exports[`e2e combination plans (D-96) > nest-jest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "246c69d32b6bc980",
+      "sha256": "fa419b5547ed1ac5",
       "strategy": "skip-if-exists",
     },
     {
@@ -20873,7 +20873,7 @@ exports[`e2e combination plans (D-96) > nest-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "e3bd54af1ac06818",
+      "sha256": "43051acf9d6e8d9e",
       "strategy": "create",
     },
     {
@@ -20945,7 +20945,7 @@ exports[`e2e combination plans (D-96) > nest-jwt plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "417249e13da6c577",
+      "sha256": "cbd4059d9e874c95",
       "strategy": "skip-if-exists",
     },
     {
@@ -21307,7 +21307,7 @@ exports[`e2e combination plans (D-96) > nest-mongoose plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "ca472f8f6d36fca4",
+      "sha256": "50fd92c7be75f8ba",
       "strategy": "create",
     },
     {
@@ -21391,7 +21391,7 @@ exports[`e2e combination plans (D-96) > nest-mongoose plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "41da6c7587fb6ebd",
+      "sha256": "51b971001444d8f4",
       "strategy": "skip-if-exists",
     },
     {
@@ -21612,7 +21612,7 @@ exports[`e2e combination plans (D-96) > nest-prisma plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "abbdd3fc874d8684",
+      "sha256": "fcfff29e6c62f37b",
       "strategy": "create",
     },
     {
@@ -21732,7 +21732,7 @@ exports[`e2e combination plans (D-96) > nest-prisma plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "93d30f3f47228997",
+      "sha256": "4ec7322f4241e4f6",
       "strategy": "skip-if-exists",
     },
     {
@@ -21973,7 +21973,7 @@ exports[`e2e combination plans (D-96) > nest-session plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "fe805db2c016ba28",
+      "sha256": "4b6b8cdb07fc6d99",
       "strategy": "create",
     },
     {
@@ -22051,7 +22051,7 @@ exports[`e2e combination plans (D-96) > nest-session plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "54986946218349d3",
+      "sha256": "c71266b44189b8b2",
       "strategy": "skip-if-exists",
     },
     {
@@ -22406,7 +22406,7 @@ exports[`e2e combination plans (D-96) > nest-session-strictest plans as recorded
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "01699c5de6b260d5",
+      "sha256": "73023c114306e998",
       "strategy": "create",
     },
     {
@@ -22478,7 +22478,7 @@ exports[`e2e combination plans (D-96) > nest-session-strictest plans as recorded
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "6977a2de0d548c94",
+      "sha256": "7ac20291604e0016",
       "strategy": "skip-if-exists",
     },
     {
@@ -22832,7 +22832,7 @@ exports[`e2e combination plans (D-96) > nest-strictest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "1e9ab54b90fc62d2",
+      "sha256": "cb72aaf1829bfece",
       "strategy": "create",
     },
     {
@@ -22898,7 +22898,7 @@ exports[`e2e combination plans (D-96) > nest-strictest plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "1bd50600e8014a3b",
+      "sha256": "b1993188bfdfacaa",
       "strategy": "skip-if-exists",
     },
     {
@@ -23124,7 +23124,7 @@ exports[`e2e combination plans (D-96) > node-data plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "2de0e29be1188a03",
+      "sha256": "e858dda48a0a1be7",
       "strategy": "create",
     },
     {
@@ -23190,7 +23190,7 @@ exports[`e2e combination plans (D-96) > node-data plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "deb7efefc125dcb3",
+      "sha256": "649155173201ce8d",
       "strategy": "skip-if-exists",
     },
     {
@@ -23261,7 +23261,7 @@ exports[`e2e combination plans (D-96) > node-mongoose plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "1be059a4b7986b1f",
+      "sha256": "f83a07e552eb982d",
       "strategy": "create",
     },
     {
@@ -23321,7 +23321,7 @@ exports[`e2e combination plans (D-96) > node-mongoose plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "be42da58791f5b69",
+      "sha256": "f8c16c9258ec9469",
       "strategy": "skip-if-exists",
     },
     {
@@ -23379,7 +23379,7 @@ exports[`e2e combination plans (D-96) > node-only plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "aaea590a36c48cbc",
+      "sha256": "dd6b82d11462fb58",
       "strategy": "create",
     },
     {
@@ -23427,7 +23427,7 @@ exports[`e2e combination plans (D-96) > node-only plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "de16c8adce0a1c35",
+      "sha256": "5cf8069c548e762d",
       "strategy": "skip-if-exists",
     },
     {
@@ -23484,7 +23484,7 @@ exports[`e2e combination plans (D-96) > node-sqlite-prisma plans as recorded 1`]
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "882d3e6b6ceb38be",
+      "sha256": "20314f326de2fa0f",
       "strategy": "create",
     },
     {
@@ -23556,7 +23556,7 @@ exports[`e2e combination plans (D-96) > node-sqlite-prisma plans as recorded 1`]
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "67a4b261541147f5",
+      "sha256": "0cf46ad50aef769d",
       "strategy": "skip-if-exists",
     },
     {
@@ -23627,7 +23627,7 @@ exports[`e2e combination plans (D-96) > owner-scenario plans as recorded 1`] = `
     {
       "mode": "644",
       "path": ".devstack/stack.json",
-      "sha256": "5b2b493248f73fe0",
+      "sha256": "f12c874a3caf0667",
       "strategy": "create",
     },
     {
@@ -24185,7 +24185,7 @@ exports[`e2e combination plans (D-96) > owner-scenario plans as recorded 1`] = `
     {
       "mode": "644",
       "path": "README.md",
-      "sha256": "8e80315dd62c6c14",
+      "sha256": "7a5e6ff5313a3758",
       "strategy": "skip-if-exists",
     },
     {
