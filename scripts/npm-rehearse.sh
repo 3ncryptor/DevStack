@@ -15,7 +15,8 @@ VERDACCIO=verdaccio@6.10.4
 PORT=${DEVSTACK_REHEARSE_PORT:-4873}
 REGISTRY="http://127.0.0.1:$PORT/"
 
-tarball=$(cd "$(dirname "${1:?usage: sh scripts/npm-rehearse.sh <tarball>}")" && pwd)/$(basename "$1")
+# Passed on as given, so the rehearsal publishes exactly as the release job does.
+tarball=${1:?usage: sh scripts/npm-rehearse.sh <tarball>}
 version=$(node -p 'require("./package.json").version')
 work=$(mktemp -d)
 server=''
