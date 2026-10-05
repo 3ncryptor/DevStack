@@ -63,5 +63,12 @@ jobs:
       - name: Smoke-test the packed CLI
         run: npm run release:smoke
 
+      # Skips a version already on npm, such as 1.0.0, which was published by hand
       - name: Publish
-        run: npm publish
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "create-devstack-app@$version" version >/dev/null 2>&1; then
+            echo "create-devstack-app@$version is already on npm; nothing to publish."
+            exit 0
+          fi
+          npm publish
